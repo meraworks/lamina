@@ -799,10 +799,9 @@ pub const PAIR_MARGIN: f64 = 0.1;
 /// the partner track keeps the clearance to other copper.
 pub fn add_pair_route(d: &mut ProjectData, r: &Route, partner: &str, gap: f64) -> EditResult {
     use lamina_geom::{Owner, Prim};
-    if r.runs.len() > 1 || !r.vias.is_empty() {
+    if r.runs.iter().any(|(_, pts)| pts.len() < 2) {
         return Err(format!(
-            "Pair routing does not change layers yet. Route {} and {partner} on one layer, or turn pair routing off (Shift+D) for a route with a via.",
-            r.net
+            "Each layer of a pair route needs a segment. Add a segment after the via, or route {partner} alone."
         ));
     }
     // The search of a lead keeps a small margin past the clearance; the
@@ -819,7 +818,6 @@ pub fn add_pair_route(d: &mut ProjectData, r: &Route, partner: &str, gap: f64) -
     // tracks leave or meet their pads apart, as in other editors.
     // Only a pad of the same part as the pad of the first net, on the layer
     // of the route: for example the D- pin of the same connector.
-    let route_li = r.runs[0].0.copper().map(|c| c.index(layers));
     let part_at = |p: Point| {
         geo.copper.iter().find_map(|it| match &it.owner {
             Owner::Pad { part, .. }
@@ -830,7 +828,8 @@ pub fn add_pair_route(d: &mut ProjectData, r: &Route, partner: &str, gap: f64) -
             _ => None,
         })
     };
-    let pad_near = |p: Point| -> Option<Point> {
+    let pad_near = |p: Point, layer: Layer| -> Option<Point> {
+        let route_li = layer.copper().map(|c| c.index(layers));
         let part = part_at(p)?;
         geo.copper
             .iter()
@@ -873,15 +872,49 @@ pub fn add_pair_route(d: &mut ProjectData, r: &Route, partner: &str, gap: f64) -
         lamina_route::walkaround(&with_route, &w)
     };
     let n_runs = r.runs.len();
+    // A via of the partner goes beside each via of the route, a via
+    // diameter and the clearance away, on the side of the partner.
+    let nc = d.board.rules.class(class.as_deref());
+    let via_d = nc.via_diameter.unwrap_or(d.board.rules.via_diameter);
+    let via_space = via_d + clr + PAIR_MARGIN;
+    let via_clear = |c: Point| {
+        let disc = Prim::Circle { c, r: via_d / 2.0 };
+        // On all layers: a via goes through the board.
+        geo.copper
+            .iter()
+            .all(|it| it.net.as_deref() == Some(partner) || disc.distance(&it.prim) >= clr - 1e-6)
+            && geo.outline.as_ref().is_none_or(|ring| inside_ring(c, ring))
+    };
     let mut best: Option<Route> = None;
     'side: for left in [true, false] {
         let mut other = r.clone();
         other.net = partner.to_string();
+        // The partner vias: beside the route vias, on the side of the partner.
+        let s = if left { 1.0 } else { -1.0 };
+        let mut pvias: Vec<Point> = Vec::new();
+        for ri in 0..n_runs.saturating_sub(1) {
+            let run = &r.runs[ri].1;
+            let (p, q) = (run[run.len() - 2], run[run.len() - 1]);
+            let l = p.dist(q).max(1e-12);
+            let n = Point::new(-(q.y - p.y) / l * s, (q.x - p.x) / l * s);
+            let pv = p6(Point::new(q.x + n.x * via_space, q.y + n.y * via_space));
+            if !via_clear(pv) {
+                continue 'side;
+            }
+            pvias.push(pv);
+        }
         for (ri, (layer, pts)) in other.runs.iter_mut().enumerate() {
             let mut o = offset_path(pts, pitch, left);
+            // The run joins the partner vias at its ends.
+            if ri > 0 {
+                o[0] = pvias[ri - 1];
+            }
+            if ri + 1 < n_runs {
+                *o.last_mut().unwrap() = pvias[ri];
+            }
             // Leave the partner pad apart, then join the coupled part.
             if ri == 0 && o.len() >= 2 {
-                if let Some(pad) = pad_near(r.runs[0].1[0]) {
+                if let Some(pad) = pad_near(r.runs[0].1[0], *layer) {
                     let k = 1.min(o.len() - 1);
                     let Some(lead) = walk(*layer, pad, o[k]) else {
                         continue 'side;
@@ -892,7 +925,7 @@ pub fn add_pair_route(d: &mut ProjectData, r: &Route, partner: &str, gap: f64) -
             }
             if ri == n_runs - 1 && o.len() >= 2 {
                 let end = *r.runs[ri].1.last().unwrap();
-                if let Some(pad) = pad_near(end) {
+                if let Some(pad) = pad_near(end, *layer) {
                     let k = o.len().saturating_sub(2);
                     // No path to the partner pad: try the other side.
                     let Some(tail) = walk(*layer, o[k], pad) else {
@@ -907,6 +940,7 @@ pub fn add_pair_route(d: &mut ProjectData, r: &Route, partner: &str, gap: f64) -
             }
             *pts = o;
         }
+        other.vias = pvias;
         best = Some(other);
         break;
     }
@@ -2022,7 +2056,7 @@ mod tests {
         // Supply rails are not a pair; D+ and D- are.
         assert_eq!(pair_net(&d, "V+"), None);
         assert_eq!(pair_net(&d, "D+").as_deref(), Some("D-"));
-        // A pair route with a via is refused, so that two vias do not short.
+        // A pair route with a via: the partner gets its own via beside it.
         let r = Route {
             net: "D+".into(),
             width: 0.2,
@@ -2038,7 +2072,17 @@ mod tests {
             ],
             vias: vec![Point::new(10.0, 10.0)],
         };
-        assert!(add_pair_route(&mut d, &r, "D-", 0.2).is_err());
-        assert!(d.routing.tracks.is_empty());
+        add_pair_route(&mut d, &r, "D-", 0.2).unwrap();
+        assert_eq!(d.routing.vias.len(), 2);
+        let (v1, v2) = (&d.routing.vias[0], &d.routing.vias[1]);
+        assert_ne!(v1.net, v2.net);
+        assert!(v1.at.dist(v2.at) >= v1.diameter / 2.0 + v2.diameter / 2.0 + 0.2 - 1e-6);
+        let a = lamina_drc::analyze(&d);
+        let errors: Vec<_> = a
+            .violations
+            .iter()
+            .filter(|v| v.severity == Severity::Error)
+            .collect();
+        assert!(errors.is_empty(), "{errors:#?}");
     }
 }
