@@ -780,7 +780,13 @@ impl App {
             }
             Drag::Segment(id, seg) => {
                 let (id, seg) = (id.clone(), *seg);
-                self.commit(move |d| edits::move_segment(d, &id, seg, delta));
+                if self.route_mode == RouteMode::Push {
+                    // As in other editors: in push mode, a dragged track pushes
+                    // the tracks of other nets aside.
+                    self.commit(move |d| edits::move_segment_and_push(d, &id, seg, delta));
+                } else {
+                    self.commit(move |d| edits::move_segment(d, &id, seg, delta));
+                }
             }
             Drag::Area(of) => {
                 let of = of.clone();

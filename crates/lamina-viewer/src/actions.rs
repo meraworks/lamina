@@ -506,6 +506,10 @@ impl App {
             ("X", "Route. V adds a via, / flips the bend"),
             ("W / Shift+W", "While routing: wider / narrower track"),
             ("Shift+R", "While routing: direct, walkaround or push mode"),
+            (
+                "Drag a track",
+                "In push mode, the tracks of other nets move aside",
+            ),
             ("V", "Via tool"),
             ("Z / K / O", "Pour / keep-out / outline"),
             ("D", "Measure (click two points)"),

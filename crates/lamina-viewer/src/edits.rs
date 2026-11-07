@@ -301,6 +301,30 @@ pub fn move_segment(d: &mut ProjectData, id: &str, seg: usize, delta: Point) -> 
     Ok(format!("Moved segment {} of {id}", seg + 1))
 }
 
+/// Move a segment, then push the tracks of other nets that are now too close
+/// aside. If they cannot move, the edit fails and nothing changes.
+pub fn move_segment_and_push(
+    d: &mut ProjectData,
+    id: &str,
+    seg: usize,
+    delta: Point,
+) -> EditResult {
+    let moved = move_segment(d, id, seg, delta)?;
+    let net = d
+        .routing
+        .tracks
+        .iter()
+        .find(|t| t.id == id)
+        .map(|t| t.net.clone())
+        .unwrap_or_default();
+    let pushed = push_aside(d, &net, &[id.to_string()], &[], true)?;
+    Ok(if pushed.is_empty() {
+        moved
+    } else {
+        format!("{moved}. {pushed}")
+    })
+}
+
 fn contour_mut<'a>(d: &'a mut ProjectData, of: &VertexOf) -> Result<&'a mut Contour, String> {
     match of {
         VertexOf::Zone(id) => d
@@ -1048,6 +1072,55 @@ mod tests {
             "A is connected again: {:?}",
             a.ratsnest
         );
+        let errors: Vec<_> = a
+            .violations
+            .iter()
+            .filter(|v| v.severity == Severity::Error)
+            .collect();
+        assert!(errors.is_empty(), "{errors:#?}");
+    }
+
+    #[test]
+    fn a_dragged_track_pushes_the_other_net_aside() {
+        use lamina_footprint::{Options, from_package};
+        let mut d = ProjectData::new("t");
+        d.board.outline = Some(Contour::rect(0.0, 0.0, 30.0, 20.0));
+        let fp = from_package("R_0603", &Options::default(), None).unwrap();
+        d.footprints.insert(fp.id.clone(), fp.clone());
+        for (r, x) in [("R1", 5.0), ("R2", 25.0)] {
+            d.parts.parts.insert(r.into(), Part::new(&fp.id));
+            d.placement
+                .placements
+                .insert(r.into(), Placement::at(x, 10.0));
+        }
+        d.nets.nets.insert(
+            "A".into(),
+            Net {
+                pads: vec!["R1.2".parse().unwrap(), "R2.1".parse().unwrap()],
+                class: None,
+            },
+        );
+        d.nets.nets.insert(
+            "X".into(),
+            Net {
+                pads: Vec::new(),
+                class: None,
+            },
+        );
+        let out = lamina_route::autoroute(&d, &Default::default()).unwrap();
+        d.routing.tracks.extend(out.tracks);
+        // A track of X beside the board middle, then dragged over the track of A.
+        d.routing.tracks.push(Track {
+            id: "tx".into(),
+            net: "X".into(),
+            layer: Layer::Copper(Copper::Top),
+            width: 0.25,
+            points: vec![Point::new(12.0, 14.0), Point::new(18.0, 14.0)],
+        });
+        let msg = move_segment_and_push(&mut d, "tx", 0, Point::new(0.0, -4.0)).unwrap();
+        assert!(msg.contains("aside"), "{msg}");
+        let a = lamina_drc::analyze(&d);
+        assert!(a.ratsnest.is_empty(), "{:?}", a.ratsnest);
         let errors: Vec<_> = a
             .violations
             .iter()
