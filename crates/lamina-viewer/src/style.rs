@@ -36,7 +36,49 @@ fn load(paths: &[&str]) -> Option<Vec<u8>> {
     paths.iter().find_map(|p| std::fs::read(p).ok())
 }
 
+/// True after `install_wide` added a font for Chinese, Japanese and Korean text.
+static WIDE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// True if the text has characters that the UI fonts do not have: Chinese,
+/// Japanese or Korean. Part data from vendors often has them.
+pub fn needs_wide(text: &str) -> bool {
+    text.chars().any(|c| c >= '\u{2E80}')
+}
+
+/// Add a system font for Chinese, Japanese and Korean text, after the UI
+/// fonts. The font is large, so the viewer loads it only for a board that
+/// needs it.
+pub fn install_wide(ctx: &egui::Context) {
+    use std::sync::atomic::Ordering;
+    if WIDE.swap(true, Ordering::Relaxed) {
+        return;
+    }
+    let Some(f) = load(&[
+        "C:\\Windows\\Fonts\\msyh.ttc",
+        "C:\\Windows\\Fonts\\simsun.ttc",
+        "/System/Library/Fonts/PingFang.ttc",
+        "/System/Library/Fonts/Hiragino Sans GB.ttc",
+        "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+        "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
+    ]) else {
+        return;
+    };
+    let mut fonts = definitions();
+    fonts
+        .font_data
+        .insert("wide".into(), Arc::new(FontData::from_owned(f)));
+    for fam in fonts.families.values_mut() {
+        fam.push("wide".into());
+    }
+    ctx.set_fonts(fonts);
+}
+
 pub fn install(ctx: &egui::Context) {
+    ctx.set_fonts(definitions());
+    install_visuals(ctx);
+}
+
+fn definitions() -> FontDefinitions {
     let mut fonts = FontDefinitions::default();
     let ui_font = load(&[
         "C:\\Windows\\Fonts\\segoeui.ttf",
@@ -90,8 +132,10 @@ pub fn install(ctx: &egui::Context) {
     fonts
         .families
         .insert(FontFamily::Name("semibold".into()), semibold_family);
-    ctx.set_fonts(fonts);
+    fonts
+}
 
+fn install_visuals(ctx: &egui::Context) {
     let mut v = Visuals::dark();
     v.panel_fill = PANEL;
     v.window_fill = RAISED;

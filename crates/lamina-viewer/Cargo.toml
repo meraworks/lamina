@@ -19,9 +19,15 @@ serde_json.workspace = true
 eframe = { version = "0.37.0", default-features = false, features = ["default_fonts", "wgpu", "accesskit", "x11", "wayland"] }
 notify = "8"
 rfd = "0.17.2"
+egui_kittest = { version = "0.37.0", optional = true, features = ["wgpu", "eframe"] }
+image = { version = "0.25", optional = true, default-features = false, features = ["png"] }
 
 [lints]
 workspace = true
 
 [target.'cfg(windows)'.build-dependencies]
 embed-resource = "3.0.12"
+
+[features]
+# `lamina-viewer shot`: run the viewer without a window and save PNG images.
+headless = ["dep:egui_kittest", "dep:image"]

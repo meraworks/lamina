@@ -524,8 +524,21 @@ impl App {
             ("Esc", "Cancel, then deselect"),
             ("F1", "This sheet"),
         ];
-        let w = 420.0f32.min(rect.width() - 24.0);
-        let h = 40.0 + KEYS.len() as f32 * 19.0;
+        // The key column is as wide as the widest key, so that no key runs
+        // into its text.
+        let width =
+            |t: &str, f: egui::FontId| ui.painter().layout_no_wrap(t.into(), f, TEXT).size().x;
+        let key_w = KEYS
+            .iter()
+            .map(|(k, _)| width(k, mono(12.0)))
+            .fold(0.0, f32::max);
+        let text_w = KEYS
+            .iter()
+            .map(|(_, v)| width(v, body(12.5)))
+            .fold(0.0, f32::max);
+        let col = 16.0 + key_w + 20.0;
+        let w = (col + text_w + 16.0).max(360.0).min(rect.width() - 24.0);
+        let h = 40.0 + KEYS.len() as f32 * 19.0 + 12.0;
         let area = ERect::from_center_size(rect.center(), Vec2::new(w, h));
         let p = ui.painter();
         p.rect_filled(area, 10.0, RAISED);
@@ -559,7 +572,7 @@ impl App {
                 ACCENT,
             );
             p.text(
-                Pos2::new(area.left() + 150.0, y),
+                Pos2::new(area.left() + col, y),
                 Align2::LEFT_TOP,
                 *v,
                 body(12.5),

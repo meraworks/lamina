@@ -422,7 +422,7 @@ pub fn hint(p: &egui::Painter, rect: Rect, text: &str) {
     );
     let g = p.layout_no_wrap(line, body(12.0), TEXT_2);
     let r = Rect::from_center_size(at, g.size()).expand2(Vec2::new(8.0, 3.0));
-    p.rect_filled(r, CornerRadius::same(5), Color32::from_black_alpha(150));
+    p.rect_filled(r, CornerRadius::same(5), Color32::from_black_alpha(215));
     p.galley(r.min + Vec2::new(8.0, 3.0), g, TEXT_2);
 }
 

@@ -4,7 +4,10 @@
 mod actions;
 mod editor;
 mod edits;
+mod labels;
 mod live;
+#[cfg(feature = "headless")]
+mod shot;
 mod style;
 mod tools;
 mod widgets;
@@ -91,11 +94,15 @@ pub(crate) struct App {
     root: Option<PathBuf>,
     live: Option<Live>,
     loaded: Option<Box<Loaded>>,
+    /// The loaded board has text that needs the wide (CJK) font.
+    needs_wide: bool,
     error: Option<String>,
     gpu: Option<Gpu>,
     target: Option<Target>,
     tex: Option<egui::TextureId>,
     g2d: Option<Gpu2D>,
+    /// The copper layer that `g2d` draws at full strength.
+    g2d_bright: u8,
     g3d: Option<Gpu3D>,
     cache: MeshCache,
     mode: Mode,
@@ -175,11 +182,13 @@ impl App {
             root: None,
             live: None,
             loaded: None,
+            needs_wide: false,
             error: None,
             gpu,
             target: None,
             tex: None,
             g2d: None,
+            g2d_bright: 0,
             g3d: None,
             cache: MeshCache::default(),
             mode: if three_d { Mode::ThreeD } else { Mode::TwoD },
@@ -298,9 +307,13 @@ impl App {
                         self.visible.entry(SceneLayer::Copper(i)).or_insert(true);
                     }
                     if let Some(gpu) = &self.gpu {
-                        self.g2d = Some(gpu.upload_2d(&l.s2, 40.0, 0));
+                        self.g2d_bright = self.bright_copper_of(&l.s2);
+                        self.g2d = Some(gpu.upload_2d(&l.s2, 40.0, self.g2d_bright));
                         self.g3d = Some(gpu.upload_3d(&l.s3, &l.s2, &mut self.cache));
                     }
+                    // Vendor part data can have Chinese text; then the viewer needs a wide font.
+                    self.needs_wide =
+                        serde_json::to_string(&l.data.parts).is_ok_and(|t| style::needs_wide(&t));
                     self.loaded = Some(l);
                     self.error = None;
                     self.last_reload = Some(now);
@@ -827,6 +840,11 @@ impl App {
                                         _ => k.side(n) != Some(Side::Top) && default_visible(*k),
                                     };
                                 }
+                                match f {
+                                    1 => self.active = 0,
+                                    2 => self.active = n - 1,
+                                    _ => {}
+                                }
                                 changed = true;
                             }
                         }
@@ -1341,6 +1359,19 @@ impl App {
             }
         }
 
+        if self.dirty && self.mode == Mode::TwoD {
+            // Copper on other layers than the active one is dimmer. Upload again
+            // when the active layer, or the layers that show, change.
+            if let Some(l) = &self.loaded {
+                let bright = self.bright_copper_of(&l.s2);
+                if bright != self.g2d_bright {
+                    if let Some(gpu) = &self.gpu {
+                        self.g2d = Some(gpu.upload_2d(&l.s2, 40.0, bright));
+                    }
+                    self.g2d_bright = bright;
+                }
+            }
+        }
         if self.dirty {
             let gpu = self.gpu.as_ref().unwrap();
             if let Some(t) = &self.target {
@@ -1497,10 +1528,27 @@ impl App {
 }
 
 impl App {
+    /// The copper layer to draw at full strength: the active layer, or the
+    /// first copper layer that shows if the active layer is hidden.
+    fn bright_copper_of(&self, s2: &lamina_scene::Scene2D) -> u8 {
+        let shows = |i: u8| self.is_visible(SceneLayer::Copper(i));
+        if shows(self.active) {
+            return self.active;
+        }
+        (0..s2.copper_layers)
+            .find(|&i| shows(i))
+            .unwrap_or(self.active)
+    }
+
     /// Pad numbers and pin names on the pads, when the zoom gives them room.
     fn pad_labels(&self, painter: &egui::Painter, xf: &Xf, d: &ProjectData) {
         let n = d.board.stackup.copper_layers;
-        let ink = Color32::from_rgb(0x14, 0x12, 0x10);
+        // The width of one monospace character, as a factor of the font size.
+        let advance = painter
+            .layout_no_wrap("0000000000".into(), mono(100.0), Color32::WHITE)
+            .size()
+            .x
+            / 1000.0;
         for (refdes, pl) in &d.placement.placements {
             let Some(fp) = d
                 .parts
@@ -1514,50 +1562,101 @@ impl App {
                 Side::Top => lamina_model::Copper::Top,
                 Side::Bottom => lamina_model::Copper::Bottom,
             };
-            if !self.is_visible(SceneLayer::Copper(copper.index(n))) {
-                continue;
-            }
-            for pad in &fp.pads {
-                if pad.number.is_empty() {
-                    continue;
-                }
+            let side_shows = self.is_visible(SceneLayer::Copper(copper.index(n)));
+            let any_shows = (0..n).any(|i| self.is_visible(SceneLayer::Copper(i)));
+            let views: Vec<(&lamina_model::Pad, labels::PadView)> = fp
+                .pads
+                .iter()
+                .filter(|pad| !pad.number.is_empty())
+                .filter(|pad| match pad.kind {
+                    lamina_model::PadKind::Through { .. } => any_shows,
+                    lamina_model::PadKind::Smd => side_shows,
+                })
+                .map(|pad| {
+                    let (w, h) = pad.shape.size();
+                    let view = labels::PadView {
+                        along_x: (w * xf.ppm_pt) as f32,
+                        along_y: (h * xf.ppm_pt) as f32,
+                        // Board angles turn counter-clockwise; the screen Y axis points down.
+                        x_angle: -(pl.transform_angle(pad.rotation) as f32).to_radians(),
+                    };
+                    (pad, view)
+                })
+                .collect();
+            // Pads of the same size get labels of the same size: the size
+            // that fits the longest label among them.
+            let key = |pad: &lamina_model::Pad| {
                 let (w, h) = pad.shape.size();
-                let (w, h) = if (pad.rotation.rem_euclid(180.0) - 90.0).abs() < 1.0 {
-                    (h, w)
-                } else {
-                    (w, h)
-                };
-                let (pw, ph) = ((w * xf.ppm_pt) as f32, (h * xf.ppm_pt) as f32);
-                let short = pw.min(ph);
-                if short < 14.0 {
-                    continue;
+                let um = |v: f64| (v * 1000.0).round() as i64;
+                (um(w), um(h), um(pad.rotation))
+            };
+            let mut cap: BTreeMap<(i64, i64, i64), f32> = BTreeMap::new();
+            for (pad, view) in &views {
+                if let Some(size) =
+                    labels::comfortable(*view, &pad.number, pad.name.as_deref(), advance)
+                {
+                    let c = cap.entry(key(pad)).or_insert(size);
+                    *c = c.min(size);
                 }
+            }
+            for (pad, view) in views {
+                let Some(&max) = cap.get(&key(pad)) else {
+                    continue;
+                };
+                let Some(fit) = labels::fit(view, &pad.number, pad.name.as_deref(), advance, max)
+                else {
+                    continue;
+                };
                 let c = xf.to_screen(pl.transform(pad.at));
-                let size = (short * 0.55).clamp(8.0, 13.0);
-                match &pad.name {
-                    Some(name) if ph >= 2.6 * size && pw >= 2.0 * size => {
-                        painter.text(
-                            c - Vec2::new(0.0, size * 0.6),
-                            Align2::CENTER_CENTER,
-                            &pad.number,
-                            mono(size),
-                            ink,
-                        );
-                        painter.text(
-                            c + Vec2::new(0.0, size * 0.6),
-                            Align2::CENTER_CENTER,
-                            name,
-                            mono((size * 0.85).max(8.0)),
-                            ink.gamma_multiply(0.75),
-                        );
+                let font = mono(fit.size);
+                let gal = |text: &str, color: Color32| {
+                    painter.layout_no_wrap(text.to_string(), font.clone(), color)
+                };
+                match (fit.arrange, fit.name.as_deref()) {
+                    (labels::Arrange::Stacked, Some(name)) => {
+                        // One line above the centre line of the pad, one below.
+                        let step = Vec2::angled(fit.angle + std::f32::consts::FRAC_PI_2)
+                            * (fit.size * labels::LINE * 0.5);
+                        label(painter, c - step, fit.angle, gal(&pad.number, NUMBER_INK));
+                        label(painter, c + step, fit.angle, gal(name, NAME_INK));
                     }
-                    _ => {
-                        painter.text(c, Align2::CENTER_CENTER, &pad.number, mono(size), ink);
+                    (labels::Arrange::Inline, Some(name)) => {
+                        let mut job = egui::text::LayoutJob::default();
+                        let fmt = |color| egui::TextFormat::simple(font.clone(), color);
+                        job.append(&pad.number, 0.0, fmt(NUMBER_INK));
+                        job.append(name, fit.size * 0.6, fmt(NAME_INK));
+                        label(painter, c, fit.angle, painter.layout_job(job));
                     }
+                    _ => label(painter, c, fit.angle, gal(&pad.number, NUMBER_INK)),
                 }
             }
         }
     }
+}
+
+/// The colour of a pad number on copper.
+const NUMBER_INK: Color32 = Color32::from_rgb(0xFA, 0xF7, 0xF2);
+/// The colour of a pin name on copper.
+const NAME_INK: Color32 = Color32::from_rgb(0xFF, 0xE2, 0xC4);
+
+/// Text centred on `c`, turned by `angle`, with a dark edge so that it can
+/// be read on any copper colour.
+fn label(painter: &egui::Painter, c: Pos2, angle: f32, galley: std::sync::Arc<egui::Galley>) {
+    let pos = c - galley.rect.center().to_vec2();
+    let shape = |at: Pos2| {
+        egui::epaint::TextShape::new(at, galley.clone(), NUMBER_INK)
+            .with_angle_and_anchor(angle, Align2::CENTER_CENTER)
+    };
+    let edge = Color32::from_black_alpha(190);
+    for d in [
+        Vec2::new(1.0, 0.0),
+        Vec2::new(-1.0, 0.0),
+        Vec2::new(0.0, 1.0),
+        Vec2::new(0.0, -1.0),
+    ] {
+        painter.add(shape(pos + d).with_override_text_color(edge));
+    }
+    painter.add(shape(pos));
 }
 
 fn wgpu_filter() -> egui_wgpu::wgpu::FilterMode {
@@ -1616,6 +1715,9 @@ struct Shell {
     pending_open: Vec<PathBuf>,
     title: String,
     remembered: Vec<PathBuf>,
+    /// False when the viewer runs without a window: do not change the
+    /// list of boards that the next start opens.
+    remember: bool,
     panes_seen: usize,
 }
 
@@ -1669,6 +1771,7 @@ impl Shell {
             pending_open: Vec::new(),
             title: String::new(),
             remembered: Vec::new(),
+            remember: true,
             panes_seen: 0,
         };
         let rs = cc.wgpu_render_state.as_ref();
@@ -1737,7 +1840,7 @@ impl Shell {
             self.title = title;
         }
         let roots: Vec<PathBuf> = self.boards.iter().filter_map(|b| b.root.clone()).collect();
-        if roots != self.remembered && !roots.is_empty() {
+        if self.remember && roots != self.remembered && !roots.is_empty() {
             if let Some(f) = config_file() {
                 let _ = std::fs::create_dir_all(f.parent().unwrap());
                 let text: Vec<String> = roots.iter().map(|r| r.display().to_string()).collect();
@@ -2005,6 +2108,9 @@ impl eframe::App for Shell {
         let rs = frame.wgpu_render_state().cloned();
         for b in &mut self.boards {
             b.poll();
+            if b.needs_wide {
+                style::install_wide(&ctx);
+            }
         }
         // Folders dropped on the window open next to the others.
         let dropped: Vec<PathBuf> = ctx.input(|i| {
@@ -2180,6 +2286,11 @@ more boards, click + in the top bar or drop a folder on the window.
 
 fn main() -> eframe::Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    #[cfg(feature = "headless")]
+    if args.first().is_some_and(|a| a == "shot") {
+        attach_console();
+        std::process::exit(shot::main(&args[1..]));
+    }
     if args.iter().any(|a| a.starts_with('-')) {
         attach_console();
     }

@@ -1454,13 +1454,13 @@ impl App {
                 r.width,
                 if bad { " · too close" } else { "" }
             );
-            painter.text(
-                xf.to_screen(target) + Vec2::new(14.0, -14.0),
-                egui::Align2::LEFT_BOTTOM,
-                label,
-                mono(11.0),
-                if bad { ERROR } else { TEXT },
-            );
+            // A dark tag, so that the text reads over copper and pad labels.
+            let color = if bad { ERROR } else { TEXT };
+            let galley = painter.layout_no_wrap(label, mono(11.0), color);
+            let at = xf.to_screen(target) + Vec2::new(16.0, -16.0 - galley.size().y);
+            let r = egui::Rect::from_min_size(at, galley.size()).expand2(Vec2::new(6.0, 3.0));
+            painter.rect_filled(r, 4.0, RAISED);
+            painter.galley(at, galley, color);
         }
 
         // Outline drafts.
