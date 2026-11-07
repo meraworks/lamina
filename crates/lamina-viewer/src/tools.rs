@@ -42,7 +42,7 @@ impl Tool {
                 "Click to select · Shift+click adds · drag to move · drag empty space to box-select · right-click for the menu · right-drag to pan"
             }
             Tool::Route => {
-                "Click a pad to start · click to add corners · V via and switch layer · / bend · W / Shift+W width · Shift+R walkaround on/off · Backspace undo corner · Enter finish · Esc cancel"
+                "Click a pad to start · click to add corners · V via and switch layer · / bend · W / Shift+W width · Shift+R direct / walkaround / push · Backspace undo corner · Enter finish · Esc cancel"
             }
             Tool::Via => "Click the copper of a net to put a via there",
             Tool::Zone => {
@@ -55,6 +55,37 @@ impl Tool {
             Tool::Measure => {
                 "Click two points to measure · snaps to pad and via centres, or to the grid · click again to restart"
             }
+        }
+    }
+}
+
+/// How the route tool treats the copper of other nets, as in other editors.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum RouteMode {
+    /// The segment goes straight. The tag shows the clearance errors.
+    Direct,
+    /// A segment that breaks the clearance goes around the copper.
+    Walkaround,
+    /// The segment goes straight. When the route is done, the tracks of other
+    /// nets in its way are routed again around it. A pad or a via in the way
+    /// makes the segment go around, as in walkaround.
+    Push,
+}
+
+impl RouteMode {
+    fn next(self) -> RouteMode {
+        match self {
+            RouteMode::Direct => RouteMode::Walkaround,
+            RouteMode::Walkaround => RouteMode::Push,
+            RouteMode::Push => RouteMode::Direct,
+        }
+    }
+
+    fn name(self) -> &'static str {
+        match self {
+            RouteMode::Direct => "direct",
+            RouteMode::Walkaround => "walkaround",
+            RouteMode::Push => "push",
         }
     }
 }
@@ -306,7 +337,15 @@ impl App {
     /// True if a track piece is nearer than the clearance to the copper of
     /// another net.
     fn conflicts(&self, a: Point, b: Point, layer: u8, net: &str, width: f64) -> bool {
-        let Some(l) = &self.loaded else { return false };
+        let (tracks, other) = self.blockers(a, b, layer, net, width);
+        tracks || other
+    }
+
+    /// The copper of other nets that a segment is too close to: (tracks, the
+    /// rest, such as pads and vias).
+    fn blockers(&self, a: Point, b: Point, layer: u8, net: &str, width: f64) -> (bool, bool) {
+        let mut found = (false, false);
+        let Some(l) = &self.loaded else { return found };
         let d = &l.data;
         let class = d.nets.nets.get(net).and_then(|n| n.class.clone());
         let clr = d.board.rules.clearance_for(class.as_deref());
@@ -332,10 +371,14 @@ impl App {
                 continue;
             }
             if it.prim.distance(&cap) < clr - 1e-6 {
-                return true;
+                if matches!(it.owner, Owner::Track { .. }) {
+                    found.0 = true;
+                } else {
+                    found.1 = true;
+                }
             }
         }
-        false
+        found
     }
 
     pub(crate) fn sel_of(p: &Pick) -> Option<Sel> {
@@ -934,12 +977,20 @@ impl App {
             // Walkaround, as in other editors: if the straight segments break
             // the clearance, find a path around the copper of other nets.
             let mut prev = last;
-            let bad = pts.iter().any(|&p| {
-                let b = self.conflicts(prev, p, li, &r.net, r.width);
+            let (mut on_tracks, mut on_other) = (false, false);
+            for &p in &pts {
+                let (t, o) = self.blockers(prev, p, li, &r.net, r.width);
+                on_tracks |= t;
+                on_other |= o;
                 prev = p;
-                b
-            });
-            if bad && self.walk {
+            }
+            let walk = match self.route_mode {
+                RouteMode::Direct => false,
+                RouteMode::Walkaround => on_tracks || on_other,
+                // Tracks move aside when the route is done; pads and vias do not.
+                RouteMode::Push => on_other,
+            };
+            if walk {
                 let walk = lamina_route::Walk {
                     net: r.net.clone(),
                     layer: r.runs.last().unwrap().0,
@@ -1010,7 +1061,28 @@ impl App {
     fn finish_route(&mut self) {
         if let Some(r) = self.route.take() {
             if r.runs.iter().any(|x| x.1.len() > 1) || !r.vias.is_empty() {
-                self.commit(move |d| edits::add_route(d, &r));
+                if self.route_mode == RouteMode::Push {
+                    self.commit(move |d| {
+                        let before: Vec<String> =
+                            d.routing.tracks.iter().map(|t| t.id.clone()).collect();
+                        let added = edits::add_route(d, &r)?;
+                        let new: Vec<String> = d
+                            .routing
+                            .tracks
+                            .iter()
+                            .map(|t| t.id.clone())
+                            .filter(|id| !before.contains(id))
+                            .collect();
+                        let pushed = edits::push_aside(d, &r.net, &new)?;
+                        Ok(if pushed.is_empty() {
+                            added
+                        } else {
+                            format!("{added}. {pushed}")
+                        })
+                    });
+                } else {
+                    self.commit(move |d| edits::add_route(d, &r));
+                }
             }
         }
     }
@@ -1215,12 +1287,18 @@ impl App {
             self.fit_2d(size_px);
         }
         if shift && k(Key::R) && self.tool == Tool::Route {
-            self.walk = !self.walk;
+            self.route_mode = self.route_mode.next();
             self.say(
-                if self.walk {
-                    "Walkaround routing: a segment goes around the copper of other nets"
-                } else {
-                    "Direct routing: a segment goes straight, and shows the clearance errors"
+                match self.route_mode {
+                    RouteMode::Direct => {
+                        "Direct routing: a segment goes straight, and shows the clearance errors"
+                    }
+                    RouteMode::Walkaround => {
+                        "Walkaround routing: a segment goes around the copper of other nets"
+                    }
+                    RouteMode::Push => {
+                        "Push routing: the tracks of other nets in the way move aside when the route is done"
+                    }
                 },
                 true,
             );
@@ -1697,10 +1775,13 @@ impl App {
                 SceneLayer::Copper(li).name(self.copper_count()),
                 r.width,
                 length,
-                match (bad, self.walk) {
-                    (true, true) => " · too close: a click goes around",
-                    (true, false) => " · too close",
-                    _ => "",
+                match (bad, self.route_mode) {
+                    (true, RouteMode::Walkaround) =>
+                        " · too close: a click goes around".to_string(),
+                    (true, RouteMode::Push) =>
+                        " · too close: tracks move aside at the end".to_string(),
+                    (true, RouteMode::Direct) => " · too close".to_string(),
+                    (false, m) => format!(" · {}", m.name()),
                 }
             );
             // A dark tag, so that the text reads over copper and pad labels.

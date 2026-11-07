@@ -422,6 +422,78 @@ pub struct Route {
     pub vias: Vec<Point>,
 }
 
+/// Route again the tracks of other nets that are too close to the new tracks
+/// `new` of `net`, so that they go around them. If a net cannot be routed
+/// again, the edit fails and nothing changes.
+pub fn push_aside(d: &mut ProjectData, net: &str, new: &[String]) -> EditResult {
+    use lamina_geom::Prim;
+    let caps = |t: &Track| -> Vec<Prim> {
+        t.points
+            .windows(2)
+            .map(|w| Prim::Capsule {
+                a: w[0],
+                b: w[1],
+                r: t.width / 2.0,
+            })
+            .collect()
+    };
+    let rules = d.board.rules.clone();
+    let clearance = |n: &str| {
+        let class = d.nets.nets.get(n).and_then(|x| x.class.clone());
+        rules.clearance_for(class.as_deref())
+    };
+    let ours: Vec<(Layer, Vec<Prim>)> = d
+        .routing
+        .tracks
+        .iter()
+        .filter(|t| new.contains(&t.id))
+        .map(|t| (t.layer, caps(t)))
+        .collect();
+    let mut hit: Vec<String> = Vec::new();
+    let mut nets: Vec<String> = Vec::new();
+    for t in d.routing.tracks.iter().filter(|t| t.net != net) {
+        let clr = clearance(net).max(clearance(&t.net));
+        let theirs = caps(t);
+        let close = ours.iter().filter(|(l, _)| *l == t.layer).any(|(_, ps)| {
+            ps.iter()
+                .any(|a| theirs.iter().any(|b| a.distance(b) < clr - 1e-6))
+        });
+        if close {
+            hit.push(t.id.clone());
+            if !nets.contains(&t.net) {
+                nets.push(t.net.clone());
+            }
+        }
+    }
+    if hit.is_empty() {
+        return Ok(String::new());
+    }
+    d.routing.tracks.retain(|t| !hit.contains(&t.id));
+    let out = lamina_route::autoroute(
+        d,
+        &lamina_route::RouteOptions {
+            nets: Some(nets.clone()),
+            time_limit: Some(10.0),
+            ..Default::default()
+        },
+    )?;
+    if let Some(f) = out.failed.first() {
+        return Err(format!(
+            "There is no room to move {} aside ({}). Use walkaround (Shift+R), or route on another layer.",
+            nets.join(", "),
+            f.reason
+        ));
+    }
+    d.routing.tracks.extend(out.tracks);
+    d.routing.vias.extend(out.vias);
+    Ok(format!(
+        "Moved {} track{} of {} aside",
+        hit.len(),
+        if hit.len() == 1 { "" } else { "s" },
+        nets.join(", ")
+    ))
+}
+
 pub fn add_route(d: &mut ProjectData, r: &Route) -> EditResult {
     let net = d
         .nets
@@ -778,5 +850,58 @@ mod tests {
         assert_eq!(posture(a, b, false), vec![Point::new(3.0, 0.0), b]);
         assert_eq!(posture(a, b, true), vec![Point::new(2.0, 2.0), b]);
         assert_eq!(posture(a, Point::new(3.0, 3.0), false).len(), 1);
+    }
+
+    #[test]
+    fn push_aside_routes_the_other_net_around_the_new_track() {
+        use lamina_footprint::{Options, from_package};
+        let mut d = ProjectData::new("t");
+        d.board.outline = Some(Contour::rect(0.0, 0.0, 30.0, 20.0));
+        let fp = from_package("R_0603", &Options::default(), None).unwrap();
+        d.footprints.insert(fp.id.clone(), fp.clone());
+        for (r, x) in [("R1", 5.0), ("R2", 25.0)] {
+            d.parts.parts.insert(r.into(), Part::new(&fp.id));
+            d.placement
+                .placements
+                .insert(r.into(), Placement::at(x, 10.0));
+        }
+        d.nets.nets.insert(
+            "A".into(),
+            Net {
+                pads: vec!["R1.2".parse().unwrap(), "R2.1".parse().unwrap()],
+                class: None,
+            },
+        );
+        d.nets.nets.insert(
+            "X".into(),
+            Net {
+                pads: Vec::new(),
+                class: None,
+            },
+        );
+        let out = lamina_route::autoroute(&d, &Default::default()).unwrap();
+        d.routing.tracks.extend(out.tracks);
+        // A new track of X across the middle of the board, over the track of A.
+        d.routing.tracks.push(Track {
+            id: "tx".into(),
+            net: "X".into(),
+            layer: Layer::Copper(Copper::Top),
+            width: 0.25,
+            points: vec![Point::new(15.0, 4.0), Point::new(15.0, 16.0)],
+        });
+        let msg = push_aside(&mut d, "X", &["tx".to_string()]).unwrap();
+        assert!(msg.contains('A'), "{msg}");
+        let a = lamina_drc::analyze(&d);
+        assert!(
+            a.ratsnest.is_empty(),
+            "A is connected again: {:?}",
+            a.ratsnest
+        );
+        let errors: Vec<_> = a
+            .violations
+            .iter()
+            .filter(|v| v.severity == Severity::Error)
+            .collect();
+        assert!(errors.is_empty(), "{errors:#?}");
     }
 }

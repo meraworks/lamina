@@ -2832,6 +2832,7 @@ dependencies = [
  "image",
  "lamina-core",
  "lamina-drc",
+ "lamina-footprint",
  "lamina-geom",
  "lamina-model",
  "lamina-render",
