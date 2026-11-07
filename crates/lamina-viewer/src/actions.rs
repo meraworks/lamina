@@ -501,6 +501,8 @@ impl App {
     fn help_panel(&mut self, ui: &mut egui::Ui, rect: ERect) {
         const KEYS: &[(&str, &str)] = &[
             ("S", "Select"),
+            ("Right-click", "Menu for the item under the pointer"),
+            ("Shift+click / Ctrl+click", "Add to the selection"),
             ("X", "Route. V adds a via, / flips the bend"),
             ("V", "Via tool"),
             ("Z / K / O", "Pour / keep-out / outline"),

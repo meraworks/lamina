@@ -115,6 +115,8 @@ pub(crate) struct App {
     placing: Option<Placing>,
     settling: Option<Settling>,
     grid_i: usize,
+    /// The right-click menu: where it was opened and what was under the pointer.
+    menu: Option<(Point, Option<Pick>)>,
     active: u8,
     diagonal_first: bool,
     toast: Option<(String, bool, Instant)>,
@@ -197,6 +199,7 @@ impl App {
             placing: None,
             settling: None,
             grid_i: 2,
+            menu: None,
             active: 0,
             diagonal_first: false,
             toast: None,

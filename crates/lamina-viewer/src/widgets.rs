@@ -556,3 +556,34 @@ pub fn toast(p: &egui::Painter, at: Pos2, text: &str, color: Color32, alpha: f32
         TEXT.gamma_multiply(alpha),
     );
 }
+
+/// A row of a right-click menu: the label at the left, the shortcut dim at
+/// the right. The whole row is the button.
+pub fn menu_row<'a>(label: &'a str, key: &'a str) -> impl egui::Widget + 'a {
+    move |ui: &mut egui::Ui| {
+        let w = ui.available_width().max(180.0);
+        let (rect, resp) = ui.allocate_exact_size(Vec2::new(w, 24.0), egui::Sense::click());
+        let p = ui.painter();
+        if resp.hovered() {
+            p.rect_filled(rect, 5.0, ACCENT_DIM);
+        }
+        let color = if resp.hovered() { TEXT } else { TEXT_2 };
+        p.text(
+            Pos2::new(rect.left() + 10.0, rect.center().y),
+            egui::Align2::LEFT_CENTER,
+            label,
+            body(12.5),
+            color,
+        );
+        if !key.is_empty() {
+            p.text(
+                Pos2::new(rect.right() - 10.0, rect.center().y),
+                egui::Align2::RIGHT_CENTER,
+                key,
+                mono(11.0),
+                TEXT_3,
+            );
+        }
+        resp
+    }
+}

@@ -39,7 +39,7 @@ impl Tool {
     fn hint(self) -> &'static str {
         match self {
             Tool::Select => {
-                "Click to select · drag to move · drag empty space to box-select · R rotate · F flip · M move · Del delete · right-drag to pan"
+                "Click to select · Shift+click adds · drag to move · drag empty space to box-select · right-click for the menu · right-drag to pan"
             }
             Tool::Route => {
                 "Click a pad to start · click to add corners · V via and switch layer · / bend · Backspace undo corner · Enter finish · Esc cancel"
@@ -57,6 +57,21 @@ impl Tool {
             }
         }
     }
+}
+
+/// An action of the right-click menu.
+#[derive(Clone)]
+enum MenuAct {
+    Rotate(f64),
+    Flip,
+    Lock,
+    Move,
+    Delete,
+    SelectNet(String),
+    Via(String),
+    Route,
+    Fit,
+    SelectAll,
 }
 
 pub enum Drag {
@@ -308,6 +323,171 @@ impl App {
             .collect()
     }
 
+    /// The menu on a right click: the actions for the item under the pointer,
+    /// with their shortcuts. A right drag still pans.
+    fn context_menu(&mut self, resp: &egui::Response, p: Point) {
+        if resp.secondary_clicked() {
+            let pick = self.pick(p);
+            let hit = pick.as_ref().and_then(App::sel_of);
+            if let Some(h) = &hit {
+                if !self.sel.iter().any(|s| s.same_item(h)) {
+                    self.sel = vec![h.clone()];
+                    self.dirty = true;
+                }
+            }
+            self.menu = Some((p, pick));
+        }
+        let Some((at, pick)) = self.menu.clone() else {
+            return;
+        };
+        let net = pick.as_ref().and_then(|k| k.net().map(str::to_string));
+        let part = pick.as_ref().and_then(|k| k.part().map(str::to_string));
+        let locked = part.as_ref().and_then(|r| {
+            self.loaded
+                .as_ref()
+                .and_then(|l| l.data.placement.placements.get(r))
+                .map(|pl| pl.locked)
+        });
+        let on_pad = matches!(pick, Some(Pick::Pad { .. }));
+        let mut act: Option<MenuAct> = None;
+        let shown = resp.context_menu(|ui| {
+            ui.set_min_width(190.0);
+            let mut item = |ui: &mut egui::Ui, label: &str, key: &str, a: MenuAct| {
+                let r = ui.add(widgets::menu_row(label, key));
+                if r.clicked() {
+                    act = Some(a);
+                    ui.close();
+                }
+            };
+            if let Some(r) = &part {
+                ui.label(egui::RichText::new(r).font(semibold(12.5)).color(TEXT));
+                item(ui, "Rotate 90°", "R", MenuAct::Rotate(90.0));
+                item(ui, "Rotate -90°", "Shift+R", MenuAct::Rotate(-90.0));
+                item(ui, "Flip to the other side", "F", MenuAct::Flip);
+                item(ui, "Move with the pointer", "M", MenuAct::Move);
+                let lock = if locked == Some(true) {
+                    "Unlock"
+                } else {
+                    "Lock"
+                };
+                item(ui, lock, "L", MenuAct::Lock);
+                item(ui, "Remove from the board", "Del", MenuAct::Delete);
+                ui.separator();
+            }
+            if on_pad {
+                item(ui, "Route from this pad", "X", MenuAct::Route);
+            }
+            if let Some(n) = &net {
+                item(
+                    ui,
+                    &format!("Select the net {n}"),
+                    "",
+                    MenuAct::SelectNet(n.clone()),
+                );
+                if matches!(pick, Some(Pick::Track { .. })) {
+                    item(ui, "Add a via here", "V", MenuAct::Via(n.clone()));
+                }
+            }
+            if part.is_none()
+                && matches!(
+                    pick,
+                    Some(Pick::Track { .. } | Pick::Via { .. } | Pick::Fill { .. })
+                )
+            {
+                item(ui, "Delete", "Del", MenuAct::Delete);
+            }
+            if pick.is_none() {
+                item(ui, "Fit the board", "Home", MenuAct::Fit);
+                item(ui, "Select all parts", "Ctrl+A", MenuAct::SelectAll);
+            }
+        });
+        if shown.is_none() {
+            self.menu = None;
+        }
+        let Some(a) = act else { return };
+        self.menu = None;
+        match a {
+            MenuAct::Rotate(by) => {
+                let refs = self.selected_parts();
+                if !refs.is_empty() {
+                    self.commit(move |d| edits::rotate_parts(d, &refs, by));
+                }
+            }
+            MenuAct::Flip => {
+                let refs = self.selected_parts();
+                if !refs.is_empty() {
+                    self.commit(move |d| edits::flip_parts(d, &refs));
+                }
+            }
+            MenuAct::Lock => {
+                let refs = self.selected_parts();
+                let lock = locked != Some(true);
+                if !refs.is_empty() {
+                    self.commit(move |d| edits::set_locked(d, &refs, lock));
+                }
+            }
+            MenuAct::Move => {
+                let refs = self.selected_parts();
+                if let (Some(first), Some(l)) = (refs.first(), &self.loaded) {
+                    if let Some(pl) = l.data.placement.placements.get(first) {
+                        self.gesture = Gesture::Grab {
+                            from: at,
+                            anchor: pl.origin(),
+                            refs,
+                        };
+                    }
+                }
+            }
+            MenuAct::Delete => {
+                if !self.sel.is_empty() {
+                    let sels = std::mem::take(&mut self.sel);
+                    self.commit(move |d| edits::delete(d, &sels));
+                }
+            }
+            MenuAct::SelectNet(n) => {
+                if let Some(l) = &self.loaded {
+                    let d = &l.data;
+                    let mut sel = Vec::new();
+                    for t in d.routing.tracks.iter().filter(|t| t.net == n) {
+                        for seg in 0..t.points.len().saturating_sub(1) {
+                            sel.push(Sel::Track {
+                                id: t.id.clone(),
+                                seg,
+                            });
+                        }
+                    }
+                    for v in d.routing.vias.iter().filter(|v| v.net == n) {
+                        sel.push(Sel::Via(v.id.clone()));
+                    }
+                    self.sel = sel;
+                    self.dirty = true;
+                }
+            }
+            MenuAct::Via(n) => {
+                let ps = snap_pt(at, self.grid());
+                self.commit(move |d| edits::add_via(d, &n, ps));
+            }
+            MenuAct::Route => {
+                self.tool = Tool::Route;
+                self.sel.clear();
+                self.start_route(at);
+            }
+            MenuAct::Fit => self.fit_pending = true,
+            MenuAct::SelectAll => {
+                if let Some(l) = &self.loaded {
+                    self.sel = l
+                        .data
+                        .placement
+                        .placements
+                        .keys()
+                        .map(|r| Sel::Part(r.clone()))
+                        .collect();
+                    self.dirty = true;
+                }
+            }
+        }
+    }
+
     fn select(&mut self, hit: Option<Sel>, shift: bool) {
         match hit {
             Some(h) if shift => {
@@ -457,7 +637,12 @@ impl App {
         xf: &Xf,
         size_px: Vec2,
     ) {
-        let (shift, origin) = ui.input(|i| (i.modifiers.shift, i.pointer.press_origin()));
+        let (shift, origin) = ui.input(|i| {
+            (
+                i.modifiers.shift || i.modifiers.command,
+                i.pointer.press_origin(),
+            )
+        });
         let origin = origin.map(|s| xf.to_board(s));
         self.keys(ui, size_px);
         let Some(p) = self.cursor_mm.or(self.last_cursor) else {
@@ -484,7 +669,10 @@ impl App {
         }
 
         match self.tool {
-            Tool::Select => self.select_input(resp, p, origin, shift),
+            Tool::Select => {
+                self.select_input(resp, p, origin, shift);
+                self.context_menu(resp, p);
+            }
             Tool::Route => self.route_input(resp, p, ps),
             Tool::Via => {
                 if resp.clicked() {
@@ -580,27 +768,33 @@ impl App {
         }
     }
 
+    /// Start a route on the copper under `p`. False if there is none.
+    fn start_route(&mut self, p: Point) -> bool {
+        let m = self
+            .magnet(p, Some(self.active), None)
+            .or_else(|| self.magnet(p, None, None));
+        let Some(m) = m else {
+            self.say("Start a route on a pad, track or via", false);
+            return false;
+        };
+        let d = &self.loaded.as_ref().unwrap().data;
+        let class = d.nets.nets.get(&m.net).and_then(|n| n.class.clone());
+        let width = d.board.rules.track_width_for(class.as_deref());
+        self.active = m.layer;
+        self.route = Some(Route {
+            net: m.net,
+            width,
+            runs: vec![(self.layer_of(m.layer), vec![m.at])],
+            vias: Vec::new(),
+        });
+        self.dirty = true;
+        true
+    }
+
     fn route_input(&mut self, resp: &egui::Response, p: Point, ps: Point) {
         let Some(r) = &self.route else {
             if resp.clicked() {
-                let m = self
-                    .magnet(p, Some(self.active), None)
-                    .or_else(|| self.magnet(p, None, None));
-                let Some(m) = m else {
-                    self.say("Start a route on a pad, track or via", false);
-                    return;
-                };
-                let d = &self.loaded.as_ref().unwrap().data;
-                let class = d.nets.nets.get(&m.net).and_then(|n| n.class.clone());
-                let width = d.board.rules.track_width_for(class.as_deref());
-                self.active = m.layer;
-                self.route = Some(Route {
-                    net: m.net,
-                    width,
-                    runs: vec![(self.layer_of(m.layer), vec![m.at])],
-                    vias: Vec::new(),
-                });
-                self.dirty = true;
+                self.start_route(p);
             }
             return;
         };
