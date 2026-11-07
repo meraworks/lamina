@@ -43,6 +43,10 @@ mod tests {
         assert!((w - 2.34).abs() < 0.01 && (h - 3.6).abs() < 0.01, "{w} {h}");
         assert_eq!(im.meta.basic, Some(true));
         assert_eq!(im.meta.mpn.as_deref(), Some("AMS1117-3.3"));
+        // The pin names come from the symbol in the same record.
+        assert_eq!(p1.name.as_deref(), Some("GND"));
+        assert_eq!(fp.pad("2").unwrap().name.as_deref(), Some("VOUT"));
+        assert_eq!(p3.name.as_deref(), Some("VIN"));
         let m = im.model.unwrap();
         let c = m.outline_center.unwrap();
         assert!(c.x.abs() < 0.2 && c.y.abs() < 0.2, "{c:?}");

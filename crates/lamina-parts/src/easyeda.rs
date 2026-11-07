@@ -258,6 +258,7 @@ pub fn convert(resp: &Value, lcsc: &str, fetched: &str) -> Result<Imported, Stri
     fp.description = Some(title.clone());
     let mut notes = Vec::new();
     let mut model = None;
+    let pin_names = symbol_pin_names(r);
     let mut skipped: std::collections::BTreeMap<String, usize> = Default::default();
     let mut body_pts: Vec<Point> = Vec::new();
 
@@ -460,6 +461,15 @@ pub fn convert(resp: &Value, lcsc: &str, fetched: &str) -> Result<Imported, Stri
             .and_then(|l| l.get("price"))
             .and_then(|v| v.as_f64()),
     };
+    if !pin_names.is_empty() {
+        for p in &mut fp.pads {
+            if let Some(n) = pin_names.get(&p.number) {
+                if n != &p.number {
+                    p.name = Some(n.clone());
+                }
+            }
+        }
+    }
     Ok(Imported {
         footprint: fp,
         model,
@@ -573,6 +583,7 @@ pub(crate) fn pad_any(ctx: &Ctx, fl: &[&str]) -> Result<RawPad, String> {
     Ok(RawPad {
         pad: Pad {
             number,
+            name: None,
             at,
             rotation,
             shape,
@@ -750,4 +761,35 @@ pub fn model_height(info: &ModelInfo, obj: &str) -> Option<f64> {
     }
     let lift = if bottom < -0.3 { -bottom } else { 0.0 };
     Some(r6(top + lift + info.z))
+}
+
+/// The pin names of the symbol in a component record, by pin number. The
+/// symbol is the `dataStr` at the top of the record; its `P~` shapes hold
+/// the name in the fourth group and the number in the fifth.
+fn symbol_pin_names(r: &Value) -> std::collections::BTreeMap<String, String> {
+    let mut out = std::collections::BTreeMap::new();
+    let Some(shapes) = r
+        .get("dataStr")
+        .and_then(|d| d.get("shape"))
+        .and_then(|s| s.as_array())
+    else {
+        return out;
+    };
+    for sh in shapes.iter().filter_map(|v| v.as_str()) {
+        if !sh.starts_with("P~") {
+            continue;
+        }
+        let groups: Vec<&str> = sh.split("^^").collect();
+        let field = |g: usize| {
+            groups
+                .get(g)
+                .and_then(|t| t.split('~').nth(4))
+                .unwrap_or("")
+        };
+        let (name, number) = (field(3).trim(), field(4).trim());
+        if !name.is_empty() && !number.is_empty() {
+            out.insert(number.to_string(), name.to_string());
+        }
+    }
+    out
 }

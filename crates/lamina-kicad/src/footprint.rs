@@ -585,6 +585,11 @@ fn pad_from(item: &Sx, ctx: &Ctx) -> Result<Option<(Pad, Option<String>)>, Strin
         other => return Err(format!("the pad type `{other}` is not known")),
     };
     let mut pad = Pad::smd(number, ctx.lp(x, y), shape);
+    pad.name = item
+        .child("pinfunction")
+        .and_then(|p| p.arg(0))
+        .map(str::to_string)
+        .filter(|n| !n.is_empty() && n != &pad.number);
     pad.kind = kind;
     pad.rotation = ctx.angle(abs_angle);
     pad.paste = matches!(pad.kind, PadKind::Smd) && has_paste && ptype != "connect";

@@ -934,6 +934,16 @@ impl App {
                 layer,
             } => {
                 title = format!("{part}.{pad}");
+                if let Some(name) = d
+                    .parts
+                    .parts
+                    .get(part)
+                    .and_then(|x| d.footprints.get(&x.footprint))
+                    .and_then(|fp| fp.pad(pad))
+                    .and_then(|pd| pd.name.clone())
+                {
+                    rows.push(("pin", name));
+                }
                 rows.push(("net", net.clone().unwrap_or_else(|| "unconnected".into())));
                 rows.push((
                     "layer",
@@ -1411,6 +1421,7 @@ impl App {
 
     fn overlays(&self, painter: &egui::Painter, xf: &Xf) {
         let Some(l) = &self.loaded else { return };
+        self.pad_labels(painter, xf, &l.data);
         // Outline the net under the cursor in the accent colour.
         let focus = self.hover.as_ref();
         if let Some(net) = focus.and_then(|p| p.net()) {
@@ -1479,6 +1490,70 @@ impl App {
             mono(11.0),
             TEXT_2,
         );
+    }
+}
+
+impl App {
+    /// Pad numbers and pin names on the pads, when the zoom gives them room.
+    fn pad_labels(&self, painter: &egui::Painter, xf: &Xf, d: &ProjectData) {
+        let n = d.board.stackup.copper_layers;
+        let ink = Color32::from_rgb(0x14, 0x12, 0x10);
+        for (refdes, pl) in &d.placement.placements {
+            let Some(fp) = d
+                .parts
+                .parts
+                .get(refdes)
+                .and_then(|p| d.footprints.get(&p.footprint))
+            else {
+                continue;
+            };
+            let copper = match pl.side {
+                Side::Top => lamina_model::Copper::Top,
+                Side::Bottom => lamina_model::Copper::Bottom,
+            };
+            if !self.is_visible(SceneLayer::Copper(copper.index(n))) {
+                continue;
+            }
+            for pad in &fp.pads {
+                if pad.number.is_empty() {
+                    continue;
+                }
+                let (w, h) = pad.shape.size();
+                let (w, h) = if (pad.rotation.rem_euclid(180.0) - 90.0).abs() < 1.0 {
+                    (h, w)
+                } else {
+                    (w, h)
+                };
+                let (pw, ph) = ((w * xf.ppm_pt) as f32, (h * xf.ppm_pt) as f32);
+                let short = pw.min(ph);
+                if short < 14.0 {
+                    continue;
+                }
+                let c = xf.to_screen(pl.transform(pad.at));
+                let size = (short * 0.55).clamp(8.0, 13.0);
+                match &pad.name {
+                    Some(name) if ph >= 2.6 * size && pw >= 2.0 * size => {
+                        painter.text(
+                            c - Vec2::new(0.0, size * 0.6),
+                            Align2::CENTER_CENTER,
+                            &pad.number,
+                            mono(size),
+                            ink,
+                        );
+                        painter.text(
+                            c + Vec2::new(0.0, size * 0.6),
+                            Align2::CENTER_CENTER,
+                            name,
+                            mono((size * 0.85).max(8.0)),
+                            ink.gamma_multiply(0.75),
+                        );
+                    }
+                    _ => {
+                        painter.text(c, Align2::CENTER_CENTER, &pad.number, mono(size), ink);
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -115,6 +115,9 @@ pub fn valid_id(id: &str) -> bool {
 pub struct Pad {
     /// The pad number that nets use (`U1.3`). It can be empty for mechanical pads.
     pub number: String,
+    /// The pin name from the datasheet (`VDD`, `SCL`), when the source has it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
     pub at: Point,
     #[serde(default, skip_serializing_if = "is_zero")]
     pub rotation: f64,
@@ -138,6 +141,7 @@ impl Pad {
     pub fn smd(number: impl Into<String>, at: Point, shape: PadShape) -> Pad {
         Pad {
             number: number.into(),
+            name: None,
             at,
             rotation: 0.0,
             shape,
@@ -152,6 +156,7 @@ impl Pad {
     pub fn through(number: impl Into<String>, at: Point, shape: PadShape, drill: Drill) -> Pad {
         Pad {
             number: number.into(),
+            name: None,
             at,
             rotation: 0.0,
             shape,
