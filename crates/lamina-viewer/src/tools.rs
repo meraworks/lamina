@@ -127,6 +127,19 @@ pub struct Magnet {
     pub layer: u8,
 }
 
+/// True if the point is inside the closed ring (even-odd rule).
+fn point_in_ring(p: Point, ring: &[Point]) -> bool {
+    let mut inside = false;
+    let n = ring.len();
+    for i in 0..n {
+        let (a, b) = (ring[i], ring[(i + n - 1) % n]);
+        if (a.y > p.y) != (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x {
+            inside = !inside;
+        }
+    }
+    inside
+}
+
 /// True if the segment from `a` to `b` touches the rectangle (Liang-Barsky clip).
 fn segment_meets_rect(a: Point, b: Point, r: &Rect) -> bool {
     let (dx, dy) = (b.x - a.x, b.y - a.y);
@@ -565,8 +578,9 @@ impl App {
             }
         };
         let mut out: Vec<Sel> = if shift { self.sel.clone() } else { Vec::new() };
+        // Each segment of a track is its own item here, so compare the segment too.
         let mut add = |s: Sel| {
-            if !out.iter().any(|x| x.same_item(&s)) {
+            if !out.contains(&s) {
                 out.push(s);
             }
         };
@@ -580,7 +594,19 @@ impl App {
                 continue;
             };
             if let Some(c) = lamina_geom::courtyard(fp, pl) {
-                if take(&c) {
+                // A crossing box takes a part whose courtyard it touches: a
+                // corner in the box, an edge across the box, or the box in the part.
+                let hit = if enclose {
+                    take(&c)
+                } else {
+                    take(&c)
+                        || (0..c.len()).any(|i| segment_meets_rect(c[i], c[(i + 1) % c.len()], &r))
+                        || point_in_ring(
+                            Point::new((r.min.x + r.max.x) / 2.0, (r.min.y + r.max.y) / 2.0),
+                            &c,
+                        )
+                };
+                if hit {
                     add(Sel::Part(refdes.clone()));
                 }
             }
@@ -2519,5 +2545,17 @@ mod box_tests {
             Point::new(11.0, 20.0),
             &r
         ));
+    }
+
+    #[test]
+    fn a_point_in_a_ring() {
+        let sq = [
+            Point::new(0.0, 0.0),
+            Point::new(4.0, 0.0),
+            Point::new(4.0, 4.0),
+            Point::new(0.0, 4.0),
+        ];
+        assert!(point_in_ring(Point::new(2.0, 2.0), &sq));
+        assert!(!point_in_ring(Point::new(5.0, 2.0), &sq));
     }
 }

@@ -2474,11 +2474,14 @@ impl eframe::App for Shell {
                         .inner_margin(egui::Margin::same(12)),
                 )
                 .show(ui, |ui| self.boards[f].layer_panel(ui));
-            let inspector = egui::Panel::right("inspector");
+            // Two panel ids, so that the narrow width does not replace the width
+            // that the user set in a wide window.
             let inspector = if narrow {
-                inspector.exact_size(right_w).resizable(false)
+                egui::Panel::right("inspector-narrow")
+                    .exact_size(right_w)
+                    .resizable(false)
             } else {
-                inspector
+                egui::Panel::right("inspector")
                     .default_size(right_w)
                     .size_range(260.0..=520.0)
                     .resizable(true)

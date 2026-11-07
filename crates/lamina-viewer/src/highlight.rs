@@ -98,7 +98,10 @@ impl NetHighlight {
         );
         let mut key = vec![o.x, o.y, u.x, u.y, bright as f32];
         for (l, _) in self.pours.iter().chain(&self.layers) {
-            key.push(color(*l).map_or(-1.0, |c| u32::from_ne_bytes(c.to_array()) as f32));
+            match color(*l) {
+                Some(c) => key.extend(c.to_array().map(f32::from)),
+                None => key.push(-1.0),
+            }
         }
         let mut cache = self.cache.borrow_mut();
         if cache.as_ref().is_none_or(|(k, _)| *k != key) {
