@@ -138,6 +138,8 @@ pub(crate) struct App {
     /// The segment that a click adds for the route to the pointer, made when
     /// the pointer stops for a moment: (key, points or why there is none).
     seg_preview: Option<(String, Result<Vec<Point>, String>)>,
+    /// How long the last segment took to make, to choose live or after a stop.
+    seg_cost: Duration,
     /// The worker thread that makes a push preview.
     push_job: Option<std::sync::mpsc::Receiver<tools::PushPreview>>,
     grid_i: usize,
@@ -235,6 +237,7 @@ impl App {
             push_preview: None,
             push_wait: None,
             seg_preview: None,
+            seg_cost: Duration::ZERO,
             push_job: None,
             grid_i: 2,
             menu: None,

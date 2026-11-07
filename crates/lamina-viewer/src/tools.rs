@@ -998,9 +998,17 @@ impl App {
         // 1. The segment that a click adds (the walkaround path, if it goes
         // around), once the pointer stops for a moment.
         if self.seg_preview.as_ref().is_none_or(|(k, _)| *k != key) {
-            let wait = std::time::Duration::from_millis(40);
+            // Live, as in other editors: a new segment for each new pointer
+            // position. If one segment takes long (a large board), wait until
+            // the pointer stops for a moment, so that the window stays smooth.
+            let wait = if self.seg_cost > std::time::Duration::from_millis(25) {
+                std::time::Duration::from_millis(40)
+            } else {
+                std::time::Duration::ZERO
+            };
             let waited = match &self.push_wait {
                 Some((k, t)) if *k == key => t.elapsed(),
+                _ if wait.is_zero() => std::time::Duration::ZERO,
                 _ => {
                     self.push_wait = Some((key, Instant::now()));
                     ctx.request_repaint_after(wait + std::time::Duration::from_millis(5));
@@ -1011,7 +1019,9 @@ impl App {
                 ctx.request_repaint_after(wait - waited + std::time::Duration::from_millis(5));
                 return;
             }
+            let t0 = Instant::now();
             let seg = self.next_segment(target).map_err(str::to_string);
+            self.seg_cost = t0.elapsed();
             self.seg_preview = Some((key.clone(), seg));
             self.dirty = true;
         }
@@ -1514,7 +1524,7 @@ impl App {
                         "Walkaround routing: a segment goes around the copper of other nets"
                     }
                     RouteMode::Push => {
-                        "Push routing: the tracks of other nets in the way move aside. Stop the pointer to see where they go"
+                        "Push routing: the tracks of other nets in the way move aside, and the view shows where they go"
                     }
                 },
                 true,
@@ -2072,7 +2082,7 @@ impl App {
                                     format!("{} tracks move", pv.removed.len())
                                 }
                             ),
-                            None => " · push: stop the pointer to see it".to_string(),
+                            None => " · push: …".to_string(),
                         }
                     }
                     (true, RouteMode::Direct) => " · too close".to_string(),
