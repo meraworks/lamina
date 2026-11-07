@@ -1112,17 +1112,35 @@ pub fn walkaround(d: &ProjectData, w: &Walk) -> Option<Vec<Point>> {
         rules.clearance_for(class.as_deref())
     };
     let own_cl = cl_of(Some(&w.net));
+    // The copper of other nets on the layer, near the two points, with the
+    // clearance to each: the exits check only this list.
+    let near_box = Rect {
+        min: Point::new(w.from.x.min(w.to.x) - 4.0, w.from.y.min(w.to.y) - 4.0),
+        max: Point::new(w.from.x.max(w.to.x) + 4.0, w.from.y.max(w.to.y) + 4.0),
+    };
+    let others: Vec<(&Prim, f64)> = ctx
+        .geo
+        .copper
+        .iter()
+        .filter(|it| it.layer as usize == l && it.net.as_deref() != Some(w.net.as_str()))
+        .filter(|it| {
+            let b = it.prim.bbox();
+            b.max.x >= near_box.min.x
+                && b.min.x <= near_box.max.x
+                && b.max.y >= near_box.min.y
+                && b.min.y <= near_box.max.y
+        })
+        .map(|it| (&it.prim, own_cl.max(cl_of(it.net.as_deref()))))
+        .collect();
     let exact_clear = |p: Point, q: Point| {
         let cap = Prim::Capsule {
             a: p,
             b: q,
             r: w.width / 2.0,
         };
-        ctx.geo.copper.iter().all(|it| {
-            it.layer as usize != l
-                || it.net.as_deref() == Some(w.net.as_str())
-                || cap.distance(&it.prim) >= own_cl.max(cl_of(it.net.as_deref())) - 1e-6
-        })
+        others
+            .iter()
+            .all(|(prim, c)| cap.distance(prim) >= c - 1e-6)
     };
     let escape = |p: Point, c0: usize| -> Vec<usize> {
         let r = c0 % g.plane();
@@ -1135,7 +1153,8 @@ pub fn walkaround(d: &ProjectData, w: &Walk) -> Option<Vec<Point>> {
                     break;
                 }
                 let c = g.idx(l, x as usize, y as usize);
-                if !exact_clear(p, g.center(x as usize, y as usize)) {
+                // The board edge and keep-outs stop an exit.
+                if st.owner[c] == HARD || !exact_clear(p, g.center(x as usize, y as usize)) {
                     break;
                 }
                 if open(c) {
@@ -1259,13 +1278,19 @@ pub fn walkaround(d: &ProjectData, w: &Walk) -> Option<Vec<Point>> {
             json::round6(a.y + dy.signum() * m),
         ))
     };
+    // An exit from a pad stays straight: it is the segment that the exact
+    // check saw.
     if pts.len() >= 2 {
-        if let Some(k) = knee(pts[0], pts[1]) {
-            pts.insert(1, k);
+        if !start_esc {
+            if let Some(k) = knee(pts[0], pts[1]) {
+                pts.insert(1, k);
+            }
         }
         let n = pts.len();
-        if let Some(k) = knee(w.to, pts[n - 1]) {
-            pts.push(k);
+        if !end_esc {
+            if let Some(k) = knee(w.to, pts[n - 1]) {
+                pts.push(k);
+            }
         }
     } else if let Some(k) = knee(w.from, w.to) {
         pts.push(k);

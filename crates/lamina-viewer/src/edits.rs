@@ -451,7 +451,7 @@ pub fn drag_parts_and_push(
 }
 
 /// The id prefix of teardrop tracks, so that they can be found and removed.
-pub const TEARDROP: &str = "td";
+pub const TEARDROP: &str = "tdrop";
 
 /// Teardrops in the line style of other editors: where a track meets a pad
 /// or a via that is wider than the track, two short tracks go from the edge
@@ -481,7 +481,7 @@ pub fn add_teardrops(d: &mut ProjectData) -> EditResult {
         for path in [fwd, back] {
             let p = path[0];
             // The pad or via of the net under the end of the track.
-            let Some(half) = geo
+            let Some((pad, half)) = geo
                 .copper
                 .iter()
                 .filter(|it| {
@@ -492,9 +492,9 @@ pub fn add_teardrops(d: &mut ProjectData) -> EditResult {
                 })
                 .map(|it| {
                     let b = it.prim.bbox();
-                    b.width().min(b.height()) / 2.0
+                    (&it.prim, b.width().min(b.height()) / 2.0)
                 })
-                .reduce(f64::max)
+                .max_by(|a, b| a.1.total_cmp(&b.1))
             else {
                 continue;
             };
@@ -518,7 +518,7 @@ pub fn add_teardrops(d: &mut ProjectData) -> EditResult {
             }
             let u = Point::new(dir.x / dl, dir.y / dl);
             let n = Point::new(-u.y, u.x);
-            let side = half - t.width / 2.0;
+            let side = (half - t.width / 2.0).max(0.0);
             let pair: Vec<Track> = [1.0, -1.0]
                 .into_iter()
                 .map(|s| {
@@ -532,20 +532,46 @@ pub fn add_teardrops(d: &mut ProjectData) -> EditResult {
                     }
                 })
                 .collect();
-            // The teardrop must keep the clearance to the copper of other nets.
-            let clear = pair.iter().all(|td| {
+            // Both legs must start on the pad copper (a track can end off the
+            // centre of a pad, or on a turned pad).
+            if !pair.iter().all(|td| pad.contains(td.points[0])) {
+                continue;
+            }
+            // The teardrop must keep the clearance to the copper of other nets,
+            // also to the teardrops of other nets that this pass adds.
+            let near_new = pair.iter().any(|td| {
                 let cap = Prim::Capsule {
                     a: td.points[0],
                     b: td.points[1],
                     r: td.width / 2.0,
                 };
-                geo.copper.iter().all(|it| {
-                    it.layer != li || it.net.as_deref() == Some(t.net.as_str()) || {
-                        let clr = clearance(&t.net).max(it.net.as_deref().map_or(0.0, clearance));
-                        cap.distance(&it.prim) >= clr - 1e-6
+                added.iter().any(|o| {
+                    o.net != td.net && o.layer == td.layer && {
+                        let oc = Prim::Capsule {
+                            a: o.points[0],
+                            b: o.points[1],
+                            r: o.width / 2.0,
+                        };
+                        let clr = clearance(&td.net).max(clearance(&o.net));
+                        cap.distance(&oc) < clr - 1e-6
                     }
                 })
             });
+            let clear = !near_new
+                && pair.iter().all(|td| {
+                    let cap = Prim::Capsule {
+                        a: td.points[0],
+                        b: td.points[1],
+                        r: td.width / 2.0,
+                    };
+                    geo.copper.iter().all(|it| {
+                        it.layer != li || it.net.as_deref() == Some(t.net.as_str()) || {
+                            let clr =
+                                clearance(&t.net).max(it.net.as_deref().map_or(0.0, clearance));
+                            cap.distance(&it.prim) >= clr - 1e-6
+                        }
+                    })
+                });
             if clear {
                 joints += 1;
                 added.extend(pair);
@@ -643,17 +669,49 @@ pub fn tune_length(d: &mut ProjectData, id: &str, seg: usize, target: f64) -> Ed
                 r: t.width / 2.0,
             })
             .collect();
-        let clear = geo.copper.iter().all(|it| {
-            Some(it.layer) != li || it.net.as_deref() == Some(t.net.as_str()) || {
-                let theirs = it
-                    .net
-                    .as_deref()
-                    .and_then(|n| d.nets.nets.get(n))
-                    .and_then(|n| n.class.clone());
-                let c = clr.max(d.board.rules.clearance_for(theirs.as_deref()));
-                caps.iter().all(|cap| cap.distance(&it.prim) >= c - 1e-6)
-            }
+        // The meanders stay on the board, with the copper-to-edge rule.
+        let edge = d.board.rules.copper_to_edge + t.width / 2.0;
+        let on_board = geo.outline.as_ref().is_none_or(|ring| {
+            pts.iter().all(|p| inside_ring(*p, ring))
+                && caps.iter().all(|cap| {
+                    (0..ring.len()).all(|i| {
+                        let e = Prim::Capsule {
+                            a: ring[i],
+                            b: ring[(i + 1) % ring.len()],
+                            r: 0.0,
+                        };
+                        cap.distance(&e) >= edge - t.width / 2.0 - 1e-6
+                    })
+                })
         });
+        // The meanders must not touch other copper of the net either (other
+        // segments, other tracks, pads), except where the segment joins it.
+        // Copper of the net that was already this close to the segment is
+        // not a problem; only copper that the meanders reach is.
+        let orig = Prim::Capsule {
+            a,
+            b,
+            r: t.width / 2.0,
+        };
+        let own_clear = geo.copper.iter().all(|it| {
+            Some(it.layer) != li
+                || it.net.as_deref() != Some(t.net.as_str())
+                || orig.distance(&it.prim) < clr - 1e-6
+                || caps.iter().all(|cap| cap.distance(&it.prim) >= clr - 1e-6)
+        });
+        let clear = on_board
+            && own_clear
+            && geo.copper.iter().all(|it| {
+                Some(it.layer) != li || it.net.as_deref() == Some(t.net.as_str()) || {
+                    let theirs = it
+                        .net
+                        .as_deref()
+                        .and_then(|n| d.nets.nets.get(n))
+                        .and_then(|n| n.class.clone());
+                    let c = clr.max(d.board.rules.clearance_for(theirs.as_deref()));
+                    caps.iter().all(|cap| cap.distance(&it.prim) >= c - 1e-6)
+                }
+            });
         if clear {
             let tr = d.routing.tracks.iter_mut().find(|x| x.id == id).unwrap();
             let mut all = tr.points[..seg].to_vec();
@@ -671,19 +729,20 @@ pub fn tune_length(d: &mut ProjectData, id: &str, seg: usize, target: f64) -> Ed
 }
 
 /// The other net of a differential pair, from the usual name endings:
-/// `_P` / `_N`, `+` / `-`, `_DP` / `_DM` and `_DP` / `_DN`.
+/// `_P` / `_N`, `_DP` / `_DM`, `_DP` / `_DN` and `D+` / `D-`.
 pub fn pair_net(d: &ProjectData, net: &str) -> Option<String> {
+    // Not `+` / `-` alone: supply rails such as V+ and V- are not a pair.
     for (a, b) in [
         ("_P", "_N"),
         ("_DP", "_DM"),
         ("_DP", "_DN"),
-        ("+", "-"),
+        ("D+", "D-"),
         ("_p", "_n"),
     ] {
         for (from, to) in [(a, b), (b, a)] {
             if let Some(stem) = net.strip_suffix(from) {
                 let other = format!("{stem}{to}");
-                if !stem.is_empty() && d.nets.nets.contains_key(&other) {
+                if d.nets.nets.contains_key(&other) {
                     return Some(other);
                 }
             }
@@ -740,6 +799,12 @@ pub const PAIR_MARGIN: f64 = 0.1;
 /// the partner track keeps the clearance to other copper.
 pub fn add_pair_route(d: &mut ProjectData, r: &Route, partner: &str, gap: f64) -> EditResult {
     use lamina_geom::{Owner, Prim};
+    if r.runs.len() > 1 || !r.vias.is_empty() {
+        return Err(format!(
+            "Pair routing does not change layers yet. Route {} and {partner} on one layer, or turn pair routing off (Shift+D) for a route with a via.",
+            r.net
+        ));
+    }
     // The search of a lead keeps a small margin past the clearance; the
     // coupled part keeps the same margin, so that a lead can reach it.
     let pitch = r.width + gap + PAIR_MARGIN;
@@ -752,11 +817,27 @@ pub fn add_pair_route(d: &mut ProjectData, r: &Route, partner: &str, gap: f64) -
     let geo = lamina_geom::build(&with_route);
     // The pad of the partner near a point: its own start or end, as the two
     // tracks leave or meet their pads apart, as in other editors.
+    // Only a pad of the same part as the pad of the first net, on the layer
+    // of the route: for example the D- pin of the same connector.
+    let route_li = r.runs[0].0.copper().map(|c| c.index(layers));
+    let part_at = |p: Point| {
+        geo.copper.iter().find_map(|it| match &it.owner {
+            Owner::Pad { part, .. }
+                if it.net.as_deref() == Some(r.net.as_str()) && it.prim.contains(p) =>
+            {
+                Some(part.clone())
+            }
+            _ => None,
+        })
+    };
     let pad_near = |p: Point| -> Option<Point> {
+        let part = part_at(p)?;
         geo.copper
             .iter()
             .filter(|it| {
-                it.net.as_deref() == Some(partner) && matches!(it.owner, Owner::Pad { .. })
+                it.net.as_deref() == Some(partner)
+                    && Some(it.layer) == route_li
+                    && matches!(&it.owner, Owner::Pad { part: q, .. } if *q == part)
             })
             .map(|it| {
                 let b = it.prim.bbox();
@@ -813,10 +894,12 @@ pub fn add_pair_route(d: &mut ProjectData, r: &Route, partner: &str, gap: f64) -
                 let end = *r.runs[ri].1.last().unwrap();
                 if let Some(pad) = pad_near(end) {
                     let k = o.len().saturating_sub(2);
-                    if let Some(tail) = walk(*layer, o[k], pad) {
-                        o.truncate(k);
-                        o.extend(tail);
-                    }
+                    // No path to the partner pad: try the other side.
+                    let Some(tail) = walk(*layer, o[k], pad) else {
+                        continue 'side;
+                    };
+                    o.truncate(k);
+                    o.extend(tail);
                 }
             }
             if !clear(*layer, &o) {
@@ -824,8 +907,6 @@ pub fn add_pair_route(d: &mut ProjectData, r: &Route, partner: &str, gap: f64) -
             }
             *pts = o;
         }
-        // A via of the pair goes beside the via of the first net.
-        other.vias = other.runs.iter().skip(1).map(|x| x.1[0]).collect();
         best = Some(other);
         break;
     }
@@ -835,6 +916,19 @@ pub fn add_pair_route(d: &mut ProjectData, r: &Route, partner: &str, gap: f64) -
     *d = with_route;
     let b = add_route(d, &other)?;
     Ok(format!("{a}. Pair: {b}"))
+}
+
+/// True if the point is inside the closed ring (even-odd rule).
+fn inside_ring(p: Point, ring: &[Point]) -> bool {
+    let mut inside = false;
+    let n = ring.len();
+    for i in 0..n {
+        let (a, b) = (ring[i], ring[(i + n - 1) % n]);
+        if (a.y > p.y) != (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x {
+            inside = !inside;
+        }
+    }
+    inside
 }
 
 /// The point at the distance `dist` along a polyline from its first point.
@@ -1817,7 +1911,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         remove_teardrops(&mut d).unwrap();
         assert_eq!(d.routing.tracks.len(), tracks);
-        assert!(!is_teardrop("t1") && is_teardrop("td3") && !is_teardrop("tdx"));
+        assert!(!is_teardrop("t1") && is_teardrop("tdrop3") && !is_teardrop("td3"));
     }
 
     #[test]
@@ -1910,5 +2004,41 @@ mod tests {
             .filter(|v| v.severity == Severity::Error)
             .collect();
         assert!(errors.is_empty(), "{errors:#?}");
+    }
+
+    #[test]
+    fn pair_rules_from_the_review() {
+        let mut d = ProjectData::new("t");
+        d.board.outline = Some(Contour::rect(0.0, 0.0, 40.0, 30.0));
+        for n in ["V+", "V-", "D+", "D-"] {
+            d.nets.nets.insert(
+                n.into(),
+                Net {
+                    pads: Vec::new(),
+                    class: None,
+                },
+            );
+        }
+        // Supply rails are not a pair; D+ and D- are.
+        assert_eq!(pair_net(&d, "V+"), None);
+        assert_eq!(pair_net(&d, "D+").as_deref(), Some("D-"));
+        // A pair route with a via is refused, so that two vias do not short.
+        let r = Route {
+            net: "D+".into(),
+            width: 0.2,
+            runs: vec![
+                (
+                    Layer::Copper(Copper::Top),
+                    vec![Point::new(5.0, 10.0), Point::new(10.0, 10.0)],
+                ),
+                (
+                    Layer::Copper(Copper::Bottom),
+                    vec![Point::new(10.0, 10.0), Point::new(15.0, 10.0)],
+                ),
+            ],
+            vias: vec![Point::new(10.0, 10.0)],
+        };
+        assert!(add_pair_route(&mut d, &r, "D-", 0.2).is_err());
+        assert!(d.routing.tracks.is_empty());
     }
 }

@@ -1337,12 +1337,17 @@ impl App {
         edits::pair_net(&self.loaded.as_ref()?.data, net)
     }
 
-    /// The gap between the two tracks of a pair: the clearance of the rules.
+    /// The gap between the two tracks of a pair: the clearance of the class
+    /// of the route net.
     fn pair_gap(&self) -> f64 {
-        self.loaded
+        let Some(l) = &self.loaded else { return 0.2 };
+        let d = &l.data;
+        let class = self
+            .route
             .as_ref()
-            .map(|l| l.data.board.rules.clearance)
-            .unwrap_or(0.2)
+            .and_then(|r| d.nets.nets.get(&r.net))
+            .and_then(|n| n.class.clone());
+        d.board.rules.clearance_for(class.as_deref())
     }
 
     fn poly_input(&mut self, resp: &egui::Response, p: Point, ps: Point, origin: Option<Point>) {
