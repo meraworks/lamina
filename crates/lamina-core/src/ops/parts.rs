@@ -7,6 +7,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::project::{OpResult, Project, Touched};
+use crate::text::natural;
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct FootprintFromPackage {
@@ -58,6 +59,25 @@ pub struct FootprintFromPads {
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct FootprintId {
     pub id: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+pub struct Pins {
+    /// The part to list, for example `U1`. Without it, all parts.
+    #[serde(default)]
+    pub refdes: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+pub struct PinRow {
+    pub refdes: String,
+    pub pad: String,
+    /// The pin name from the datasheet, when the footprint has it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    /// The net, or none when the pad is unconnected.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub net: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
@@ -181,6 +201,48 @@ impl Project {
             .map_err(Error::Invalid)?;
         let summary = format!("footprint `{}`: {} pads", fp.id, fp.pads.len());
         self.store_footprint(fp, p.overwrite, summary)
+    }
+
+    /// Every pad of a part (or of all parts) with its pin name and its net.
+    /// Use it to check the wiring against the datasheet before you route.
+    pub fn pins(&self, p: Pins) -> Result<Vec<PinRow>> {
+        let d = &self.data;
+        let mut net_of: std::collections::BTreeMap<&PadRef, &str> = Default::default();
+        for (name, n) in &d.nets.nets {
+            for pr in &n.pads {
+                net_of.insert(pr, name);
+            }
+        }
+        let mut parts: Vec<(&String, &Part)> = match &p.refdes {
+            Some(r) => {
+                let part = d
+                    .parts
+                    .parts
+                    .get(r)
+                    .ok_or_else(|| Error::invalid(format!("The part {r} does not exist.")))?;
+                vec![(r, part)]
+            }
+            None => d.parts.parts.iter().collect(),
+        };
+        parts.sort_by(|a, b| natural(a.0, b.0));
+        let mut out = Vec::new();
+        for (refdes, part) in parts {
+            let Some(fp) = d.footprints.get(&part.footprint) else {
+                continue;
+            };
+            let mut pads: Vec<&Pad> = fp.pads.iter().filter(|x| !x.number.is_empty()).collect();
+            pads.sort_by(|a, b| natural(&a.number, &b.number));
+            for pad in pads {
+                let pr = PadRef::new(refdes.clone(), pad.number.clone());
+                out.push(PinRow {
+                    refdes: refdes.clone(),
+                    pad: pad.number.clone(),
+                    name: pad.name.clone(),
+                    net: net_of.get(&pr).map(|s| s.to_string()),
+                });
+            }
+        }
+        Ok(out)
     }
 
     pub fn get_footprint(&self, id: &str) -> Result<Footprint> {

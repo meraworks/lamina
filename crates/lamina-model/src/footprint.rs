@@ -137,6 +137,64 @@ pub struct Pad {
     pub mask: bool,
 }
 
+/// What a pin name says about the pin, from the name alone.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PinRole {
+    Ground,
+    Power,
+    /// Not connected inside the part.
+    NoConnect,
+    Other,
+}
+
+/// The role of a pin or net name. `GND`, `VSS`, `AGND` and `GNDIO` are
+/// ground. `VDD`, `VCC`, `VIN`, `VBAT`, `3V3` and `5V` are power. `NC`
+/// is a pin with no connection.
+pub fn pin_role(name: &str) -> PinRole {
+    let n = name.trim().to_ascii_uppercase();
+    let n = n.trim_start_matches('+');
+    if n.is_empty() {
+        return PinRole::Other;
+    }
+    if matches!(
+        n,
+        "NC" | "N/C" | "N.C." | "N.C" | "DNC" | "NOCONNECT" | "NO_CONNECT"
+    ) {
+        return PinRole::NoConnect;
+    }
+    if matches!(n, "V+" | "V-") {
+        return PinRole::Power;
+    }
+    let head = n
+        .split(|c: char| !c.is_ascii_alphanumeric())
+        .next()
+        .unwrap_or("");
+    if head.starts_with("GND")
+        || head.starts_with("VSS")
+        || head.ends_with("GND")
+        || head == "GROUND"
+        || head == "0V"
+    {
+        return PinRole::Ground;
+    }
+    if head.starts_with("VDD")
+        || head.starts_with("VCC")
+        || head.starts_with("VBAT")
+        || head.starts_with("VIN")
+        || head == "VBUS"
+        || head == "V+"
+        || head.ends_with("VDD")
+        || head.ends_with("VCC")
+        || (head.len() <= 5
+            && head.starts_with(|c: char| c.is_ascii_digit())
+            && head.contains('V')
+            && head.chars().all(|c| c.is_ascii_digit() || c == 'V'))
+    {
+        return PinRole::Power;
+    }
+    PinRole::Other
+}
+
 impl Pad {
     pub fn smd(number: impl Into<String>, at: Point, shape: PadShape) -> Pad {
         Pad {
@@ -472,4 +530,29 @@ fn is_one3(v: &[f64; 3]) -> bool {
 }
 fn default_text_size() -> f64 {
     1.0
+}
+
+#[cfg(test)]
+mod pin_role_tests {
+    use super::{PinRole, pin_role};
+
+    #[test]
+    fn names_have_roles() {
+        for n in [
+            "GND", "gnd", "AGND", "GNDIO", "VSS", "VSS_PA", "DGND", "+0V",
+        ] {
+            assert_eq!(pin_role(n), PinRole::Ground, "{n}");
+        }
+        for n in [
+            "VDD", "VDDIO", "VCC", "+3V3", "3V3", "5V", "VIN", "VBAT", "VBUS", "AVDD", "V+",
+        ] {
+            assert_eq!(pin_role(n), PinRole::Power, "{n}");
+        }
+        for n in ["NC", "N/C", "n.c.", "DNC"] {
+            assert_eq!(pin_role(n), PinRole::NoConnect, "{n}");
+        }
+        for n in ["SCL", "P0.01", "ANT", "A", "VOUT_EN", ""] {
+            assert_eq!(pin_role(n), PinRole::Other, "{n}");
+        }
+    }
 }

@@ -470,16 +470,16 @@ impl Project {
         }
 
         let fp = &d.footprints[&fp_id];
-        let pads: Vec<&str> = {
-            let mut v: Vec<&str> = fp
-                .pads
-                .iter()
-                .map(|x| x.number.as_str())
-                .filter(|n| !n.is_empty())
-                .collect();
-            v.sort_by(|a, b| natural(a, b));
-            v.dedup();
-            v
+        let pads: Vec<String> = {
+            let mut v: Vec<&Pad> = fp.pads.iter().filter(|x| !x.number.is_empty()).collect();
+            v.sort_by(|a, b| natural(&a.number, &b.number));
+            v.dedup_by(|a, b| a.number == b.number);
+            v.iter()
+                .map(|x| match &x.name {
+                    Some(n) => format!("{}={n}", x.number),
+                    None => x.number.clone(),
+                })
+                .collect()
         };
         let info = &rec.info;
         let class = match info.basic {

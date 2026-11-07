@@ -105,6 +105,8 @@ pub fn validate(d: &ProjectData) -> Vec<Violation> {
         }
     }
 
+    pin_roles(d, &mut v);
+
     let net_exists = |n: &str| d.nets.nets.contains_key(n);
     for t in &d.routing.tracks {
         if !t.layer.is_copper() || !t.layer.exists_in(layers) {
@@ -182,4 +184,44 @@ pub fn validate(d: &ProjectData) -> Vec<Violation> {
         }
     }
     v
+}
+
+/// Pins with a name that does not agree with the net: a ground pin on a
+/// power net, a power pin on a ground net, or a no-connect pin on a net
+/// with other pads. The names come from the datasheet through the
+/// footprint. The check finds the mistakes that look fine on the copper.
+fn pin_roles(d: &ProjectData, v: &mut Vec<Violation>) {
+    for (net, n) in &d.nets.nets {
+        let net_role = pin_role(net);
+        let others = n.pads.len();
+        for p in &n.pads {
+            let Some(pad) = d
+                .parts
+                .parts
+                .get(&p.part)
+                .and_then(|part| d.footprints.get(&part.footprint))
+                .and_then(|fp| fp.pad(&p.pad))
+            else {
+                continue;
+            };
+            let Some(name) = pad.name.as_deref() else {
+                continue;
+            };
+            let msg = match (pin_role(name), net_role) {
+                (PinRole::Ground, PinRole::Power) => {
+                    format!("{p} is the {name} pin, but it is on the net {net}.")
+                }
+                (PinRole::Power, PinRole::Ground) => {
+                    format!("{p} is the {name} pin, but it is on the net {net}.")
+                }
+                (PinRole::NoConnect, _) if others > 1 => {
+                    format!(
+                        "{p} is a no-connect pin ({name}), but it is on the net {net} with other pads."
+                    )
+                }
+                _ => continue,
+            };
+            v.push(Violation::warning("pin_role", msg).items([p.to_string(), net.clone()]));
+        }
+    }
 }

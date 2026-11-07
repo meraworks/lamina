@@ -426,6 +426,14 @@ impl Lamina {
         self.with(|proj| proj.footprint_from_pads(p))
     }
 
+    /// The pads of a part, or of all parts, each with its pin name from the
+    /// datasheet and its net. Read it after `set_nets` to check that each
+    /// pin is on the right net, before you route.
+    #[tool(annotations(title = "Pins", read_only_hint = true))]
+    async fn pins(&self, Parameters(p): Parameters<Pins>) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.pins(p))
+    }
+
     /// The full JSON of a footprint: pads, graphics, model, provenance.
     #[tool(annotations(title = "Get footprint", read_only_hint = true))]
     async fn get_footprint(

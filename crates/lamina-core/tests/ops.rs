@@ -1216,3 +1216,123 @@ fn a_board_without_a_design_source_port() {
     p.reload().unwrap();
     assert!(!p.sync().unwrap());
 }
+
+#[test]
+fn pin_names_check_the_nets_and_the_pins_tool_lists_them() {
+    let (_t, mut p) = new_project();
+    add_resistor(&mut p, "R1");
+    // A part whose pads carry datasheet names.
+    let mut fp = Footprint::new("REG", Provenance::Manual { note: "t".into() });
+    for (n, name, x) in [("1", "VIN", -1.0), ("2", "GND", 0.0), ("3", "NC", 1.0)] {
+        let mut pad = Pad::smd(
+            n,
+            Point::new(x, 0.0),
+            PadShape::Rect {
+                width: 0.5,
+                height: 0.5,
+            },
+        );
+        pad.name = Some(name.into());
+        fp.pads.push(pad);
+    }
+    let mut d = p.data.clone();
+    d.footprints.insert(fp.id.clone(), fp);
+    d.parts.parts.insert("U9".into(), Part::new("REG"));
+    p.commit(
+        d,
+        Touched::file(FileKind::Parts).footprint("REG"),
+        false,
+        "add",
+    )
+    .unwrap();
+    // The power pin on ground, the ground pin on power, the no-connect pin on a net.
+    p.set_nets(SetNets {
+        nets: [
+            (
+                "GND".to_string(),
+                Net {
+                    pads: vec!["U9.1".parse().unwrap(), "R1.1".parse().unwrap()],
+                    class: None,
+                },
+            ),
+            (
+                "VDD".to_string(),
+                Net {
+                    pads: vec!["U9.2".parse().unwrap(), "R1.2".parse().unwrap()],
+                    class: None,
+                },
+            ),
+            (
+                "X".to_string(),
+                Net {
+                    pads: vec!["U9.3".parse().unwrap(), "R1.2".parse().unwrap()],
+                    class: None,
+                },
+            ),
+        ]
+        .into(),
+        replace: true,
+        strict: false,
+    })
+    .unwrap();
+    let v: Vec<_> = p
+        .check()
+        .into_iter()
+        .filter(|x| x.rule == "pin_role")
+        .collect();
+    assert_eq!(v.len(), 3, "{v:?}");
+    assert!(v.iter().any(|x| {
+        x.message
+            .contains("U9.1 is the VIN pin, but it is on the net GND")
+    }));
+    assert!(v.iter().any(|x| {
+        x.message
+            .contains("U9.2 is the GND pin, but it is on the net VDD")
+    }));
+    assert!(
+        v.iter()
+            .any(|x| x.message.contains("U9.3 is a no-connect pin"))
+    );
+
+    // The right wiring gives no warning.
+    p.set_nets(SetNets {
+        nets: [
+            (
+                "GND".to_string(),
+                Net {
+                    pads: vec!["U9.2".parse().unwrap(), "R1.1".parse().unwrap()],
+                    class: None,
+                },
+            ),
+            (
+                "VDD".to_string(),
+                Net {
+                    pads: vec!["U9.1".parse().unwrap(), "R1.2".parse().unwrap()],
+                    class: None,
+                },
+            ),
+        ]
+        .into(),
+        replace: true,
+        strict: false,
+    })
+    .unwrap();
+    assert!(p.check().iter().all(|x| x.rule != "pin_role"));
+
+    let rows = p
+        .pins(Pins {
+            refdes: Some("U9".into()),
+        })
+        .unwrap();
+    assert_eq!(rows.len(), 3);
+    assert_eq!(rows[0].name.as_deref(), Some("VIN"));
+    assert_eq!(rows[0].net.as_deref(), Some("VDD"));
+    assert_eq!(rows[2].net, None);
+    assert!(
+        p.pins(Pins {
+            refdes: Some("Q7".into())
+        })
+        .is_err()
+    );
+    assert_eq!(p.pins(Pins { refdes: None }).unwrap().len(), 5);
+}
