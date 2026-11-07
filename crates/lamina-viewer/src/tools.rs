@@ -42,7 +42,7 @@ impl Tool {
                 "Click to select · Shift+click adds · drag to move · drag empty space to box-select · right-click for the menu · right-drag to pan"
             }
             Tool::Route => {
-                "Click a pad to start · click to add corners · V via and switch layer · / bend · Backspace undo corner · Enter finish · Esc cancel"
+                "Click a pad to start · click to add corners · V via and switch layer · / bend · W / Shift+W width · Backspace undo corner · Enter finish · Esc cancel"
             }
             Tool::Via => "Click the copper of a net to put a via there",
             Tool::Zone => {
@@ -125,6 +125,25 @@ pub struct Magnet {
     pub at: Point,
     pub net: String,
     pub layer: u8,
+}
+
+/// The usual track widths in mm.
+const WIDTHS: [f64; 13] = [
+    0.1, 0.127, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.5, 2.0,
+];
+
+/// The next track width up (or down) from `w` in the list of usual widths.
+fn next_width(w: f64, up: bool) -> f64 {
+    if up {
+        WIDTHS.iter().copied().find(|x| *x > w + 1e-6).unwrap_or(w)
+    } else {
+        WIDTHS
+            .iter()
+            .rev()
+            .copied()
+            .find(|x| *x < w - 1e-6)
+            .unwrap_or(w)
+    }
 }
 
 /// True if the point is inside the closed ring (even-odd rule).
@@ -1111,6 +1130,14 @@ impl App {
         if k(Key::Slash) {
             self.diagonal_first = !self.diagonal_first;
         }
+        // W and Shift+W: the next or the last track width in the list, as in
+        // other editors. The width is for all of the route in progress.
+        if k(Key::W) {
+            if let Some(r) = self.route.as_mut() {
+                r.width = next_width(r.width, !shift);
+                self.dirty = true;
+            }
+        }
         let n = self.copper_count();
         for (key, to) in [(Key::PageUp, 0u8), (Key::PageDown, n - 1)] {
             if k(key) {
@@ -1611,18 +1638,37 @@ impl App {
                 painter.circle_filled(s, ((d.via_diameter / 2.0) * xf.ppm_pt) as f32, TEXT_2);
                 painter.circle_filled(s, ((d.via_drill / 2.0) * xf.ppm_pt) as f32, CANVAS_EDGE);
             }
+            // The length of the route so far, with the part to the pointer, as in
+            // other editors.
+            let seg_len = |w: &[Point]| w[0].dist(w[1]);
+            let length: f64 = r
+                .runs
+                .iter()
+                .flat_map(|(_, run)| run.windows(2).map(seg_len))
+                .chain(pts.windows(2).map(seg_len))
+                .sum();
             let label = format!(
-                "{} · {} · {:.2} mm{}",
+                "{} · {} · {:.2} mm wide · {:.2} mm long{}",
                 r.net,
                 SceneLayer::Copper(li).name(self.copper_count()),
                 r.width,
+                length,
                 if bad { " · too close" } else { "" }
             );
             // A dark tag, so that the text reads over copper and pad labels.
             let color = if bad { ERROR } else { TEXT };
             let galley = painter.layout_no_wrap(label, mono(11.0), color);
-            let at = xf.to_screen(target) + Vec2::new(16.0, -16.0 - galley.size().y);
-            let r = egui::Rect::from_min_size(at, galley.size()).expand2(Vec2::new(6.0, 3.0));
+            let tip = xf.to_screen(target);
+            let size = galley.size();
+            let mut at = tip + Vec2::new(16.0, -16.0 - size.y);
+            // Keep the tag on the canvas: near an edge, put it on the other side.
+            if at.x + size.x + 8.0 > xf.rect.right() {
+                at.x = tip.x - 16.0 - size.x;
+            }
+            if at.y - 4.0 < xf.rect.top() {
+                at.y = tip.y + 16.0;
+            }
+            let r = egui::Rect::from_min_size(at, size).expand2(Vec2::new(6.0, 3.0));
             painter.rect_filled(r, 4.0, RAISED);
             painter.galley(at, galley, color);
         }
@@ -2545,6 +2591,15 @@ mod box_tests {
             Point::new(11.0, 20.0),
             &r
         ));
+    }
+
+    #[test]
+    fn track_widths_step_up_and_down() {
+        assert_eq!(next_width(0.25, true), 0.3);
+        assert_eq!(next_width(0.25, false), 0.2);
+        assert_eq!(next_width(0.22, true), 0.25);
+        assert_eq!(next_width(2.0, true), 2.0);
+        assert_eq!(next_width(0.1, false), 0.1);
     }
 
     #[test]
