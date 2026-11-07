@@ -301,6 +301,155 @@ pub fn move_segment(d: &mut ProjectData, id: &str, seg: usize, delta: Point) -> 
     Ok(format!("Moved segment {} of {id}", seg + 1))
 }
 
+/// Move (and turn) parts, as in the push mode of other editors: the tracks on
+/// their pads follow, and the tracks of other nets that are now too close
+/// move aside. A track with both ends on moved parts moves with them. A track
+/// with one end on a moved pad is routed again to the new pad, with its own
+/// width and layer. If the tracks cannot move, the edit fails.
+pub fn drag_parts_and_push(
+    d: &mut ProjectData,
+    refs: &[String],
+    delta: Point,
+    turn: f64,
+    about: Point,
+) -> EditResult {
+    use lamina_geom::Prim;
+    let layers = d.board.stackup.copper_layers;
+    let centres = |d: &ProjectData| -> Vec<((String, String), Point)> {
+        let mut out = Vec::new();
+        for r in refs {
+            let (Some(pl), Some(fp)) = (
+                d.placement.placements.get(r),
+                d.parts
+                    .parts
+                    .get(r)
+                    .and_then(|p| d.footprints.get(&p.footprint)),
+            ) else {
+                continue;
+            };
+            for pad in fp.pads.iter().filter(|p| !p.number.is_empty()) {
+                out.push(((r.clone(), pad.number.clone()), pl.transform(pad.at)));
+            }
+        }
+        out
+    };
+    let before = centres(d);
+    let mut msg = move_parts(d, refs, delta.x, delta.y)?;
+    if turn != 0.0 {
+        msg = format!("{msg}. {}", rotate_parts_about(d, refs, turn, about)?);
+    }
+    let after = centres(d);
+    let moved_to = |p: Point| -> Option<Point> {
+        let i = before.iter().position(|(_, c)| c.dist(p) < 1e-3)?;
+        after
+            .iter()
+            .find(|(k, _)| *k == before[i].0)
+            .map(|(_, c)| *c)
+    };
+    // The tracks on the pads of the moved parts follow them.
+    let mut followed: Vec<String> = Vec::new();
+    let tracks = d.routing.tracks.clone();
+    for t in &tracks {
+        let (Some(&a), Some(&b)) = (t.points.first(), t.points.last()) else {
+            continue;
+        };
+        let (na, nb) = (moved_to(a), moved_to(b));
+        if na.is_none() && nb.is_none() {
+            continue;
+        }
+        let idx = d.routing.tracks.iter().position(|x| x.id == t.id).unwrap();
+        if na.is_some() && nb.is_some() {
+            // Both ends move: the track moves as the parts move.
+            let pts: Vec<Point> = t
+                .points
+                .iter()
+                .map(|p| {
+                    let q = p.add(delta);
+                    p6(if turn != 0.0 {
+                        q.sub(about).rotated(turn).add(about)
+                    } else {
+                        q
+                    })
+                })
+                .collect();
+            d.routing.tracks[idx].points = pts;
+        } else {
+            // One end moves: route the track again from its other end.
+            let (fixed, to) = match (na, nb) {
+                (Some(n), None) => (b, n),
+                (None, Some(n)) => (a, n),
+                _ => unreachable!(),
+            };
+            let old = d.routing.tracks.remove(idx);
+            let walk = lamina_route::Walk {
+                net: old.net.clone(),
+                layer: old.layer,
+                width: old.width,
+                from: fixed,
+                to,
+                grid: (old.width / 2.0).clamp(0.05, 0.1),
+            };
+            let mut pts = lamina_route::walkaround(d, &walk).unwrap_or_else(|| vec![fixed, to]);
+            if na.is_some() {
+                pts.reverse();
+            }
+            d.routing.tracks.insert(
+                idx,
+                Track {
+                    points: pts.into_iter().map(p6).collect(),
+                    ..old
+                },
+            );
+        }
+        followed.push(t.id.clone());
+    }
+    // The pads of the moved parts and the tracks that followed push.
+    let net_of = |part: &str, pad: &str| {
+        d.nets
+            .nets
+            .iter()
+            .find(|(_, n)| n.pads.iter().any(|p| p.part == part && p.pad == pad))
+            .map(|(name, _)| name.clone())
+    };
+    let mut ours: Vec<Pusher> = Vec::new();
+    for r in refs {
+        let (Some(pl), Some(fp)) = (
+            d.placement.placements.get(r),
+            d.parts
+                .parts
+                .get(r)
+                .and_then(|p| d.footprints.get(&p.footprint)),
+        ) else {
+            continue;
+        };
+        for (pad, _, prim, ls) in lamina_geom::placed_pads(fp, pl, layers) {
+            let net = net_of(r, &pad.number).unwrap_or_default();
+            for l in ls {
+                let layer = Layer::Copper(Copper::from_index(l, layers));
+                ours.push((Some(layer), vec![prim.clone()], net.clone()));
+            }
+        }
+    }
+    for t in d.routing.tracks.iter().filter(|t| followed.contains(&t.id)) {
+        let caps: Vec<Prim> = t
+            .points
+            .windows(2)
+            .map(|w| Prim::Capsule {
+                a: w[0],
+                b: w[1],
+                r: t.width / 2.0,
+            })
+            .collect();
+        ours.push((Some(t.layer), caps, t.net.clone()));
+    }
+    let pushed = push_from(d, ours, true)?;
+    Ok(if pushed.is_empty() {
+        msg
+    } else {
+        format!("{msg}. {pushed}")
+    })
+}
+
 /// Move a segment, then push the tracks of other nets that are now too close
 /// aside. If they cannot move, the edit fails and nothing changes.
 pub fn move_segment_and_push(
@@ -469,17 +618,12 @@ pub fn push_aside(
             })
             .collect()
     };
-    let rules = d.board.rules.clone();
-    let clearance = |n: &str| {
-        let class = d.nets.nets.get(n).and_then(|x| x.class.clone());
-        rules.clearance_for(class.as_deref())
-    };
-    let mut ours: Vec<(Option<Layer>, Vec<Prim>)> = d
+    let mut ours: Vec<Pusher> = d
         .routing
         .tracks
         .iter()
         .filter(|t| new.contains(&t.id))
-        .map(|t| (Some(t.layer), caps(t)))
+        .map(|t| (Some(t.layer), caps(t), net.to_string()))
         .collect();
     // A via is on all copper layers.
     for v in d.routing.vias.iter().filter(|v| new_vias.contains(&v.id)) {
@@ -489,17 +633,45 @@ pub fn push_aside(
                 c: v.at,
                 r: v.diameter / 2.0,
             }],
+            net.to_string(),
         ));
     }
+    push_from(d, ours, router)
+}
+
+/// Copper that pushes: its layer (`None` for all copper layers), its shapes
+/// and its net.
+type Pusher = (Option<Layer>, Vec<lamina_geom::Prim>, String);
+
+/// Route again the tracks of other nets that are too close to `ours`, so that
+/// they go around it. See `push_aside`.
+fn push_from(d: &mut ProjectData, ours: Vec<Pusher>, router: bool) -> EditResult {
+    use lamina_geom::Prim;
+    let caps = |t: &Track| -> Vec<Prim> {
+        t.points
+            .windows(2)
+            .map(|w| Prim::Capsule {
+                a: w[0],
+                b: w[1],
+                r: t.width / 2.0,
+            })
+            .collect()
+    };
+    let rules = d.board.rules.clone();
+    let clearance = |n: &str| {
+        let class = d.nets.nets.get(n).and_then(|x| x.class.clone());
+        rules.clearance_for(class.as_deref())
+    };
+    let own: Vec<&String> = ours.iter().map(|(_, _, n)| n).collect();
     let mut hit: Vec<String> = Vec::new();
     let mut nets: Vec<String> = Vec::new();
-    for t in d.routing.tracks.iter().filter(|t| t.net != net) {
-        let clr = clearance(net).max(clearance(&t.net));
+    for t in d.routing.tracks.iter().filter(|t| !own.contains(&&t.net)) {
         let theirs = caps(t);
         let close = ours
             .iter()
-            .filter(|(l, _)| l.is_none_or(|l| l == t.layer))
-            .any(|(_, ps)| {
+            .filter(|(l, _, _)| l.is_none_or(|l| l == t.layer))
+            .any(|(_, ps, n)| {
+                let clr = clearance(n).max(clearance(&t.net));
                 ps.iter()
                     .any(|a| theirs.iter().any(|b| a.distance(b) < clr - 1e-6))
             });
@@ -1127,5 +1299,60 @@ mod tests {
             .filter(|v| v.severity == Severity::Error)
             .collect();
         assert!(errors.is_empty(), "{errors:#?}");
+    }
+
+    #[test]
+    fn a_dragged_part_takes_its_tracks_and_pushes_others() {
+        use lamina_footprint::{Options, from_package};
+        let mut d = ProjectData::new("t");
+        d.board.outline = Some(Contour::rect(0.0, 0.0, 30.0, 20.0));
+        let fp = from_package("R_0603", &Options::default(), None).unwrap();
+        d.footprints.insert(fp.id.clone(), fp.clone());
+        for (r, x) in [("R1", 5.0), ("R2", 25.0)] {
+            d.parts.parts.insert(r.into(), Part::new(&fp.id));
+            d.placement
+                .placements
+                .insert(r.into(), Placement::at(x, 10.0));
+        }
+        d.nets.nets.insert(
+            "A".into(),
+            Net {
+                pads: vec!["R1.2".parse().unwrap(), "R2.1".parse().unwrap()],
+                class: None,
+            },
+        );
+        d.nets.nets.insert(
+            "X".into(),
+            Net {
+                pads: Vec::new(),
+                class: None,
+            },
+        );
+        let out = lamina_route::autoroute(&d, &Default::default()).unwrap();
+        d.routing.tracks.extend(out.tracks);
+        // A track of X where R2 goes.
+        d.routing.tracks.push(Track {
+            id: "tx".into(),
+            net: "X".into(),
+            layer: Layer::Copper(Copper::Top),
+            width: 0.25,
+            points: vec![Point::new(22.0, 14.0), Point::new(28.0, 14.0)],
+        });
+        let at = d.placement.placements["R2"].origin();
+        drag_parts_and_push(&mut d, &["R2".to_string()], Point::new(0.0, 4.0), 0.0, at).unwrap();
+        let a = lamina_drc::analyze(&d);
+        assert!(a.ratsnest.is_empty(), "A follows R2: {:?}", a.ratsnest);
+        let errors: Vec<_> = a
+            .violations
+            .iter()
+            .filter(|v| v.severity == Severity::Error)
+            .collect();
+        assert!(errors.is_empty(), "{errors:#?}");
+        // The track of X moved.
+        let x = d.routing.tracks.iter().find(|t| t.net == "X").unwrap();
+        assert_ne!(
+            x.points,
+            vec![Point::new(22.0, 14.0), Point::new(28.0, 14.0)]
+        );
     }
 }

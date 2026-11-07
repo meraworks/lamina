@@ -761,6 +761,11 @@ impl App {
             return;
         }
         match &what {
+            Drag::Parts(refs, anchor) if self.route_mode == RouteMode::Push => {
+                let refs = refs.clone();
+                let held = anchor.add(delta);
+                self.commit(move |d| edits::drag_parts_and_push(d, &refs, delta, turn, held));
+            }
             Drag::Parts(refs, anchor) => {
                 let refs = refs.clone();
                 // The held part is the centre of the turn.
