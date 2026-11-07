@@ -300,6 +300,18 @@ impl App {
                 self.rip_up(None);
                 ui.close();
             }
+            if ui
+                .button("Add teardrops")
+                .on_hover_text("Strengthen the joints where tracks meet wider pads and vias")
+                .clicked()
+            {
+                self.commit(edits::add_teardrops);
+                ui.close();
+            }
+            if ui.button("Remove teardrops").clicked() {
+                self.commit(edits::remove_teardrops);
+                ui.close();
+            }
             ui.separator();
             if ui
                 .button("Export fab files (Gerbers, drill, BOM, CPL)")

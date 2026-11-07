@@ -450,6 +450,156 @@ pub fn drag_parts_and_push(
     })
 }
 
+/// The id prefix of teardrop tracks, so that they can be found and removed.
+pub const TEARDROP: &str = "td";
+
+/// Teardrops in the line style of other editors: where a track meets a pad
+/// or a via that is wider than the track, two short tracks go from the edge
+/// of the pad to a point on the track. They make the joint stronger. A
+/// teardrop that comes too close to other copper is not added.
+pub fn add_teardrops(d: &mut ProjectData) -> EditResult {
+    use lamina_geom::{Owner, Prim};
+    remove_teardrops(d)?;
+    let geo = lamina_geom::build(d);
+    let layers = d.board.stackup.copper_layers;
+    let rules = d.board.rules.clone();
+    let clearance = |n: &str| {
+        let class = d.nets.nets.get(n).and_then(|x| x.class.clone());
+        rules.clearance_for(class.as_deref())
+    };
+    let mut added: Vec<Track> = Vec::new();
+    let mut joints = 0;
+    for t in &d.routing.tracks {
+        let Some(li) = t.layer.copper().map(|c| c.index(layers)) else {
+            continue;
+        };
+        if t.points.len() < 2 {
+            continue;
+        }
+        let fwd: Vec<Point> = t.points.clone();
+        let back: Vec<Point> = t.points.iter().rev().copied().collect();
+        for path in [fwd, back] {
+            let p = path[0];
+            // The pad or via of the net under the end of the track.
+            let Some(half) = geo
+                .copper
+                .iter()
+                .filter(|it| {
+                    it.layer == li
+                        && it.net.as_deref() == Some(t.net.as_str())
+                        && matches!(it.owner, Owner::Pad { .. } | Owner::Via { .. })
+                        && it.prim.contains(p)
+                })
+                .map(|it| {
+                    let b = it.prim.bbox();
+                    b.width().min(b.height()) / 2.0
+                })
+                .reduce(f64::max)
+            else {
+                continue;
+            };
+            // Only where the pad is clearly wider than the track.
+            if half * 2.0 < t.width * 1.6 {
+                continue;
+            }
+            let total: f64 = path.windows(2).map(|w| w[0].dist(w[1])).sum();
+            let reach = (half * 2.5).min(total * 0.6);
+            if reach <= half + t.width {
+                continue;
+            }
+            // The tip is on the track, `reach` from the end, measured along it.
+            let Some(tip) = along(&path, reach) else {
+                continue;
+            };
+            let dir = tip.sub(p);
+            let dl = p.dist(tip);
+            if dl < 1e-6 {
+                continue;
+            }
+            let u = Point::new(dir.x / dl, dir.y / dl);
+            let n = Point::new(-u.y, u.x);
+            let side = half - t.width / 2.0;
+            let pair: Vec<Track> = [1.0, -1.0]
+                .into_iter()
+                .map(|s| {
+                    let base = p.add(Point::new(n.x * side * s, n.y * side * s));
+                    Track {
+                        id: String::new(),
+                        net: t.net.clone(),
+                        layer: t.layer,
+                        width: t.width,
+                        points: vec![p6(base), p6(tip)],
+                    }
+                })
+                .collect();
+            // The teardrop must keep the clearance to the copper of other nets.
+            let clear = pair.iter().all(|td| {
+                let cap = Prim::Capsule {
+                    a: td.points[0],
+                    b: td.points[1],
+                    r: td.width / 2.0,
+                };
+                geo.copper.iter().all(|it| {
+                    it.layer != li || it.net.as_deref() == Some(t.net.as_str()) || {
+                        let clr = clearance(&t.net).max(it.net.as_deref().map_or(0.0, clearance));
+                        cap.distance(&it.prim) >= clr - 1e-6
+                    }
+                })
+            });
+            if clear {
+                joints += 1;
+                added.extend(pair);
+            }
+        }
+    }
+    for mut td in added {
+        td.id = new_id(d, TEARDROP);
+        d.routing.tracks.push(td);
+    }
+    if joints == 0 {
+        return Err(
+            "There is no joint of a track and a wider pad or via with room for a teardrop.".into(),
+        );
+    }
+    Ok(format!(
+        "Added teardrops at {joints} joint{}",
+        if joints == 1 { "" } else { "s" }
+    ))
+}
+
+/// The point at the distance `dist` along a polyline from its first point.
+fn along(path: &[Point], dist: f64) -> Option<Point> {
+    let mut left = dist;
+    for w in path.windows(2) {
+        let l = w[0].dist(w[1]);
+        if l >= left {
+            let k = if l > 0.0 { left / l } else { 0.0 };
+            return Some(Point::new(
+                w[0].x + (w[1].x - w[0].x) * k,
+                w[0].y + (w[1].y - w[0].y) * k,
+            ));
+        }
+        left -= l;
+    }
+    None
+}
+
+/// Remove the teardrops that `add_teardrops` made.
+pub fn remove_teardrops(d: &mut ProjectData) -> EditResult {
+    let before = d.routing.tracks.len();
+    d.routing.tracks.retain(|t| !is_teardrop(&t.id));
+    Ok(format!(
+        "Removed {} teardrop tracks",
+        before - d.routing.tracks.len()
+    ))
+}
+
+/// True for the id of a teardrop track (`td` and a number).
+pub fn is_teardrop(id: &str) -> bool {
+    id.strip_prefix(TEARDROP)
+        .is_some_and(|n| !n.is_empty() && n.chars().all(|c| c.is_ascii_digit()))
+}
+
 /// Move a segment, then push the tracks of other nets that are now too close
 /// aside. If they cannot move, the edit fails and nothing changes.
 pub fn move_segment_and_push(
@@ -1354,5 +1504,49 @@ mod tests {
             x.points,
             vec![Point::new(22.0, 14.0), Point::new(28.0, 14.0)]
         );
+    }
+
+    #[test]
+    fn teardrops_keep_the_rules_and_come_off_again() {
+        use lamina_footprint::{Options, from_package};
+        let mut d = ProjectData::new("t");
+        d.board.outline = Some(Contour::rect(0.0, 0.0, 30.0, 20.0));
+        let fp = from_package("R_0805", &Options::default(), None).unwrap();
+        d.footprints.insert(fp.id.clone(), fp.clone());
+        for (r, x) in [("R1", 5.0), ("R2", 25.0)] {
+            d.parts.parts.insert(r.into(), Part::new(&fp.id));
+            d.placement
+                .placements
+                .insert(r.into(), Placement::at(x, 10.0));
+        }
+        d.nets.nets.insert(
+            "A".into(),
+            Net {
+                pads: vec!["R1.2".parse().unwrap(), "R2.1".parse().unwrap()],
+                class: None,
+            },
+        );
+        let out = lamina_route::autoroute(&d, &Default::default()).unwrap();
+        d.routing.tracks.extend(out.tracks);
+        let tracks = d.routing.tracks.len();
+        let msg = add_teardrops(&mut d).unwrap();
+        assert!(msg.contains("joint"), "{msg}");
+        let drops = d
+            .routing
+            .tracks
+            .iter()
+            .filter(|t| is_teardrop(&t.id))
+            .count();
+        assert!(drops >= 2 && drops % 2 == 0, "{drops}");
+        let a = lamina_drc::analyze(&d);
+        let errors: Vec<_> = a
+            .violations
+            .iter()
+            .filter(|v| v.severity == Severity::Error)
+            .collect();
+        assert!(errors.is_empty(), "{errors:#?}");
+        remove_teardrops(&mut d).unwrap();
+        assert_eq!(d.routing.tracks.len(), tracks);
+        assert!(!is_teardrop("t1") && is_teardrop("td3") && !is_teardrop("tdx"));
     }
 }
