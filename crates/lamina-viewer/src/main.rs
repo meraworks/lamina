@@ -133,13 +133,11 @@ pub(crate) struct App {
     /// Push mode: what the push does to the other tracks for the route to the
     /// pointer, made when the pointer stops.
     push_preview: Option<tools::PushPreview>,
-    /// The route to the pointer that waits for a push preview, and since when.
-    push_wait: Option<(String, Instant)>,
     /// The segment that a click adds for the route to the pointer, made when
     /// the pointer stops for a moment: (key, points or why there is none).
     seg_preview: Option<(String, Result<Vec<Point>, String>)>,
-    /// How long the last segment took to make, to choose live or after a stop.
-    seg_cost: Duration,
+    /// The walk of the segment to the pointer on a worker thread, and its key.
+    seg_job: Option<(String, std::sync::mpsc::Receiver<Option<Vec<Point>>>)>,
     /// Route a net of a differential pair together with its partner.
     pair_on: bool,
     /// The worker thread that makes a push preview.
@@ -237,9 +235,8 @@ impl App {
             models: true,
             route_mode: tools::RouteMode::Walkaround,
             push_preview: None,
-            push_wait: None,
             seg_preview: None,
-            seg_cost: Duration::ZERO,
+            seg_job: None,
             pair_on: true,
             push_job: None,
             grid_i: 2,

@@ -90,6 +90,12 @@ impl RouteMode {
     }
 }
 
+/// The segment to the pointer: known at once, or a walk to make on a board.
+pub enum SegPlan {
+    Done(Result<Vec<Point>, String>),
+    Walk(lamina_route::Walk, Box<ProjectData>),
+}
+
 /// The result of a push for the route to the pointer, to show it before the click.
 pub struct PushPreview {
     /// The route that the preview is for (see `App::push_key`).
@@ -1010,31 +1016,44 @@ impl App {
         // around), once the pointer stops for a moment.
         if self.seg_preview.as_ref().is_none_or(|(k, _)| *k != key) {
             // Live, as in other editors: a new segment for each new pointer
-            // position. If one segment takes long (a large board), wait until
-            // the pointer stops for a moment, so that the window stays smooth.
-            let wait = if self.seg_cost > std::time::Duration::from_millis(25) {
-                std::time::Duration::from_millis(40)
-            } else {
-                std::time::Duration::ZERO
-            };
-            let waited = match &self.push_wait {
-                Some((k, t)) if *k == key => t.elapsed(),
-                _ if wait.is_zero() => std::time::Duration::ZERO,
-                _ => {
-                    self.push_wait = Some((key, Instant::now()));
-                    ctx.request_repaint_after(wait + std::time::Duration::from_millis(5));
-                    return;
+            // position. A walk can take tens of milliseconds on a large board,
+            // so it runs on a worker thread and the window does not wait.
+            if let Some((k, rx)) = &self.seg_job {
+                match rx.try_recv() {
+                    Ok(path) => {
+                        let k = k.clone();
+                        self.seg_job = None;
+                        if k == key {
+                            let seg = self.finish_walk(path);
+                            self.seg_preview = Some((key.clone(), seg));
+                            self.dirty = true;
+                        }
+                    }
+                    Err(std::sync::mpsc::TryRecvError::Empty) => {
+                        ctx.request_repaint_after(std::time::Duration::from_millis(8));
+                        return;
+                    }
+                    Err(_) => self.seg_job = None,
                 }
-            };
-            if waited < wait {
-                ctx.request_repaint_after(wait - waited + std::time::Duration::from_millis(5));
-                return;
             }
-            let t0 = Instant::now();
-            let seg = self.next_segment(target).map_err(str::to_string);
-            self.seg_cost = t0.elapsed();
-            self.seg_preview = Some((key.clone(), seg));
-            self.dirty = true;
+            if self.seg_preview.as_ref().is_none_or(|(k, _)| *k != key) {
+                match self.segment_plan(target) {
+                    SegPlan::Done(seg) => {
+                        self.seg_preview = Some((key.clone(), seg));
+                        self.dirty = true;
+                    }
+                    SegPlan::Walk(w, d) => {
+                        let (tx, rx) = std::sync::mpsc::channel();
+                        self.seg_job = Some((key.clone(), rx));
+                        let ctx = ctx.clone();
+                        std::thread::spawn(move || {
+                            let _ = tx.send(lamina_route::walkaround(&d, &w));
+                            ctx.request_repaint();
+                        });
+                        return;
+                    }
+                }
+            }
         }
         // 2. Push mode: what the push does to the other tracks.
         if self.route_mode != RouteMode::Push {
@@ -1144,9 +1163,11 @@ impl App {
 
     /// The points that a click to `target` adds to the route in progress: the
     /// straight segments, or the walkaround path in the modes that go around.
-    fn next_segment(&self, target: Point) -> Result<Vec<Point>, &'static str> {
+    /// The first, fast part of the segment that a click to `target` adds:
+    /// the straight segments, or a walk to make (with the board to walk on).
+    fn segment_plan(&self, target: Point) -> SegPlan {
         let Some(r) = &self.route else {
-            return Ok(Vec::new());
+            return SegPlan::Done(Ok(Vec::new()));
         };
         let li = self.index_of(r.runs.last().unwrap().0);
         let last = *r.runs.last().unwrap().1.last().unwrap();
@@ -1167,8 +1188,11 @@ impl App {
                 RouteMode::Push => on_other,
             };
         if !walk {
-            return Ok(pts);
+            return SegPlan::Done(Ok(pts));
         }
+        let Some(l) = &self.loaded else {
+            return SegPlan::Done(Ok(pts));
+        };
         let w = lamina_route::Walk {
             net: r.net.clone(),
             layer: r.runs.last().unwrap().0,
@@ -1179,33 +1203,48 @@ impl App {
         };
         // In push mode the walk goes around pads and vias only: the tracks of
         // other nets move aside later.
-        let path = self.loaded.as_ref().and_then(|l| {
-            if self.route_mode == RouteMode::Push {
-                let mut d = l.data.clone();
-                d.routing.tracks.retain(|t| t.net == r.net);
-                lamina_route::walkaround(&d, &w)
-            } else {
-                lamina_route::walkaround(&l.data, &w)
-            }
-        });
+        let mut d = l.data.clone();
+        if self.route_mode == RouteMode::Push {
+            d.routing.tracks.retain(|t| t.net == r.net);
+        }
+        SegPlan::Walk(w, Box::new(d))
+    }
+
+    /// The last, fast part: check a walk with exact geometry. The search is
+    /// on a grid. The first segment can start in a band where the user put
+    /// the last corner, so it is not checked. In push mode only pads and vias
+    /// count.
+    fn finish_walk(&self, path: Option<Vec<Point>>) -> Result<Vec<Point>, String> {
+        let Some(r) = &self.route else {
+            return Ok(Vec::new());
+        };
+        let li = self.index_of(r.runs.last().unwrap().0);
         let Some(path) = path else {
             return Err(
-                "There is no clear path to here on this layer. Add a corner, or V for a via.",
+                "There is no clear path to here on this layer. Add a corner, or V for a via."
+                    .into(),
             );
         };
-        // A last check with exact geometry: the search is on a grid. The first
-        // segment can start in a band where the user put the last corner, so it
-        // is not checked. In push mode only pads and vias count.
         let clear = path.windows(2).skip(1).all(|s| {
             let (t, o) = self.blockers(s[0], s[1], li, &r.net, r.width);
             !o && (self.route_mode == RouteMode::Push || !t)
         });
         if !clear {
             return Err(
-                "The path around the copper is too close at one place. Add a corner nearer to the gap.",
+                "The path around the copper is too close at one place. Add a corner nearer to the gap."
+                    .into(),
             );
         }
         Ok(path.into_iter().skip(1).collect())
+    }
+
+    /// The points that a click to `target` adds to the route in progress: the
+    /// straight segments, or the walkaround path in the modes that go around.
+    fn next_segment(&self, target: Point) -> Result<Vec<Point>, String> {
+        match self.segment_plan(target) {
+            SegPlan::Done(r) => r,
+            SegPlan::Walk(w, d) => self.finish_walk(lamina_route::walkaround(&d, &w)),
+        }
     }
 
     fn route_input(&mut self, resp: &egui::Response, p: Point, ps: Point) {
