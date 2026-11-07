@@ -284,6 +284,11 @@ pub fn build_2d(d: &ProjectData, a: &Analysis) -> Scene2D {
             }
         }
     }
+    // Everything on a copper layer so far is pour. The renderers draw the
+    // first `pour` items lighter, so that pads and tracks stand out.
+    for l in &mut layers {
+        l.pour = l.items.len();
+    }
     for it in &g.copper {
         push(
             &mut layers,

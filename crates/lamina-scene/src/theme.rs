@@ -9,6 +9,10 @@ pub type Rgba = [u8; 4];
 pub const BACKGROUND: Rgba = [14, 16, 21, 255];
 pub const BOARD_2D: Rgba = [24, 28, 36, 255];
 
+/// Pour fills in the technical view are drawn at this share of the layer
+/// colour, so that pads and tracks on the same layer stand out.
+pub const POUR_ALPHA: f32 = 0.3;
+
 /// Layer colours for the technical 2D view.
 pub fn layer_color(l: SceneLayer, copper_layers: u8) -> Rgba {
     match l {

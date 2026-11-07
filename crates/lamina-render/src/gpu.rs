@@ -478,6 +478,8 @@ impl Gpu {
     /// Upload 2D layers. Each layer gets its own depth, so that overlaps in a
     /// layer blend one time.
     pub fn upload_2d(&self, s: &Scene2D, px_per_mm: f64, active_copper: u8) -> Gpu2D {
+        /// Pour fills are drawn at this share of the layer colour.
+        const POUR_ALPHA: f32 = lamina_scene::theme::POUR_ALPHA;
         let mut verts: Vec<V2> = Vec::new();
         let mut idx: Vec<u32> = Vec::new();
         let mut ranges = Vec::new();
@@ -493,7 +495,10 @@ impl Gpu {
             let start = idx.len() as u32;
             // Pours have their own depth slot, just below the pads and tracks
             // of the layer. They are also lighter.
-            for (part, items, k) in [(0, &l.items[..l.pour], 0.26), (1, &l.items[l.pour..], 1.0)] {
+            for (part, items, k) in [
+                (0, &l.items[..l.pour], POUR_ALPHA),
+                (1, &l.items[l.pour..], 1.0),
+            ] {
                 let mut tris = Tris::default();
                 for g in items {
                     tris.add(g, px_per_mm);

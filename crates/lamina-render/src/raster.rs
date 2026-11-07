@@ -190,17 +190,27 @@ pub fn render_layers(s: &Scene2D, opt: &Options2D) -> Option<Pixmap> {
             continue;
         }
         let c = theme::layer_color(l.layer, s.copper_layers);
-        // Draw each layer into its own pixmap, so that overlaps are not drawn two times.
-        let mut layer_pm = Pixmap::new(opt.width, opt.height)?;
         let opaque = [c[0], c[1], c[2], 255];
-        for g in &l.items {
-            draw_geom(&mut layer_pm, g, opaque, ts, None);
+        // Draw each layer into its own pixmap, so that overlaps are not drawn
+        // two times. The pour goes first and lighter, so that the pads and
+        // tracks on it stand out.
+        for (items, k) in [
+            (&l.items[..l.pour], theme::POUR_ALPHA),
+            (&l.items[l.pour..], 1.0),
+        ] {
+            if items.is_empty() {
+                continue;
+            }
+            let mut layer_pm = Pixmap::new(opt.width, opt.height)?;
+            for g in items {
+                draw_geom(&mut layer_pm, g, opaque, ts, None);
+            }
+            let paint = tiny_skia::PixmapPaint {
+                opacity: c[3] as f32 / 255.0 * k,
+                ..Default::default()
+            };
+            pm.draw_pixmap(0, 0, layer_pm.as_ref(), &paint, Transform::identity(), None);
         }
-        let paint = tiny_skia::PixmapPaint {
-            opacity: c[3] as f32 / 255.0,
-            ..Default::default()
-        };
-        pm.draw_pixmap(0, 0, layer_pm.as_ref(), &paint, Transform::identity(), None);
     }
     Some(pm)
 }
