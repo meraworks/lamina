@@ -107,7 +107,7 @@ An agent usually calls the tools in this order:
 2. `use_fab_preset`
 3. `set_outline`
 4. `import_part` for each part
-5. `set_nets`
+5. `set_nets`, then `pins` to compare each pin name with its net
 6. `place_many`
 7. `autoroute`
 8. `add_zone` for the ground pour
@@ -116,6 +116,12 @@ An agent usually calls the tools in this order:
 11. `export`
 
 The `notes` tool gives the agent the notes that you type in the viewer.
+
+A part from a provider carries the pin names of its datasheet. The viewer draws the pad
+number and the pin name on each pad when you zoom in, and the inspector shows them when
+you hover a pad. `check` warns when a ground pin is on a power net, a power pin is on a
+ground net, or a no-connect pin is on a net (`pin_role`). `pins` lists every pad of a part
+with its name and its net.
 
 ## Viewer
 
