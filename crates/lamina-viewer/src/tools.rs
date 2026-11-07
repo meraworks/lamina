@@ -1318,11 +1318,31 @@ impl App {
                             format!("{added}. {pushed}")
                         })
                     });
+                } else if let Some(partner) = self.pair_partner(&r.net) {
+                    // A differential pair: the partner goes beside the route.
+                    let gap = self.pair_gap();
+                    self.commit(move |d| edits::add_pair_route(d, &r, &partner, gap));
                 } else {
                     self.commit(move |d| edits::add_route(d, &r));
                 }
             }
         }
+    }
+
+    /// The other net of a pair, if pair routing is on and the net has one.
+    fn pair_partner(&self, net: &str) -> Option<String> {
+        if !self.pair_on {
+            return None;
+        }
+        edits::pair_net(&self.loaded.as_ref()?.data, net)
+    }
+
+    /// The gap between the two tracks of a pair: the clearance of the rules.
+    fn pair_gap(&self) -> f64 {
+        self.loaded
+            .as_ref()
+            .map(|l| l.data.board.rules.clearance)
+            .unwrap_or(0.2)
     }
 
     fn poly_input(&mut self, resp: &egui::Response, p: Point, ps: Point, origin: Option<Point>) {
@@ -1472,6 +1492,18 @@ impl App {
         }
         if k(Key::Slash) {
             self.diagonal_first = !self.diagonal_first;
+        }
+        if shift && k(Key::D) && self.tool == Tool::Route {
+            self.pair_on = !self.pair_on;
+            self.say(
+                if self.pair_on {
+                    "Pair routing: a net of a differential pair gets its partner beside it"
+                } else {
+                    "Pair routing is off"
+                },
+                true,
+            );
+            self.dirty = true;
         }
         // W and Shift+W: the next or the last track width in the list, as in
         // other editors. The width is for all of the route in progress.
@@ -2046,6 +2078,15 @@ impl App {
                 Color32::from_rgb(c.r(), c.g(), c.b())
             };
             self.track_line(painter, xf, &pts, r.width, col.gamma_multiply(0.55));
+            if self.pair_partner(&r.net).is_some() {
+                let pitch = r.width + self.pair_gap() + edits::PAIR_MARGIN;
+                let mut whole: Vec<Point> = run.clone();
+                whole.extend(pts.iter().skip(1).copied());
+                for left in [true, false] {
+                    let o = edits::offset_path(&whole, pitch, left);
+                    self.track_line(painter, xf, &o, r.width, col.gamma_multiply(0.4));
+                }
+            }
             for w in pts.windows(2) {
                 painter.line_segment(
                     [xf.to_screen(w[0]), xf.to_screen(w[1])],

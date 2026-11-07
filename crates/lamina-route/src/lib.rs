@@ -1097,38 +1097,63 @@ pub fn walkaround(d: &ProjectData, w: &Walk) -> Option<Vec<Point>> {
     let (a, b) = (cell(w.from)?, cell(w.to)?);
     let st = &ctx.profiles[pi];
     let open = |c: usize| st.owner[c] == FREE || st.owner[c] == id;
-    // The end must be clear: else the track ends too close to other copper.
-    if !open(b) {
-        return None;
-    }
     if a == b {
         return Some(vec![w.from, w.to]);
     }
-    // A start in the clearance band of other copper (a corner that the user
-    // put there) starts the search from the nearest clear cells.
-    let sources: Vec<usize> = if open(a) {
-        vec![a]
-    } else {
-        let (ax, ay) = (
-            (a % g.plane() % g.nx) as isize,
-            (a % g.plane() / g.nx) as isize,
-        );
-        let reach = ((st.p.hw + st.p.cl) / g.pitch).ceil() as isize + 2;
-        let mut near = Vec::new();
-        for dy in -reach..=reach {
-            for dx in -reach..=reach {
-                let (x, y) = (ax + dx, ay + dy);
-                if x >= 0 && y >= 0 && (x as usize) < g.nx && (y as usize) < g.ny {
-                    let c = g.idx(l, x as usize, y as usize);
-                    if open(c) {
-                        near.push(c);
-                    }
+    // A point on a pad in a row of fine-pitch pads is in the safety band of
+    // its neighbours on the grid, but a straight exit along the pad can be
+    // legal. Try straight exits in the 8 directions, checked with the exact
+    // shapes, to the first clear cell. A search starts or ends there.
+    let rules = &ctx.d.board.rules;
+    let cl_of = |n: Option<&str>| {
+        let class = n
+            .and_then(|n| ctx.d.nets.nets.get(n))
+            .and_then(|x| x.class.clone());
+        rules.clearance_for(class.as_deref())
+    };
+    let own_cl = cl_of(Some(&w.net));
+    let exact_clear = |p: Point, q: Point| {
+        let cap = Prim::Capsule {
+            a: p,
+            b: q,
+            r: w.width / 2.0,
+        };
+        ctx.geo.copper.iter().all(|it| {
+            it.layer as usize != l
+                || it.net.as_deref() == Some(w.net.as_str())
+                || cap.distance(&it.prim) >= own_cl.max(cl_of(it.net.as_deref())) - 1e-6
+        })
+    };
+    let escape = |p: Point, c0: usize| -> Vec<usize> {
+        let r = c0 % g.plane();
+        let (ax, ay) = ((r % g.nx) as isize, (r / g.nx) as isize);
+        let mut out = Vec::new();
+        for (dx, dy, _) in DIRS {
+            for k in 1..=60isize {
+                let (x, y) = (ax + dx * k, ay + dy * k);
+                if x < 0 || y < 0 || x as usize >= g.nx || y as usize >= g.ny {
+                    break;
+                }
+                let c = g.idx(l, x as usize, y as usize);
+                if !exact_clear(p, g.center(x as usize, y as usize)) {
+                    break;
+                }
+                if open(c) {
+                    out.push(c);
+                    break;
                 }
             }
         }
-        near
+        out
     };
-    if sources.is_empty() {
+    let (start_esc, end_esc) = (!open(a), !open(b));
+    let sources: Vec<usize> = if start_esc {
+        escape(w.from, a)
+    } else {
+        vec![a]
+    };
+    let targets: Vec<usize> = if end_esc { escape(w.to, b) } else { vec![b] };
+    if sources.is_empty() || targets.is_empty() {
         return None;
     }
     let mut s = Search::new(g.plane() * g.nl);
@@ -1136,14 +1161,14 @@ pub fn walkaround(d: &ProjectData, w: &Walk) -> Option<Vec<Point>> {
         net: id,
         pi,
         sources: &sources,
-        targets: &[b],
+        targets: &targets,
         goals: &[w.to],
         via_cost: 1.0e9,
         mode: Mode::Strict,
         vias: &[],
     };
     let path = astar(&ctx, &mut s, &q)?;
-    if path.len() < 2 {
+    if path.len() < 2 && !start_esc && !end_esc {
         return Some(vec![w.from, w.to]);
     }
     // Make the path clean: from each kept point, go to the farthest point of
@@ -1210,7 +1235,14 @@ pub fn walkaround(d: &ProjectData, w: &Walk) -> Option<Vec<Point>> {
     cells.dedup();
     let at = |(x, y): (isize, isize)| g.center(x as usize, y as usize);
     let mut pts = vec![w.from];
-    for &c in &cells[1..cells.len().saturating_sub(1)] {
+    // An exit from a pad ends at the first cell of the path: keep it.
+    let lo = if start_esc { 0 } else { 1 };
+    let hi = if end_esc {
+        cells.len()
+    } else {
+        cells.len().saturating_sub(1)
+    };
+    for &c in &cells[lo.min(hi)..hi] {
         let p = at(c);
         pts.push(Point::new(json::round6(p.x), json::round6(p.y)));
     }

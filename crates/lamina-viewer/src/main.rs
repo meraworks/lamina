@@ -140,6 +140,8 @@ pub(crate) struct App {
     seg_preview: Option<(String, Result<Vec<Point>, String>)>,
     /// How long the last segment took to make, to choose live or after a stop.
     seg_cost: Duration,
+    /// Route a net of a differential pair together with its partner.
+    pair_on: bool,
     /// The worker thread that makes a push preview.
     push_job: Option<std::sync::mpsc::Receiver<tools::PushPreview>>,
     grid_i: usize,
@@ -238,6 +240,7 @@ impl App {
             push_wait: None,
             seg_preview: None,
             seg_cost: Duration::ZERO,
+            pair_on: true,
             push_job: None,
             grid_i: 2,
             menu: None,

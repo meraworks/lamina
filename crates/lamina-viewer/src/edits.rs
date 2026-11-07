@@ -670,6 +670,173 @@ pub fn tune_length(d: &mut ProjectData, id: &str, seg: usize, target: f64) -> Ed
     ))
 }
 
+/// The other net of a differential pair, from the usual name endings:
+/// `_P` / `_N`, `+` / `-`, `_DP` / `_DM` and `_DP` / `_DN`.
+pub fn pair_net(d: &ProjectData, net: &str) -> Option<String> {
+    for (a, b) in [
+        ("_P", "_N"),
+        ("_DP", "_DM"),
+        ("_DP", "_DN"),
+        ("+", "-"),
+        ("_p", "_n"),
+    ] {
+        for (from, to) in [(a, b), (b, a)] {
+            if let Some(stem) = net.strip_suffix(from) {
+                let other = format!("{stem}{to}");
+                if !stem.is_empty() && d.nets.nets.contains_key(&other) {
+                    return Some(other);
+                }
+            }
+        }
+    }
+    None
+}
+
+/// The track of the other net of a pair beside `pts`, at the distance
+/// `pitch` (centre to centre), on the left side of the path when `left`.
+/// Corners get the offset of both segments, so that the gap stays the same.
+pub fn offset_path(pts: &[Point], pitch: f64, left: bool) -> Vec<Point> {
+    let s = if left { 1.0 } else { -1.0 };
+    let normal = |a: Point, b: Point| {
+        let l = a.dist(b).max(1e-12);
+        Point::new(-(b.y - a.y) / l * s, (b.x - a.x) / l * s)
+    };
+    let n = pts.len();
+    if n < 2 {
+        return pts.to_vec();
+    }
+    let mut out = Vec::with_capacity(n);
+    for i in 0..n {
+        let p = pts[i];
+        let q = if i == 0 {
+            let m = normal(pts[0], pts[1]);
+            Point::new(p.x + m.x * pitch, p.y + m.y * pitch)
+        } else if i == n - 1 {
+            let m = normal(pts[n - 2], pts[n - 1]);
+            Point::new(p.x + m.x * pitch, p.y + m.y * pitch)
+        } else {
+            let (m1, m2) = (normal(pts[i - 1], p), normal(p, pts[i + 1]));
+            let bis = Point::new(m1.x + m2.x, m1.y + m2.y);
+            let bl = (bis.x * bis.x + bis.y * bis.y).sqrt();
+            if bl < 1e-9 {
+                Point::new(p.x + m1.x * pitch, p.y + m1.y * pitch)
+            } else {
+                // The miter: the length grows as the corner gets sharper.
+                let cos_half = (bis.x * m1.x + bis.y * m1.y) / bl;
+                let k = pitch / cos_half.max(0.2);
+                Point::new(p.x + bis.x / bl * k, p.y + bis.y / bl * k)
+            }
+        };
+        out.push(p6(q));
+    }
+    out
+}
+
+/// The extra gap of a pair past the clearance, in mm.
+pub const PAIR_MARGIN: f64 = 0.1;
+
+/// Add the route of one net of a differential pair and the same route of
+/// its partner beside it, at the gap of the rules. The side is the one where
+/// the partner track keeps the clearance to other copper.
+pub fn add_pair_route(d: &mut ProjectData, r: &Route, partner: &str, gap: f64) -> EditResult {
+    use lamina_geom::{Owner, Prim};
+    // The search of a lead keeps a small margin past the clearance; the
+    // coupled part keeps the same margin, so that a lead can reach it.
+    let pitch = r.width + gap + PAIR_MARGIN;
+    let layers = d.board.stackup.copper_layers;
+    let class = d.nets.nets.get(partner).and_then(|n| n.class.clone());
+    let clr = d.board.rules.clearance_for(class.as_deref());
+    // The first net goes in first; the partner must keep the clearance to it.
+    let mut with_route = d.clone();
+    let a = add_route(&mut with_route, r)?;
+    let geo = lamina_geom::build(&with_route);
+    // The pad of the partner near a point: its own start or end, as the two
+    // tracks leave or meet their pads apart, as in other editors.
+    let pad_near = |p: Point| -> Option<Point> {
+        geo.copper
+            .iter()
+            .filter(|it| {
+                it.net.as_deref() == Some(partner) && matches!(it.owner, Owner::Pad { .. })
+            })
+            .map(|it| {
+                let b = it.prim.bbox();
+                Point::new((b.min.x + b.max.x) / 2.0, (b.min.y + b.max.y) / 2.0)
+            })
+            .filter(|c| c.dist(p) < 6.0 * pitch)
+            .min_by(|x, y| x.dist(p).total_cmp(&y.dist(p)))
+    };
+    let clear = |layer: Layer, pts: &[Point]| {
+        let li = layer.copper().map(|c| c.index(layers));
+        pts.windows(2).all(|w| {
+            let cap = Prim::Capsule {
+                a: w[0],
+                b: w[1],
+                r: r.width / 2.0,
+            };
+            geo.copper.iter().all(|it| {
+                Some(it.layer) != li
+                    || it.net.as_deref() == Some(partner)
+                    || cap.distance(&it.prim) >= clr - 1e-6
+            })
+        })
+    };
+    let walk = |layer: Layer, from: Point, to: Point| -> Option<Vec<Point>> {
+        let w = lamina_route::Walk {
+            net: partner.to_string(),
+            layer,
+            width: r.width,
+            from,
+            to,
+            grid: 0.05,
+        };
+        lamina_route::walkaround(&with_route, &w)
+    };
+    let n_runs = r.runs.len();
+    let mut best: Option<Route> = None;
+    'side: for left in [true, false] {
+        let mut other = r.clone();
+        other.net = partner.to_string();
+        for (ri, (layer, pts)) in other.runs.iter_mut().enumerate() {
+            let mut o = offset_path(pts, pitch, left);
+            // Leave the partner pad apart, then join the coupled part.
+            if ri == 0 && o.len() >= 2 {
+                if let Some(pad) = pad_near(r.runs[0].1[0]) {
+                    let k = 1.min(o.len() - 1);
+                    let Some(lead) = walk(*layer, pad, o[k]) else {
+                        continue 'side;
+                    };
+                    let join = o[k];
+                    o.splice(..k, lead.into_iter().take_while(|q| q.dist(join) > 1e-9));
+                }
+            }
+            if ri == n_runs - 1 && o.len() >= 2 {
+                let end = *r.runs[ri].1.last().unwrap();
+                if let Some(pad) = pad_near(end) {
+                    let k = o.len().saturating_sub(2);
+                    if let Some(tail) = walk(*layer, o[k], pad) {
+                        o.truncate(k);
+                        o.extend(tail);
+                    }
+                }
+            }
+            if !clear(*layer, &o) {
+                continue 'side;
+            }
+            *pts = o;
+        }
+        // A via of the pair goes beside the via of the first net.
+        other.vias = other.runs.iter().skip(1).map(|x| x.1[0]).collect();
+        best = Some(other);
+        break;
+    }
+    let other = best.ok_or_else(|| {
+        format!("There is no room for the {partner} track beside the route. Route it with more room, or route {partner} alone.")
+    })?;
+    *d = with_route;
+    let b = add_route(d, &other)?;
+    Ok(format!("{a}. Pair: {b}"))
+}
+
 /// The point at the distance `dist` along a polyline from its first point.
 fn along(path: &[Point], dist: f64) -> Option<Point> {
     let mut left = dist;
@@ -1685,5 +1852,63 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         // A length that is not longer is refused.
         assert!(tune_length(&mut d, "t1", 0, 10.0).is_err());
+    }
+
+    #[test]
+    fn a_pair_route_adds_the_partner_beside_it() {
+        let mut d = ProjectData::new("t");
+        d.board.outline = Some(Contour::rect(0.0, 0.0, 40.0, 30.0));
+        for n in ["USB_DP", "USB_DM"] {
+            d.nets.nets.insert(
+                n.into(),
+                Net {
+                    pads: Vec::new(),
+                    class: None,
+                },
+            );
+        }
+        assert_eq!(pair_net(&d, "USB_DP").as_deref(), Some("USB_DM"));
+        assert_eq!(pair_net(&d, "USB_DM").as_deref(), Some("USB_DP"));
+        assert_eq!(pair_net(&d, "GND"), None);
+        let r = Route {
+            net: "USB_DP".into(),
+            width: 0.2,
+            runs: vec![(
+                Layer::Copper(Copper::Top),
+                vec![
+                    Point::new(5.0, 10.0),
+                    Point::new(15.0, 10.0),
+                    Point::new(20.0, 15.0),
+                ],
+            )],
+            vias: Vec::new(),
+        };
+        add_pair_route(&mut d, &r, "USB_DM", 0.2).unwrap();
+        let dm = d.routing.tracks.iter().find(|t| t.net == "USB_DM").unwrap();
+        assert_eq!(dm.points.len(), 3);
+        // The gap is the same on the straight part and at the corner.
+        let dp = d.routing.tracks.iter().find(|t| t.net == "USB_DP").unwrap();
+        let caps = |t: &Track| -> Vec<lamina_geom::Prim> {
+            t.points
+                .windows(2)
+                .map(|w| lamina_geom::Prim::Capsule {
+                    a: w[0],
+                    b: w[1],
+                    r: t.width / 2.0,
+                })
+                .collect()
+        };
+        let gap = caps(dp)
+            .iter()
+            .flat_map(|a| caps(dm).into_iter().map(move |b| a.distance(&b)))
+            .fold(f64::INFINITY, f64::min);
+        assert!((gap - 0.2 - PAIR_MARGIN).abs() < 1e-3, "{gap}");
+        let a = lamina_drc::analyze(&d);
+        let errors: Vec<_> = a
+            .violations
+            .iter()
+            .filter(|v| v.severity == Severity::Error)
+            .collect();
+        assert!(errors.is_empty(), "{errors:#?}");
     }
 }
