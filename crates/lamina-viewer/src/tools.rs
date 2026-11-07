@@ -441,6 +441,7 @@ impl App {
                 let refs = self.selected_parts();
                 if let (Some(first), Some(l)) = (refs.first(), &self.loaded) {
                     if let Some(pl) = l.data.placement.placements.get(first) {
+                        self.turn = 0.0;
                         self.gesture = Gesture::Grab {
                             from: at,
                             anchor: pl.origin(),
@@ -778,7 +779,10 @@ impl App {
                     Sel::Hole(_) | Sel::Outline => None,
                 };
                 self.gesture = match what {
-                    Some(what) => Gesture::Drag { from, what },
+                    Some(what) => {
+                        self.turn = 0.0;
+                        Gesture::Drag { from, what }
+                    }
                     None => Gesture::Box { from },
                 };
             } else {
@@ -970,7 +974,13 @@ impl App {
         if self.help || self.find.is_some() {
             return;
         }
-        if k(Key::Backtick) {
+        let backtick = ui.input(|i| {
+            i.events.iter().any(|e| {
+                matches!(e, egui::Event::Key { key, physical_key, pressed: true, .. }
+                    if *key == Key::Backtick || *physical_key == Some(Key::Backtick))
+            })
+        });
+        if backtick {
             let net = self
                 .hover
                 .as_ref()
@@ -1126,6 +1136,7 @@ impl App {
             let refs = self.selected_parts();
             if let (Some(first), Some(p), Some(l)) = (refs.first(), self.cursor_mm, &self.loaded) {
                 if let Some(pl) = l.data.placement.placements.get(first) {
+                    self.turn = 0.0;
                     self.gesture = Gesture::Grab {
                         from: p,
                         anchor: pl.origin(),
@@ -1177,6 +1188,7 @@ impl App {
 
     pub(crate) fn set_tool(&mut self, t: Tool) {
         self.tool = t;
+        self.turn = 0.0;
         self.route = None;
         self.poly.clear();
         self.placing = None;
@@ -1244,7 +1256,6 @@ impl App {
         );
     }
 
-    #[allow(clippy::too_many_arguments)]
     fn ghost(
         &self,
         painter: &egui::Painter,
@@ -1627,7 +1638,7 @@ impl App {
             return "Click to place · R rotate · F flip side · Esc cancel";
         }
         if let Gesture::Grab { .. } = self.gesture {
-            return "Click to drop · Esc cancel";
+            return "Click to drop · R rotate · Esc cancel";
         }
         self.tool.hint()
     }

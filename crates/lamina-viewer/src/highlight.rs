@@ -90,7 +90,9 @@ impl NetHighlight {
         let items = self.layers.iter().map(|(l, t)| (l, t, 1.0));
         for (layer, t, k) in pours.chain(items) {
             let Some(c) = color(*layer) else { continue };
-            let c = c.gamma_multiply(if *layer == bright { k } else { k * OTHER });
+            let f = if *layer == bright { k } else { k * OTHER };
+            let dim = |v: u8| (v as f32 * f).round() as u8;
+            let c = Color32::from_rgb(dim(c.r()), dim(c.g()), dim(c.b()));
             let mut mesh = egui::Mesh::default();
             for p in &t.pos {
                 mesh.colored_vertex(to_screen(Point::new(p[0] as f64, p[1] as f64)), c);

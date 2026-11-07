@@ -173,10 +173,18 @@ impl Camera {
     }
 
     /// Look straight down at the top of the board, or straight up at its
-    /// bottom, with +Y up in the view. The target and the distance stay.
+    /// bottom, with +Y up in the view. From the bottom, +X points to the left,
+    /// as when you turn the board over. The target and the distance stay.
+    /// Both pitches are inside the orbit range of the viewer (-89 to 89.9),
+    /// so that the first orbit drag does not turn the view over.
     pub fn look_straight(&mut self, from_top: bool) {
-        self.yaw = -90.0;
-        self.pitch = if from_top { 89.9 } else { -89.9 };
+        if from_top {
+            self.yaw = -90.0;
+            self.pitch = 89.9;
+        } else {
+            self.yaw = 90.0;
+            self.pitch = -89.0;
+        }
     }
 
     /// Fit a box in a square view, seen from a three-quarter angle.
@@ -222,6 +230,21 @@ mod camera_tests {
         let after = cam.view_proj(aspect).project_point3(Vec3::from(at));
         assert!((before.x - after.x).abs() < 1e-4 && (before.y - after.y).abs() < 1e-4);
         assert!((before.x - 0.4).abs() < 1e-3 && (before.y + 0.3).abs() < 1e-3);
+    }
+
+    #[test]
+    fn the_bottom_view_has_y_up_and_x_to_the_left() {
+        let mut cam = Camera::frame([0.0, 0.0, 0.0], [40.0, 30.0, 1.6]);
+        cam.look_straight(false);
+        let vp = cam.view_proj(1.0);
+        let at = |x: f32, y: f32| vp.project_point3(Vec3::new(x, y, 0.0));
+        assert!(at(20.0, 25.0).y > at(20.0, 5.0).y, "+Y is up");
+        assert!(at(35.0, 15.0).x < at(5.0, 15.0).x, "+X is to the left");
+        // A small orbit does not turn the view over.
+        cam.pitch = (cam.pitch + 0.3).clamp(-89.0, 89.9);
+        let vp = cam.view_proj(1.0);
+        let at = |x: f32, y: f32| vp.project_point3(Vec3::new(x, y, 0.0));
+        assert!(at(20.0, 25.0).y > at(20.0, 5.0).y);
     }
 
     #[test]

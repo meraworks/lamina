@@ -269,6 +269,7 @@ impl App {
                 let ctx3 = ctx.clone();
                 self.editor = Some(Editor::start(root.clone(), move || ctx3.request_repaint()));
                 self.loaded = None;
+                self.hl = None;
                 self.fitted = false;
                 self.cam_fitted = false;
                 self.sel.clear();
@@ -328,6 +329,13 @@ impl App {
                     self.needs_wide = !style::has_wide()
                         && serde_json::to_string(&l.data.parts)
                             .is_ok_and(|t| style::needs_wide(&t));
+                    if self
+                        .hl
+                        .as_ref()
+                        .is_some_and(|h| !l.data.nets.nets.contains_key(&h.net))
+                    {
+                        self.hl = None;
+                    }
                     if let Some(h) = &mut self.hl {
                         h.rebuild(
                             &l.analysis.geometry.copper,
@@ -347,9 +355,7 @@ impl App {
 
     fn is_visible(&self, l: SceneLayer) -> bool {
         if let (true, SceneLayer::Copper(i)) = (self.single, l) {
-            if i != self.active {
-                return false;
-            }
+            return i == self.active;
         }
         self.visible.get(&l).copied().unwrap_or(true)
     }
@@ -801,23 +807,39 @@ impl App {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if let Some(l) = &self.loaded {
                     let d = &l.data;
-                    ui.label(mono_c(format!("rebuilt in {} ms", l.took.as_millis())));
-                    ui.add_space(14.0);
-                    ui.label(mono_c(format!(
-                        "{} parts · {} nets · {} tracks · {} vias",
-                        d.parts.parts.len(),
-                        d.nets.nets.len(),
-                        d.routing.tracks.len(),
-                        d.routing.vias.len()
-                    )));
+                    let mut items = vec![
+                        format!("rebuilt in {} ms", l.took.as_millis()),
+                        format!(
+                            "{} parts · {} nets · {} tracks · {} vias",
+                            d.parts.parts.len(),
+                            d.nets.nets.len(),
+                            d.routing.tracks.len(),
+                            d.routing.vias.len()
+                        ),
+                    ];
                     if let Some(b) = d.board.outline.as_ref().and_then(|o| o.bbox()) {
-                        ui.add_space(14.0);
-                        ui.label(mono_c(format!(
+                        items.push(format!(
                             "{:.1} × {:.1} mm · {} layers",
                             b.width(),
                             b.height(),
                             d.board.stackup.copper_layers
-                        )));
+                        ));
+                    }
+                    // In a narrow window, show only the items that fit next to the
+                    // coordinates; they must not write over them.
+                    for (i, text) in items.into_iter().enumerate() {
+                        let w = ui
+                            .painter()
+                            .layout_no_wrap(text.clone(), mono(11.5), TEXT_2)
+                            .size()
+                            .x;
+                        if ui.available_width() < w + 24.0 {
+                            break;
+                        }
+                        if i > 0 {
+                            ui.add_space(14.0);
+                        }
+                        ui.label(mono_c(text));
                     }
                 }
             });
@@ -895,16 +917,15 @@ impl App {
                         // The row shows what the canvas shows, also in single-layer mode.
                         let single_hides = self.single
                             && matches!(layer, SceneLayer::Copper(i) if *i != self.active);
-                        let mut on =
-                            !single_hides && self.visible.get(layer).copied().unwrap_or(true);
+                        let single_shows = self.single
+                            && matches!(layer, SceneLayer::Copper(i) if *i == self.active);
+                        let mut on = single_shows
+                            || (!single_hides && self.visible.get(layer).copied().unwrap_or(true));
                         let color = rgba(lamina_scene::theme::layer_color(*layer, n));
                         if widgets::layer_row(ui, &layer.name(n), color, count(*layer), &mut on) {
                             match (self.single, layer) {
                                 // In single-layer mode, a copper row picks the layer to show.
-                                (true, SceneLayer::Copper(i)) => {
-                                    self.active = *i;
-                                    self.visible.insert(*layer, true);
-                                }
+                                (true, SceneLayer::Copper(i)) => self.active = *i,
                                 _ => {
                                     self.visible.insert(*layer, on);
                                 }
@@ -1385,15 +1406,25 @@ impl App {
                 self.hover = None;
                 if inside && (scroll != 0.0 || zoom_gesture != 1.0) {
                     let factor = (-(scroll * 0.0018)).exp() / zoom_gesture;
-                    // Zoom toward the point of the board under the pointer, as in
-                    // other viewers. Off the board, zoom toward the centre.
+                    // Zoom toward the point of the board plane under the pointer, as in
+                    // other viewers. If that point is far away (a low camera), zoom
+                    // toward the centre of the view.
                     let pos = hover_pos.unwrap();
                     let ndc = [
                         (pos.x - rect.left()) / rect.width() * 2.0 - 1.0,
                         1.0 - (pos.y - rect.top()) / rect.height() * 2.0,
                     ];
                     let aspect = rect.width() / rect.height().max(1.0);
-                    match self.cam.hit_plane(aspect, ndc, self.cam.target[2]) {
+                    let cam = self.cam;
+                    let near = |at: &[f32; 3]| {
+                        let d: f32 = (0..3).map(|i| (at[i] - cam.target[i]).powi(2)).sum();
+                        d.sqrt() < 3.0 * cam.distance
+                    };
+                    match self
+                        .cam
+                        .hit_plane(aspect, ndc, self.cam.target[2])
+                        .filter(near)
+                    {
                         Some(at) => self.cam.zoom_about(at, factor),
                         None => self.cam.distance = (self.cam.distance * factor).clamp(2.0, 5000.0),
                     }
@@ -1511,7 +1542,7 @@ impl App {
             widgets::hint(
                 &painter,
                 rect,
-                "Drag to orbit · right-drag to pan · scroll to zoom at the pointer · T top · B bottom · I reset · P parts",
+                "Drag to orbit · right-drag to pan · scroll to zoom at the pointer · T top · B bottom · I or F reset · P parts",
             );
             // The view buttons, and the Board menu, which works from 3D too.
             let bar = ERect::from_min_size(
@@ -1532,20 +1563,22 @@ impl App {
                     ui.spacing_mut().item_spacing.x = 2.0;
                     ui.horizontal(|ui| {
                         let top = self.cam.pitch > 89.0;
-                        let bottom = self.cam.pitch < -89.0;
-                        if widgets::tool_button(ui, "Top", "T", top).clicked() {
+                        let bottom = self.cam.pitch < -88.9;
+                        let compact = rect.width() < 900.0;
+                        let name = |s: &'static str| if compact { "" } else { s };
+                        if widgets::tool_button(ui, name("Top"), "T", top).clicked() {
                             self.look_straight(true, size_px);
                             self.dirty = true;
                         }
-                        if widgets::tool_button(ui, "Bottom", "B", bottom).clicked() {
+                        if widgets::tool_button(ui, name("Bottom"), "B", bottom).clicked() {
                             self.look_straight(false, size_px);
                             self.dirty = true;
                         }
-                        if widgets::tool_button(ui, "Reset", "I", false).clicked() {
+                        if widgets::tool_button(ui, name("Reset"), "I", false).clicked() {
                             self.fit_3d(size_px);
                         }
                         widgets::vdivider(ui);
-                        if widgets::tool_button(ui, "Parts", "P", self.models)
+                        if widgets::tool_button(ui, name("Parts"), "P", self.models)
                             .on_hover_text("Show or hide the part bodies")
                             .clicked()
                         {
