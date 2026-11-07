@@ -2589,6 +2589,7 @@ impl App {
                 let len: f64 = t.points.windows(2).map(|w| w[0].dist(w[1])).sum();
                 let mut width = None;
                 let mut layer = None;
+                let mut tune = None;
                 grid(ui, &mut |ui| {
                     kv(ui, "net");
                     val(ui, &t.net);
@@ -2613,6 +2614,11 @@ impl App {
                     kv(ui, "length");
                     val(ui, format!("{len:.2} mm"));
                     ui.end_row();
+                    // Length tuning, as in other editors: type a longer length,
+                    // and the selected segment gets meanders.
+                    kv(ui, "tune to");
+                    tune = num_field(ui, &format!("{id}.tune"), len, 0.1, " mm");
+                    ui.end_row();
                     kv(ui, "segment");
                     val(
                         ui,
@@ -2620,6 +2626,10 @@ impl App {
                     );
                     ui.end_row();
                 });
+                if let Some(target) = tune.filter(|v| (v - len).abs() > 1e-6) {
+                    let id2 = id.clone();
+                    self.commit(move |d| edits::tune_length(d, &id2, seg, target));
+                }
                 if width.is_some() || layer.is_some() {
                     let id2 = id.clone();
                     self.commit(move |d| {

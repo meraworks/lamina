@@ -567,6 +567,109 @@ pub fn add_teardrops(d: &mut ProjectData) -> EditResult {
     ))
 }
 
+/// Make a track longer with meanders on one of its segments, as the length
+/// tuning of other editors does. The track gets the length `target` (mm).
+/// The meanders keep the clearance to the copper of other nets; the edit
+/// tries one side of the segment, then the other.
+pub fn tune_length(d: &mut ProjectData, id: &str, seg: usize, target: f64) -> EditResult {
+    use lamina_geom::Prim;
+    let t = d
+        .routing
+        .tracks
+        .iter()
+        .find(|t| t.id == id)
+        .cloned()
+        .ok_or_else(|| format!("There is no track {id}"))?;
+    if seg + 1 >= t.points.len() {
+        return Err(format!("{id} has no segment {}", seg + 1));
+    }
+    let total: f64 = t.points.windows(2).map(|w| w[0].dist(w[1])).sum();
+    let extra = target - total;
+    if extra < 1e-6 {
+        return Err(format!(
+            "The track is {total:.2} mm long. Give a longer length to tune it."
+        ));
+    }
+    let class = d.nets.nets.get(&t.net).and_then(|n| n.class.clone());
+    let clr = d.board.rules.clearance_for(class.as_deref());
+    let (a, b) = (t.points[seg], t.points[seg + 1]);
+    let len = a.dist(b);
+    // The legs of the meander are this far apart, so that they keep the
+    // clearance to each other.
+    let gap = t.width + clr + 0.05;
+    let bumps_max = ((len - 2.0 * gap) / (2.0 * gap)).floor();
+    if bumps_max < 1.0 {
+        return Err(format!(
+            "Segment {} is too short for meanders. Select a longer segment.",
+            seg + 1
+        ));
+    }
+    let h_max = 3.0_f64.max(4.0 * gap);
+    let bumps = (extra / (2.0 * h_max)).ceil().max(1.0);
+    if bumps > bumps_max {
+        return Err(format!(
+            "Segment {} has room for {:.1} mm more, not {extra:.1} mm. Select a longer segment, or tune two segments.",
+            seg + 1,
+            bumps_max * 2.0 * h_max
+        ));
+    }
+    let h = extra / (2.0 * bumps);
+    let u = Point::new((b.x - a.x) / len, (b.y - a.y) / len);
+    let geo = lamina_geom::build(d);
+    let layers = d.board.stackup.copper_layers;
+    let li = t.layer.copper().map(|c| c.index(layers));
+    for side in [1.0, -1.0] {
+        let n = Point::new(-u.y * side, u.x * side);
+        let at = |along: f64, up: f64| {
+            p6(Point::new(
+                a.x + u.x * along + n.x * up,
+                a.y + u.y * along + n.y * up,
+            ))
+        };
+        // Centre the meanders on the segment.
+        let start = (len - 2.0 * gap * bumps) / 2.0;
+        let mut pts = vec![a];
+        for k in 0..bumps as usize {
+            let s0 = start + 2.0 * gap * k as f64;
+            pts.extend([at(s0, 0.0), at(s0, h), at(s0 + gap, h), at(s0 + gap, 0.0)]);
+        }
+        pts.push(b);
+        pts.dedup_by(|p, q| p.dist(*q) < 1e-9);
+        let caps: Vec<Prim> = pts
+            .windows(2)
+            .map(|w| Prim::Capsule {
+                a: w[0],
+                b: w[1],
+                r: t.width / 2.0,
+            })
+            .collect();
+        let clear = geo.copper.iter().all(|it| {
+            Some(it.layer) != li || it.net.as_deref() == Some(t.net.as_str()) || {
+                let theirs = it
+                    .net
+                    .as_deref()
+                    .and_then(|n| d.nets.nets.get(n))
+                    .and_then(|n| n.class.clone());
+                let c = clr.max(d.board.rules.clearance_for(theirs.as_deref()));
+                caps.iter().all(|cap| cap.distance(&it.prim) >= c - 1e-6)
+            }
+        });
+        if clear {
+            let tr = d.routing.tracks.iter_mut().find(|x| x.id == id).unwrap();
+            let mut all = tr.points[..seg].to_vec();
+            all.extend(pts);
+            all.extend_from_slice(&tr.points[seg + 2..]);
+            tr.points = all;
+            let now: f64 = tr.points.windows(2).map(|w| w[0].dist(w[1])).sum();
+            return Ok(format!("Tuned {id} to {now:.2} mm"));
+        }
+    }
+    Err(format!(
+        "There is no room for meanders beside segment {} of {id}. Select another segment.",
+        seg + 1
+    ))
+}
+
 /// The point at the distance `dist` along a polyline from its first point.
 fn along(path: &[Point], dist: f64) -> Option<Point> {
     let mut left = dist;
@@ -1548,5 +1651,39 @@ mod tests {
         remove_teardrops(&mut d).unwrap();
         assert_eq!(d.routing.tracks.len(), tracks);
         assert!(!is_teardrop("t1") && is_teardrop("td3") && !is_teardrop("tdx"));
+    }
+
+    #[test]
+    fn tune_length_reaches_the_target_and_keeps_the_rules() {
+        let mut d = ProjectData::new("t");
+        d.board.outline = Some(Contour::rect(0.0, 0.0, 40.0, 30.0));
+        d.nets.nets.insert(
+            "A".into(),
+            Net {
+                pads: Vec::new(),
+                class: None,
+            },
+        );
+        d.routing.tracks.push(Track {
+            id: "t1".into(),
+            net: "A".into(),
+            layer: Layer::Copper(Copper::Top),
+            width: 0.25,
+            points: vec![Point::new(5.0, 15.0), Point::new(35.0, 15.0)],
+        });
+        let msg = tune_length(&mut d, "t1", 0, 38.0).unwrap();
+        assert!(msg.contains("38.00"), "{msg}");
+        let t = &d.routing.tracks[0];
+        let len: f64 = t.points.windows(2).map(|w| w[0].dist(w[1])).sum();
+        assert!((len - 38.0).abs() < 1e-3, "{len}");
+        let a = lamina_drc::analyze(&d);
+        let errors: Vec<_> = a
+            .violations
+            .iter()
+            .filter(|v| v.severity == Severity::Error)
+            .collect();
+        assert!(errors.is_empty(), "{errors:#?}");
+        // A length that is not longer is refused.
+        assert!(tune_length(&mut d, "t1", 0, 10.0).is_err());
     }
 }
