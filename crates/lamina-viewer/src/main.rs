@@ -883,8 +883,15 @@ impl App {
         egui::ScrollArea::vertical()
             .auto_shrink([false, false])
             .show(ui, |ui| {
-                ui.horizontal(|ui| {
+                // In a narrow panel, the title goes above the side buttons.
+                let narrow = ui.available_width() < 200.0;
+                if narrow {
                     widgets::section_title(ui, "Layers");
+                }
+                ui.horizontal(|ui| {
+                    if !narrow {
+                        widgets::section_title(ui, "Layers");
+                    }
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         for (label, f) in [("Bottom", 2u8), ("Top", 1u8), ("All", 0u8)] {
                             if widgets::text_button(ui, label) {
@@ -2450,8 +2457,16 @@ impl eframe::App for Shell {
             )
             .show(ui, |ui| self.boards[f].status_bar(ui));
         if self.boards[f].loaded.is_some() {
+            // In a narrow window the side panels are narrower, so that the board
+            // keeps the room in the middle.
+            let narrow = ctx.content_rect().width() < 1100.0;
+            let (left_w, right_w) = if narrow {
+                (176.0, 228.0)
+            } else {
+                (236.0, 312.0)
+            };
             egui::Panel::left("layers")
-                .exact_size(236.0)
+                .exact_size(left_w)
                 .resizable(false)
                 .frame(
                     egui::Frame::new()
@@ -2459,10 +2474,16 @@ impl eframe::App for Shell {
                         .inner_margin(egui::Margin::same(12)),
                 )
                 .show(ui, |ui| self.boards[f].layer_panel(ui));
-            egui::Panel::right("inspector")
-                .default_size(312.0)
-                .size_range(260.0..=520.0)
-                .resizable(true)
+            let inspector = egui::Panel::right("inspector");
+            let inspector = if narrow {
+                inspector.exact_size(right_w).resizable(false)
+            } else {
+                inspector
+                    .default_size(right_w)
+                    .size_range(260.0..=520.0)
+                    .resizable(true)
+            };
+            inspector
                 .frame(
                     egui::Frame::new()
                         .fill(PANEL)

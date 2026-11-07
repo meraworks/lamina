@@ -253,10 +253,20 @@ pub fn layer_row(
             StrokeKind::Inside,
         );
     }
+    // The name must not run into the count.
+    let count_w = if count > 0 {
+        p.layout_no_wrap(count.to_string(), mono(11.0), TEXT_3)
+            .size()
+            .x
+            + 8.0
+    } else {
+        0.0
+    };
+    let room = rect.width() - 30.0 - 32.0 - count_w;
     p.text(
         Pos2::new(rect.left() + 30.0, rect.center().y),
         Align2::LEFT_CENTER,
-        name,
+        fit_text(p, name, body(13.0), room.max(20.0)),
         body(13.0),
         if *on { TEXT } else { TEXT_3 },
     );
@@ -426,10 +436,31 @@ pub fn hint(p: &egui::Painter, rect: Rect, text: &str) {
     p.galley(r.min + Vec2::new(8.0, 3.0), g, TEXT_2);
 }
 
+/// The text, cut at the end with "…" so that it is not wider than `max`.
+pub fn fit_text(p: &egui::Painter, text: &str, font: egui::FontId, max: f32) -> String {
+    let width = |t: &str| p.layout_no_wrap(t.to_string(), font.clone(), TEXT).size().x;
+    if width(text) <= max {
+        return text.to_string();
+    }
+    let chars: Vec<char> = text.chars().collect();
+    let (mut lo, mut hi) = (0, chars.len());
+    while lo < hi {
+        let mid = (lo + hi).div_ceil(2);
+        let t: String = chars[..mid].iter().collect::<String>() + "…";
+        if width(&t) <= max {
+            lo = mid;
+        } else {
+            hi = mid - 1;
+        }
+    }
+    chars[..lo].iter().collect::<String>() + "…"
+}
+
 /// A short state message at the bottom of the canvas, above the hint line.
 /// Row 0 is just above the hint line; row 1 is above row 0.
 pub fn banner(p: &egui::Painter, rect: Rect, text: &str, row: u8) {
-    let g = p.layout_no_wrap(text.to_string(), body(12.5), TEXT);
+    let text = fit_text(p, text, body(12.5), (rect.width() - 60.0).max(40.0));
+    let g = p.layout_no_wrap(text, body(12.5), TEXT);
     let at = Pos2::new(rect.center().x, rect.bottom() - 48.0 - 32.0 * row as f32);
     let r = Rect::from_center_size(at, g.size()).expand2(Vec2::new(10.0, 5.0));
     p.rect_filled(r, CornerRadius::same(6), RAISED);
@@ -584,6 +615,16 @@ pub fn menu_row<'a>(label: &'a str, key: &'a str) -> impl egui::Widget + 'a {
             p.rect_filled(rect, 5.0, ACCENT_DIM);
         }
         let color = if resp.hovered() { TEXT } else { TEXT_2 };
+        let key_w = if key.is_empty() {
+            0.0
+        } else {
+            p.layout_no_wrap(key.to_string(), mono(11.0), TEXT_3)
+                .size()
+                .x
+                + 16.0
+        };
+        // A long net name must not run into the key or out of the menu.
+        let label = fit_text(p, label, body(12.5), w - 20.0 - key_w);
         p.text(
             Pos2::new(rect.left() + 10.0, rect.center().y),
             egui::Align2::LEFT_CENTER,

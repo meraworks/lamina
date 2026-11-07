@@ -127,6 +127,35 @@ pub struct Magnet {
     pub layer: u8,
 }
 
+/// True if the segment from `a` to `b` touches the rectangle (Liang-Barsky clip).
+fn segment_meets_rect(a: Point, b: Point, r: &Rect) -> bool {
+    let (dx, dy) = (b.x - a.x, b.y - a.y);
+    let (mut t0, mut t1) = (0.0f64, 1.0f64);
+    for (p, q) in [
+        (-dx, a.x - r.min.x),
+        (dx, r.max.x - a.x),
+        (-dy, a.y - r.min.y),
+        (dy, r.max.y - a.y),
+    ] {
+        if p == 0.0 {
+            if q < 0.0 {
+                return false;
+            }
+        } else {
+            let t = q / p;
+            if p < 0.0 {
+                t0 = t0.max(t);
+            } else {
+                t1 = t1.min(t);
+            }
+            if t0 > t1 {
+                return false;
+            }
+        }
+    }
+    true
+}
+
 fn rect_pts(a: Point, b: Point) -> Vec<Point> {
     vec![a, Point::new(b.x, a.y), b, Point::new(a.x, b.y)]
 }
@@ -561,9 +590,17 @@ impl App {
                 add(Sel::Via(v.id.clone()));
             }
         }
+        // Tracks go by segment, as in other editors: a window takes the
+        // segments inside it, and a crossing box takes each segment that it
+        // touches, also if both ends are outside the box.
         for t in &d.routing.tracks {
-            if take(&t.points) {
-                for seg in 0..t.points.len().saturating_sub(1) {
+            for (seg, w) in t.points.windows(2).enumerate() {
+                let hit = if enclose {
+                    inside(w[0]) && inside(w[1])
+                } else {
+                    segment_meets_rect(w[0], w[1], &r)
+                };
+                if hit {
                     add(Sel::Track {
                         id: t.id.clone(),
                         seg,
@@ -618,14 +655,16 @@ impl App {
             return;
         }
         match &what {
-            Drag::Parts(refs, _) => {
+            Drag::Parts(refs, anchor) => {
                 let refs = refs.clone();
+                // The held part is the centre of the turn.
+                let held = anchor.add(delta);
                 self.commit(move |d| {
                     let moved = edits::move_parts(d, &refs, delta.x, delta.y)?;
                     if turn == 0.0 {
                         return Ok(moved);
                     }
-                    let turned = edits::rotate_parts(d, &refs, turn)?;
+                    let turned = edits::rotate_parts_about(d, &refs, turn, held)?;
                     Ok(format!("{moved}. {turned}"))
                 });
             }
@@ -1269,8 +1308,8 @@ impl App {
         let d = &l.data;
         let c = ACCENT;
         match what {
-            Drag::Parts(refs, _) => {
-                // As `edits::rotate_parts`: turn about the centre of the part origins.
+            Drag::Parts(refs, anchor) => {
+                // As the commit: turn about the held part.
                 let moved: Vec<(&String, Placement)> = refs
                     .iter()
                     .filter_map(|r| d.placement.placements.get(r).map(|pl| (r, *pl)))
@@ -1280,11 +1319,7 @@ impl App {
                         (r, pl)
                     })
                     .collect();
-                let n = moved.len().max(1) as f64;
-                let centre = moved
-                    .iter()
-                    .fold(Point::new(0.0, 0.0), |a, (_, pl)| a.add(pl.origin()));
-                let centre = Point::new(centre.x / n, centre.y / n);
+                let centre = anchor.add(delta);
                 for (r, mut pl) in moved {
                     if turn != 0.0 {
                         let p = pl.origin().sub(centre).rotated(turn).add(centre);
@@ -1689,9 +1724,12 @@ impl App {
                         }
                         self.dirty = true;
                     }
-                    if widgets::pill(ui, None, &fmt_grid(self.grid()))
-                        .on_hover_text("Grid · N / Shift+N")
-                        .clicked()
+                    // A tiny bar keeps the tools, the layer and the Board menu. N still
+                    // changes the grid.
+                    if !tiny
+                        && widgets::pill(ui, None, &fmt_grid(self.grid()))
+                            .on_hover_text("Grid · N / Shift+N")
+                            .clicked()
                     {
                         self.grid_i = (self.grid_i + 1) % edits::GRIDS.len();
                     }
@@ -2447,5 +2485,39 @@ impl App {
                 }
             }
         });
+    }
+}
+
+#[cfg(test)]
+mod box_tests {
+    use super::*;
+
+    #[test]
+    fn a_crossing_segment_meets_the_box() {
+        let r = Rect {
+            min: Point::new(0.0, 0.0),
+            max: Point::new(10.0, 10.0),
+        };
+        // Both ends outside, the middle inside.
+        assert!(segment_meets_rect(
+            Point::new(-5.0, 5.0),
+            Point::new(15.0, 5.0),
+            &r
+        ));
+        assert!(segment_meets_rect(
+            Point::new(2.0, 2.0),
+            Point::new(3.0, 3.0),
+            &r
+        ));
+        assert!(!segment_meets_rect(
+            Point::new(-5.0, 15.0),
+            Point::new(15.0, 12.0),
+            &r
+        ));
+        assert!(!segment_meets_rect(
+            Point::new(11.0, -1.0),
+            Point::new(11.0, 20.0),
+            &r
+        ));
     }
 }

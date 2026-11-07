@@ -112,6 +112,12 @@ pub fn rotate_parts(d: &mut ProjectData, refs: &[String], deg: f64) -> EditResul
     }
     let n = refs.len().max(1) as f64;
     let c = Point::new(c.x / n, c.y / n);
+    rotate_parts_about(d, refs, deg, c)
+}
+
+/// Turn parts by `deg` about the point `c`. A drag turns the parts about
+/// the part that the pointer holds, as in other editors.
+pub fn rotate_parts_about(d: &mut ProjectData, refs: &[String], deg: f64, c: Point) -> EditResult {
     for r in refs {
         let pl = placed_mut(d, r)?;
         let p = pl.origin().sub(c).rotated(deg).add(c);

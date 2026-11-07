@@ -33,6 +33,8 @@ pub struct NetHighlight {
     pours: Vec<(u8, Tris)>,
     /// The number of copper items of the net.
     pub items: usize,
+    /// The meshes in screen points of the last frame, and the view they are for.
+    cache: std::cell::RefCell<Option<(Vec<f32>, Vec<egui::Shape>)>>,
 }
 
 impl NetHighlight {
@@ -42,6 +44,7 @@ impl NetHighlight {
             layers: Vec::new(),
             pours: Vec::new(),
             items: 0,
+            cache: Default::default(),
         };
         h.rebuild(copper, fills, layers);
         h
@@ -52,6 +55,7 @@ impl NetHighlight {
         self.layers.clear();
         self.pours.clear();
         self.items = 0;
+        self.cache.take();
         let net = self.net.clone();
         // The pour fills of the net go first, under its pads and tracks.
         for f in fills.iter().filter(|f| f.net.as_deref() == Some(&net)) {
@@ -86,19 +90,38 @@ impl NetHighlight {
         bright: u8,
     ) {
         painter.rect_filled(canvas, 0.0, Color32::from_black_alpha(165));
-        let pours = self.pours.iter().map(|(l, t)| (l, t, POUR));
-        let items = self.layers.iter().map(|(l, t)| (l, t, 1.0));
-        for (layer, t, k) in pours.chain(items) {
-            let Some(c) = color(*layer) else { continue };
-            let f = if *layer == bright { k } else { k * OTHER };
-            let dim = |v: u8| (v as f32 * f).round() as u8;
-            let c = Color32::from_rgb(dim(c.r()), dim(c.g()), dim(c.b()));
-            let mut mesh = egui::Mesh::default();
-            for p in &t.pos {
-                mesh.colored_vertex(to_screen(Point::new(p[0] as f64, p[1] as f64)), c);
+        // The meshes in screen points change only when the view or the layer
+        // colours change, so keep them between frames.
+        let (o, u) = (
+            to_screen(Point::new(0.0, 0.0)),
+            to_screen(Point::new(1.0, 1.0)),
+        );
+        let mut key = vec![o.x, o.y, u.x, u.y, bright as f32];
+        for (l, _) in self.pours.iter().chain(&self.layers) {
+            key.push(color(*l).map_or(-1.0, |c| u32::from_ne_bytes(c.to_array()) as f32));
+        }
+        let mut cache = self.cache.borrow_mut();
+        if cache.as_ref().is_none_or(|(k, _)| *k != key) {
+            let mut shapes = Vec::new();
+            let pours = self.pours.iter().map(|(l, t)| (l, t, POUR));
+            let items = self.layers.iter().map(|(l, t)| (l, t, 1.0));
+            for (layer, t, k) in pours.chain(items) {
+                let Some(c) = color(*layer) else { continue };
+                let f = if *layer == bright { k } else { k * OTHER };
+                let dim = |v: u8| (v as f32 * f).round() as u8;
+                let c = Color32::from_rgb(dim(c.r()), dim(c.g()), dim(c.b()));
+                let mut mesh = egui::Mesh::default();
+                for p in &t.pos {
+                    mesh.colored_vertex(to_screen(Point::new(p[0] as f64, p[1] as f64)), c);
+                }
+                mesh.indices = t.idx.clone();
+                shapes.push(egui::Shape::mesh(mesh));
             }
-            mesh.indices = t.idx.clone();
-            painter.add(egui::Shape::mesh(mesh));
+            *cache = Some((key, shapes));
+        }
+        if let Some((_, shapes)) = cache.as_ref() {
+            // A shape of a mesh holds it in an `Arc`, so a clone is cheap.
+            painter.extend(shapes.iter().cloned());
         }
     }
 }
