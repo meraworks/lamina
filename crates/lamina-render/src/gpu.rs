@@ -146,6 +146,39 @@ impl Camera {
         ) * view
     }
 
+    /// The point on the plane at height `z` under a point of the view. `ndc`
+    /// is the point in -1..1 on both axes, with y up. `None` if the ray of the
+    /// point does not meet the plane in front of the camera.
+    pub fn hit_plane(&self, aspect: f32, ndc: [f32; 2], z: f32) -> Option<[f32; 3]> {
+        let inv = self.view_proj(aspect).inverse();
+        let a = inv.project_point3(Vec3::new(ndc[0], ndc[1], 0.0));
+        let b = inv.project_point3(Vec3::new(ndc[0], ndc[1], 1.0));
+        let d = b - a;
+        if d.z.abs() < 1e-9 {
+            return None;
+        }
+        let t = (z - a.z) / d.z;
+        (t > 0.0).then(|| (a + d * t).into())
+    }
+
+    /// Move the camera nearer (`factor` below 1) or farther, so that the point
+    /// `at` stays at the same place in the view.
+    pub fn zoom_about(&mut self, at: [f32; 3], factor: f32) {
+        let dist = (self.distance * factor).clamp(2.0, 5000.0);
+        let k = dist / self.distance;
+        for (t, a) in self.target.iter_mut().zip(at) {
+            *t = a + (*t - a) * k;
+        }
+        self.distance = dist;
+    }
+
+    /// Look straight down at the top of the board, or straight up at its
+    /// bottom, with +Y up in the view. The target and the distance stay.
+    pub fn look_straight(&mut self, from_top: bool) {
+        self.yaw = -90.0;
+        self.pitch = if from_top { 89.9 } else { -89.9 };
+    }
+
     /// Fit a box in a square view, seen from a three-quarter angle.
     pub fn frame(lo: [f32; 3], hi: [f32; 3]) -> Camera {
         Camera::frame_aspect(lo, hi, 1.0)
@@ -172,6 +205,33 @@ impl Camera {
             distance: (r / half_v.min(half_h).sin()).max(5.0) * 1.05,
             fov,
         }
+    }
+}
+
+#[cfg(test)]
+mod camera_tests {
+    use super::*;
+
+    #[test]
+    fn zoom_about_keeps_the_point_in_place() {
+        let mut cam = Camera::frame([0.0, 0.0, 0.0], [40.0, 30.0, 1.6]);
+        let aspect = 1.5;
+        let at = cam.hit_plane(aspect, [0.4, -0.3], 1.6).unwrap();
+        let before = cam.view_proj(aspect).project_point3(Vec3::from(at));
+        cam.zoom_about(at, 0.5);
+        let after = cam.view_proj(aspect).project_point3(Vec3::from(at));
+        assert!((before.x - after.x).abs() < 1e-4 && (before.y - after.y).abs() < 1e-4);
+        assert!((before.x - 0.4).abs() < 1e-3 && (before.y + 0.3).abs() < 1e-3);
+    }
+
+    #[test]
+    fn a_straight_view_has_y_up() {
+        let mut cam = Camera::frame([0.0, 0.0, 0.0], [40.0, 30.0, 1.6]);
+        cam.look_straight(true);
+        let vp = cam.view_proj(1.0);
+        let up = vp.project_point3(Vec3::new(20.0, 25.0, 1.6));
+        let down = vp.project_point3(Vec3::new(20.0, 5.0, 1.6));
+        assert!(up.y > down.y);
     }
 }
 
@@ -769,6 +829,12 @@ impl Gpu {
     }
 
     pub fn draw_3d(&self, t: &Target, s: &Gpu3D, cam: &Camera) {
+        self.draw_3d_with(t, s, cam, true);
+    }
+
+    /// Draw the 3D view. With `models` false, only the board shows, without
+    /// the part bodies.
+    pub fn draw_3d_with(&self, t: &Target, s: &Gpu3D, cam: &Camera, models: bool) {
         let mut u = Self::base_uniforms();
         u.view_proj = cam
             .view_proj(t.width as f32 / t.height as f32)
@@ -793,7 +859,7 @@ impl Gpu {
                 rp.set_index_buffer(s.board_ib.slice(..), wgpu::IndexFormat::Uint32);
                 rp.draw_indexed(0..s.board_count, 0, 0..1);
             }
-            if let Some(vb) = &s.mesh_vb {
+            if let (true, Some(vb)) = (models, &s.mesh_vb) {
                 rp.set_pipeline(&self.pipe_mesh);
                 rp.set_vertex_buffer(0, vb.slice(..));
                 rp.draw(0..s.mesh_count, 0..1);

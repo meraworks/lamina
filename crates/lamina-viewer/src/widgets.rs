@@ -426,6 +426,22 @@ pub fn hint(p: &egui::Painter, rect: Rect, text: &str) {
     p.galley(r.min + Vec2::new(8.0, 3.0), g, TEXT_2);
 }
 
+/// A short state message at the bottom of the canvas, above the hint line.
+/// Row 0 is just above the hint line; row 1 is above row 0.
+pub fn banner(p: &egui::Painter, rect: Rect, text: &str, row: u8) {
+    let g = p.layout_no_wrap(text.to_string(), body(12.5), TEXT);
+    let at = Pos2::new(rect.center().x, rect.bottom() - 48.0 - 32.0 * row as f32);
+    let r = Rect::from_center_size(at, g.size()).expand2(Vec2::new(10.0, 5.0));
+    p.rect_filled(r, CornerRadius::same(6), RAISED);
+    p.rect_stroke(
+        r,
+        CornerRadius::same(6),
+        Stroke::new(1.0, ACCENT),
+        egui::StrokeKind::Inside,
+    );
+    p.galley(r.min + Vec2::new(10.0, 5.0), g, TEXT);
+}
+
 /// Toolbar button: label with its shortcut key, accent when active.
 pub fn tool_button(ui: &mut egui::Ui, label: &str, key: &str, active: bool) -> egui::Response {
     // Compact form: only the key letter.
@@ -561,7 +577,7 @@ pub fn toast(p: &egui::Painter, at: Pos2, text: &str, color: Color32, alpha: f32
 /// the right. The whole row is the button.
 pub fn menu_row<'a>(label: &'a str, key: &'a str) -> impl egui::Widget + 'a {
     move |ui: &mut egui::Ui| {
-        let w = ui.available_width().max(180.0);
+        let w = ui.available_width().clamp(180.0, 270.0);
         let (rect, resp) = ui.allocate_exact_size(Vec2::new(w, 24.0), egui::Sense::click());
         let p = ui.painter();
         if resp.hovered() {

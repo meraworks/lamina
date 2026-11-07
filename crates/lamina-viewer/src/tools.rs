@@ -68,6 +68,7 @@ enum MenuAct {
     Move,
     Delete,
     SelectNet(String),
+    HighlightNet(String),
     Via(String),
     Route,
     Fit,
@@ -114,6 +115,8 @@ pub struct Placing {
 pub struct Settling {
     pub what: Drag,
     pub delta: Point,
+    /// The rotation of the parts, in degrees.
+    pub turn: f64,
     pub to: Point,
     pub replied: bool,
 }
@@ -351,7 +354,9 @@ impl App {
         let on_pad = matches!(pick, Some(Pick::Pad { .. }));
         let mut act: Option<MenuAct> = None;
         let shown = resp.context_menu(|ui| {
-            ui.set_min_width(190.0);
+            // A compact menu, as in other editors: it must not cover the board.
+            ui.set_min_width(210.0);
+            ui.set_max_width(270.0);
             let mut item = |ui: &mut egui::Ui, label: &str, key: &str, a: MenuAct| {
                 let r = ui.add(widgets::menu_row(label, key));
                 if r.clicked() {
@@ -378,6 +383,12 @@ impl App {
                 item(ui, "Route from this pad", "X", MenuAct::Route);
             }
             if let Some(n) = &net {
+                item(
+                    ui,
+                    &format!("Highlight the net {n}"),
+                    "`",
+                    MenuAct::HighlightNet(n.clone()),
+                );
                 item(
                     ui,
                     &format!("Select the net {n}"),
@@ -463,6 +474,7 @@ impl App {
                     self.dirty = true;
                 }
             }
+            MenuAct::HighlightNet(n) => self.highlight_net(Some(n)),
             MenuAct::Via(n) => {
                 let ps = snap_pt(at, self.grid());
                 self.commit(move |d| edits::add_via(d, &n, ps));
@@ -595,13 +607,26 @@ impl App {
     }
 
     fn commit_drag(&mut self, what: Drag, delta: Point, to: Point) {
-        if delta.x.abs() < 1e-9 && delta.y.abs() < 1e-9 && !matches!(what, Drag::Vertex(..)) {
+        let turn = std::mem::take(&mut self.turn);
+        let turned = matches!(what, Drag::Parts(..)) && turn != 0.0;
+        if delta.x.abs() < 1e-9
+            && delta.y.abs() < 1e-9
+            && !turned
+            && !matches!(what, Drag::Vertex(..))
+        {
             return;
         }
         match &what {
             Drag::Parts(refs, _) => {
                 let refs = refs.clone();
-                self.commit(move |d| edits::move_parts(d, &refs, delta.x, delta.y));
+                self.commit(move |d| {
+                    let moved = edits::move_parts(d, &refs, delta.x, delta.y)?;
+                    if turn == 0.0 {
+                        return Ok(moved);
+                    }
+                    let turned = edits::rotate_parts(d, &refs, turn)?;
+                    Ok(format!("{moved}. {turned}"))
+                });
             }
             Drag::Via(id, _) => {
                 let id = id.clone();
@@ -623,6 +648,7 @@ impl App {
         self.settling = Some(Settling {
             what,
             delta,
+            turn: if turned { turn } else { 0.0 },
             to,
             replied: false,
         });
@@ -716,7 +742,18 @@ impl App {
                     from,
                     what: Drag::Vertex(of, i),
                 };
-            } else if let Some(hit) = self.pick(from).as_ref().and_then(App::sel_of) {
+            } else if let Some(hit) = self
+                .pick(from)
+                .as_ref()
+                .and_then(App::sel_of)
+                // A pour or a keep-out often covers the board. A drag on it
+                // selects with a box, as on an empty board, unless the area
+                // is already selected: then the drag moves it.
+                .filter(|hit| {
+                    !matches!(hit, Sel::Zone(_) | Sel::Keepout(_))
+                        || self.sel.iter().any(|s| s.same_item(hit))
+                })
+            {
                 if !self.sel.iter().any(|s| s.same_item(&hit)) {
                     self.select(Some(hit.clone()), shift);
                 }
@@ -933,7 +970,19 @@ impl App {
         if self.help || self.find.is_some() {
             return;
         }
+        if k(Key::Backtick) {
+            let net = self
+                .hover
+                .as_ref()
+                .and_then(|p| p.net())
+                .map(str::to_string);
+            let same = self.hl.as_ref().map(|h| &h.net) == net.as_ref();
+            self.highlight_net(if same { None } else { net });
+        }
         if k(Key::Escape) {
+            self.turn = 0.0;
+            // Esc cancels the work in progress first, then the highlight, then
+            // the tool, then the selection.
             if self.measure.a.is_some() {
                 self.measure = Default::default();
             } else if self.placing.take().is_some()
@@ -944,11 +993,17 @@ impl App {
                     Gesture::None
                 )
             {
+            } else if self.hl.is_some() {
+                self.highlight_net(None);
             } else if self.tool != Tool::Select {
                 self.tool = Tool::Select;
             } else {
                 self.sel.clear();
             }
+            self.dirty = true;
+        }
+        if shift && k(Key::S) {
+            self.single = !self.single;
             self.dirty = true;
         }
         for (tool, key) in [
@@ -959,7 +1014,7 @@ impl App {
             (Tool::Outline, Key::O),
             (Tool::Measure, Key::D),
         ] {
-            if k(key) {
+            if k(key) && !(shift && key == Key::S) {
                 self.set_tool(tool);
             }
         }
@@ -1026,7 +1081,18 @@ impl App {
         }
         if k(Key::R) {
             let by = if shift { -90.0 } else { 90.0 };
-            if let Some(pl) = self.placing.as_mut() {
+            let dragging_parts = matches!(
+                self.gesture,
+                Gesture::Drag {
+                    what: Drag::Parts(..),
+                    ..
+                } | Gesture::Grab { .. }
+            );
+            if dragging_parts {
+                // As in other editors: R turns the parts that move with the pointer.
+                self.turn = (self.turn + by).rem_euclid(360.0);
+                self.dirty = true;
+            } else if let Some(pl) = self.placing.as_mut() {
                 pl.rotation = (pl.rotation + by).rem_euclid(360.0);
             } else {
                 let refs = self.selected_parts();
@@ -1178,19 +1244,44 @@ impl App {
         );
     }
 
-    fn ghost(&self, painter: &egui::Painter, xf: &Xf, what: &Drag, delta: Point, to: Point) {
+    #[allow(clippy::too_many_arguments)]
+    fn ghost(
+        &self,
+        painter: &egui::Painter,
+        xf: &Xf,
+        what: &Drag,
+        delta: Point,
+        to: Point,
+        turn: f64,
+    ) {
         let Some(l) = &self.loaded else { return };
         let d = &l.data;
         let c = ACCENT;
         match what {
             Drag::Parts(refs, _) => {
-                for r in refs {
-                    if let Some(pl) = d.placement.placements.get(r) {
-                        let mut pl = *pl;
+                // As `edits::rotate_parts`: turn about the centre of the part origins.
+                let moved: Vec<(&String, Placement)> = refs
+                    .iter()
+                    .filter_map(|r| d.placement.placements.get(r).map(|pl| (r, *pl)))
+                    .map(|(r, mut pl)| {
                         pl.x += delta.x;
                         pl.y += delta.y;
-                        self.ghost_part(painter, xf, r, &pl, c);
+                        (r, pl)
+                    })
+                    .collect();
+                let n = moved.len().max(1) as f64;
+                let centre = moved
+                    .iter()
+                    .fold(Point::new(0.0, 0.0), |a, (_, pl)| a.add(pl.origin()));
+                let centre = Point::new(centre.x / n, centre.y / n);
+                for (r, mut pl) in moved {
+                    if turn != 0.0 {
+                        let p = pl.origin().sub(centre).rotated(turn).add(centre);
+                        pl.x = p.x;
+                        pl.y = p.y;
+                        pl.rotation = (pl.rotation + turn).rem_euclid(360.0);
                     }
+                    self.ghost_part(painter, xf, r, &pl, c);
                 }
             }
             Drag::Via(id, _) => {
@@ -1339,12 +1430,12 @@ impl App {
         match (&self.gesture, cur) {
             (Gesture::Drag { from, what }, Some(p)) => {
                 let (delta, to) = self.drag_delta(what, *from, p);
-                self.ghost(painter, xf, what, delta, to);
+                self.ghost(painter, xf, what, delta, to, self.turn);
             }
             (Gesture::Grab { from, refs, anchor }, Some(p)) => {
                 let what = Drag::Parts(refs.clone(), *anchor);
                 let (delta, to) = self.drag_delta(&what, *from, p);
-                self.ghost(painter, xf, &what, delta, to);
+                self.ghost(painter, xf, &what, delta, to, self.turn);
             }
             (Gesture::Box { from }, Some(p)) => {
                 let r = ERect::from_two_pos(xf.to_screen(*from), xf.to_screen(p));
@@ -1391,7 +1482,7 @@ impl App {
             _ => {}
         }
         if let Some(s) = &self.settling {
-            self.ghost(painter, xf, &s.what, s.delta, s.to);
+            self.ghost(painter, xf, &s.what, s.delta, s.to, s.turn);
         }
         if let (Some(pl), Some(p)) = (&self.placing, cur) {
             let ps = snap_pt(p, self.grid());

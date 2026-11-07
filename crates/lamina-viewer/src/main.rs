@@ -4,6 +4,7 @@
 mod actions;
 mod editor;
 mod edits;
+mod highlight;
 mod labels;
 mod live;
 #[cfg(feature = "headless")]
@@ -121,6 +122,12 @@ pub(crate) struct App {
     poly: Vec<Point>,
     placing: Option<Placing>,
     settling: Option<Settling>,
+    /// The rotation (degrees) that R adds to the parts of a drag in progress.
+    turn: f64,
+    /// Single-layer mode: only the active copper layer shows.
+    single: bool,
+    /// The 3D view draws the part bodies.
+    models: bool,
     grid_i: usize,
     /// The right-click menu: where it was opened and what was under the pointer.
     menu: Option<(Point, Option<Pick>)>,
@@ -138,6 +145,8 @@ pub(crate) struct App {
     cursor_mm: Option<Point>,
     note_text: String,
     note_at: Option<Point>,
+    /// The highlighted net: the rest of the board is dim.
+    hl: Option<highlight::NetHighlight>,
     note_status: Option<(String, Instant)>,
     dirty: bool,
     open_path: String,
@@ -207,6 +216,9 @@ impl App {
             poly: Vec::new(),
             placing: None,
             settling: None,
+            turn: 0.0,
+            single: false,
+            models: true,
             grid_i: 2,
             menu: None,
             active: 0,
@@ -222,6 +234,7 @@ impl App {
             cursor_mm: None,
             note_text: String::new(),
             note_at: None,
+            hl: None,
             note_status: None,
             dirty: true,
             open_path: String::new(),
@@ -315,6 +328,13 @@ impl App {
                     self.needs_wide = !style::has_wide()
                         && serde_json::to_string(&l.data.parts)
                             .is_ok_and(|t| style::needs_wide(&t));
+                    if let Some(h) = &mut self.hl {
+                        h.rebuild(
+                            &l.analysis.geometry.copper,
+                            &l.analysis.fills,
+                            l.data.board.stackup.copper_layers,
+                        );
+                    }
                     self.loaded = Some(l);
                     self.error = None;
                     self.last_reload = Some(now);
@@ -326,6 +346,11 @@ impl App {
     }
 
     fn is_visible(&self, l: SceneLayer) -> bool {
+        if let (true, SceneLayer::Copper(i)) = (self.single, l) {
+            if i != self.active {
+                return false;
+            }
+        }
         self.visible.get(&l).copied().unwrap_or(true)
     }
 
@@ -349,6 +374,13 @@ impl App {
             self.cam_fitted = true;
             self.dirty = true;
         }
+    }
+
+    /// The top or the bottom view in 3D, with the board fitted in it.
+    fn look_straight(&mut self, from_top: bool, size_px: Vec2) {
+        self.fit_3d(size_px);
+        self.cam.look_straight(from_top);
+        self.dirty = true;
     }
 
     fn zoom_to(&mut self, at: Point, span_mm: f64, size_px: Vec2) {
@@ -860,10 +892,23 @@ impl App {
                         if !matches!(layer, SceneLayer::Copper(_)) && !present.contains(layer) {
                             continue;
                         }
-                        let mut on = self.visible.get(layer).copied().unwrap_or(true);
+                        // The row shows what the canvas shows, also in single-layer mode.
+                        let single_hides = self.single
+                            && matches!(layer, SceneLayer::Copper(i) if *i != self.active);
+                        let mut on =
+                            !single_hides && self.visible.get(layer).copied().unwrap_or(true);
                         let color = rgba(lamina_scene::theme::layer_color(*layer, n));
                         if widgets::layer_row(ui, &layer.name(n), color, count(*layer), &mut on) {
-                            self.visible.insert(*layer, on);
+                            match (self.single, layer) {
+                                // In single-layer mode, a copper row picks the layer to show.
+                                (true, SceneLayer::Copper(i)) => {
+                                    self.active = *i;
+                                    self.visible.insert(*layer, true);
+                                }
+                                _ => {
+                                    self.visible.insert(*layer, on);
+                                }
+                            }
                             changed = true;
                         }
                     }
@@ -1256,10 +1301,31 @@ impl App {
         };
         match self.mode {
             Mode::TwoD => {
-                if inside && (scroll != 0.0 || zoom_gesture != 1.0) {
-                    let pos = hover_pos.unwrap();
+                // + and - zoom at the pointer (or at the centre), as the wheel does.
+                let key_zoom = if focus_free {
+                    ui.input(|i| {
+                        let plus =
+                            i.key_pressed(egui::Key::Plus) || i.key_pressed(egui::Key::Equals);
+                        let minus = i.key_pressed(egui::Key::Minus);
+                        if i.modifiers.command {
+                            1.0
+                        } else if plus {
+                            1.3
+                        } else if minus {
+                            1.0 / 1.3
+                        } else {
+                            1.0
+                        }
+                    })
+                } else {
+                    1.0
+                };
+                if key_zoom != 1.0 || (inside && (scroll != 0.0 || zoom_gesture != 1.0)) {
+                    let pos = hover_pos
+                        .filter(|p| rect.contains(*p))
+                        .unwrap_or(rect.center());
                     let before = xf.to_board(pos);
-                    let factor = (scroll as f64 * 0.0018).exp() * zoom_gesture as f64;
+                    let factor = (scroll as f64 * 0.0018).exp() * zoom_gesture as f64 * key_zoom;
                     self.ppm = (self.ppm * factor).clamp(0.5, 4000.0);
                     let xf2 = Xf {
                         rect,
@@ -1318,10 +1384,38 @@ impl App {
                 self.cursor_mm = None;
                 self.hover = None;
                 if inside && (scroll != 0.0 || zoom_gesture != 1.0) {
-                    self.cam.distance = (self.cam.distance * (-(scroll * 0.0018)).exp()
-                        / zoom_gesture)
-                        .clamp(2.0, 5000.0);
+                    let factor = (-(scroll * 0.0018)).exp() / zoom_gesture;
+                    // Zoom toward the point of the board under the pointer, as in
+                    // other viewers. Off the board, zoom toward the centre.
+                    let pos = hover_pos.unwrap();
+                    let ndc = [
+                        (pos.x - rect.left()) / rect.width() * 2.0 - 1.0,
+                        1.0 - (pos.y - rect.top()) / rect.height() * 2.0,
+                    ];
+                    let aspect = rect.width() / rect.height().max(1.0);
+                    match self.cam.hit_plane(aspect, ndc, self.cam.target[2]) {
+                        Some(at) => self.cam.zoom_about(at, factor),
+                        None => self.cam.distance = (self.cam.distance * factor).clamp(2.0, 5000.0),
+                    }
                     self.dirty = true;
+                }
+                if focus_free {
+                    let k = |key| ui.input(|i| i.key_pressed(key) && !i.modifiers.command);
+                    if k(egui::Key::T) {
+                        self.look_straight(true, size_px);
+                        self.dirty = true;
+                    }
+                    if k(egui::Key::B) {
+                        self.look_straight(false, size_px);
+                        self.dirty = true;
+                    }
+                    if k(egui::Key::I) {
+                        self.fit_3d(size_px);
+                    }
+                    if k(egui::Key::P) {
+                        self.models = !self.models;
+                        self.dirty = true;
+                    }
                 }
                 if resp.dragged_by(egui::PointerButton::Primary) {
                     let d = resp.drag_delta();
@@ -1379,13 +1473,13 @@ impl App {
                 match self.mode {
                     Mode::TwoD => {
                         if let Some(g) = &self.g2d {
-                            let vis = |l: SceneLayer| self.visible.get(&l).copied().unwrap_or(true);
+                            let vis = |l: SceneLayer| self.is_visible(l);
                             gpu.draw_2d(t, g, self.center, self.ppm, &vis);
                         }
                     }
                     Mode::ThreeD => {
                         if let Some(g) = &self.g3d {
-                            gpu.draw_3d(t, g, &self.cam);
+                            gpu.draw_3d_with(t, g, &self.cam, self.models);
                         }
                     }
                 }
@@ -1417,12 +1511,12 @@ impl App {
             widgets::hint(
                 &painter,
                 rect,
-                "Drag to orbit · right-drag to pan · scroll to zoom · F to fit",
+                "Drag to orbit · right-drag to pan · scroll to zoom at the pointer · T top · B bottom · I reset · P parts",
             );
-            // The Board menu works from 3D too.
+            // The view buttons, and the Board menu, which works from 3D too.
             let bar = ERect::from_min_size(
                 rect.left_top() + Vec2::new(12.0, 12.0),
-                Vec2::new(200.0, 36.0),
+                Vec2::new(rect.width() - 24.0, 36.0),
             );
             let mut b = ui.new_child(
                 egui::UiBuilder::new()
@@ -1433,8 +1527,36 @@ impl App {
                 .fill(RAISED.gamma_multiply(0.97))
                 .stroke(Stroke::new(1.0, HAIRLINE))
                 .corner_radius(CornerRadius::same(9))
-                .inner_margin(egui::Margin::symmetric(8, 6))
-                .show(&mut b, |ui| self.board_menu(ui));
+                .inner_margin(egui::Margin::symmetric(4, 4))
+                .show(&mut b, |ui| {
+                    ui.spacing_mut().item_spacing.x = 2.0;
+                    ui.horizontal(|ui| {
+                        let top = self.cam.pitch > 89.0;
+                        let bottom = self.cam.pitch < -89.0;
+                        if widgets::tool_button(ui, "Top", "T", top).clicked() {
+                            self.look_straight(true, size_px);
+                            self.dirty = true;
+                        }
+                        if widgets::tool_button(ui, "Bottom", "B", bottom).clicked() {
+                            self.look_straight(false, size_px);
+                            self.dirty = true;
+                        }
+                        if widgets::tool_button(ui, "Reset", "I", false).clicked() {
+                            self.fit_3d(size_px);
+                        }
+                        widgets::vdivider(ui);
+                        if widgets::tool_button(ui, "Parts", "P", self.models)
+                            .on_hover_text("Show or hide the part bodies")
+                            .clicked()
+                        {
+                            self.models = !self.models;
+                            self.dirty = true;
+                        }
+                        widgets::vdivider(ui);
+                        ui.add_space(4.0);
+                        self.board_menu(ui);
+                    });
+                });
         }
         // Toasts show in both views. A "…" message stays while its work runs.
         let working = self.editor.as_ref().is_some_and(|e| e.busy > 0) || !self.bg.is_empty();
@@ -1456,7 +1578,42 @@ impl App {
 
     fn overlays(&self, painter: &egui::Painter, xf: &Xf) {
         let Some(l) = &self.loaded else { return };
+        if let Some(h) = &self.hl {
+            let n = l.data.board.stackup.copper_layers;
+            h.draw(
+                painter,
+                xf.rect,
+                |p| xf.to_screen(p),
+                |i| {
+                    let layer = SceneLayer::Copper(i);
+                    self.is_visible(layer).then(|| {
+                        let c = lamina_scene::theme::layer_color(layer, n);
+                        Color32::from_rgb(c[0], c[1], c[2])
+                    })
+                },
+                self.g2d_bright,
+            );
+            widgets::banner(
+                painter,
+                xf.rect,
+                &format!("Net {} · {} items · ` or Esc to clear", h.net, h.items),
+                0,
+            );
+        }
+        if self.single {
+            let n = l.data.board.stackup.copper_layers;
+            widgets::banner(
+                painter,
+                xf.rect,
+                &format!(
+                    "Single layer: {} · Shift+S to show all",
+                    SceneLayer::Copper(self.active).name(n)
+                ),
+                if self.hl.is_some() { 1 } else { 0 },
+            );
+        }
         self.pad_labels(painter, xf, &l.data);
+        self.track_labels(painter, xf, &l.data);
         // Outline the net under the cursor in the accent colour.
         let focus = self.hover.as_ref();
         if let Some(net) = focus.and_then(|p| p.net()) {
@@ -1529,6 +1686,20 @@ impl App {
 }
 
 impl App {
+    /// Highlight a net, or clear the highlight with `None`.
+    pub(crate) fn highlight_net(&mut self, net: Option<String>) {
+        self.hl = match (net, &self.loaded) {
+            (Some(n), Some(l)) => Some(highlight::NetHighlight::new(
+                n,
+                &l.analysis.geometry.copper,
+                &l.analysis.fills,
+                l.data.board.stackup.copper_layers,
+            )),
+            _ => None,
+        };
+        self.dirty = true;
+    }
+
     /// The copper layer to draw at full strength: the active layer, or the
     /// first copper layer that shows if the active layer is hidden.
     fn bright_copper_of(&self, s2: &lamina_scene::Scene2D) -> u8 {
@@ -1541,6 +1712,58 @@ impl App {
             .unwrap_or(self.active)
     }
 
+    /// The net name on each track, along its longest segment on the screen,
+    /// when the zoom gives it room.
+    fn track_labels(&self, painter: &egui::Painter, xf: &Xf, d: &ProjectData) {
+        let n = d.board.stackup.copper_layers;
+        let advance = painter
+            .layout_no_wrap("0000000000".into(), mono(100.0), Color32::WHITE)
+            .size()
+            .x
+            / 1000.0;
+        let clip = painter.clip_rect();
+        for t in &d.routing.tracks {
+            let Some(c) = t.layer.copper() else { continue };
+            let layer = c.index(n);
+            if !self.is_visible(SceneLayer::Copper(layer)) {
+                continue;
+            }
+            if let Some(h) = &self.hl {
+                if h.net != t.net {
+                    continue;
+                }
+            }
+            let w_px = (t.width * xf.ppm_pt) as f32;
+            let size = (w_px * 0.72).min(11.0);
+            if size < labels::MIN_NUMBER {
+                continue;
+            }
+            let Some((a, b)) = t
+                .points
+                .windows(2)
+                .map(|w| (xf.to_screen(w[0]), xf.to_screen(w[1])))
+                .max_by(|x, y| (x.1 - x.0).length().total_cmp(&(y.1 - y.0).length()))
+            else {
+                continue;
+            };
+            let text_w = t.net.chars().count() as f32 * advance * size;
+            if (b - a).length() < text_w + 4.0 * w_px {
+                continue;
+            }
+            let mid = a + (b - a) * 0.5;
+            if !clip.contains(mid) {
+                continue;
+            }
+            let ink = if layer == self.g2d_bright {
+                NAME_INK
+            } else {
+                NAME_INK.gamma_multiply(0.6)
+            };
+            let g = painter.layout_no_wrap(t.net.clone(), mono(size), ink);
+            label(painter, mid, labels::upright((b - a).angle()), g);
+        }
+    }
+
     /// Pad numbers and pin names on the pads, when the zoom gives them room.
     fn pad_labels(&self, painter: &egui::Painter, xf: &Xf, d: &ProjectData) {
         let n = d.board.stackup.copper_layers;
@@ -1550,6 +1773,13 @@ impl App {
             .size()
             .x
             / 1000.0;
+        // A pad without a pin name shows its net, as in other editors.
+        let mut net_of: std::collections::HashMap<(&str, &str), &str> = Default::default();
+        for (name, net) in &d.nets.nets {
+            for pr in &net.pads {
+                net_of.insert((pr.part.as_str(), pr.pad.as_str()), name.as_str());
+            }
+        }
         for (refdes, pl) in &d.placement.placements {
             let Some(fp) = d
                 .parts
@@ -1602,9 +1832,14 @@ impl App {
             };
             let mut cap: BTreeMap<(i64, i64, i64), f32> = BTreeMap::new();
             for (pad, view) in &views {
-                if let Some(size) =
-                    labels::comfortable(*view, &pad.number, pad.name.as_deref(), advance)
-                {
+                if let Some(size) = labels::comfortable(
+                    *view,
+                    &pad.number,
+                    pad.name
+                        .as_deref()
+                        .or(net_of.get(&(refdes.as_str(), pad.number.as_str())).copied()),
+                    advance,
+                ) {
                     let c = cap.entry(key(pad)).or_insert(size);
                     *c = c.min(size);
                 }
@@ -1613,8 +1848,15 @@ impl App {
                 let Some(&max) = cap.get(&key(pad)) else {
                     continue;
                 };
-                let Some(fit) = labels::fit(view, &pad.number, pad.name.as_deref(), advance, max)
-                else {
+                let Some(fit) = labels::fit(
+                    view,
+                    &pad.number,
+                    pad.name
+                        .as_deref()
+                        .or(net_of.get(&(refdes.as_str(), pad.number.as_str())).copied()),
+                    advance,
+                    max,
+                ) else {
                     continue;
                 };
                 let c = xf.to_screen(pl.transform(pad.at));
