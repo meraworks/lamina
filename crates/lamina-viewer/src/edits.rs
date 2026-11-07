@@ -496,24 +496,68 @@ pub fn push_aside(
             .count()
     };
     let open_before = open_of(d);
+    // Take each track in the way out and route it again between its own two
+    // ends, with its own width and layer, around the new copper. So the push
+    // changes only these tracks, keeps their widths and leaves no stubs.
+    let removed: Vec<Track> = d
+        .routing
+        .tracks
+        .iter()
+        .filter(|t| hit.contains(&t.id))
+        .cloned()
+        .collect();
     d.routing.tracks.retain(|t| !hit.contains(&t.id));
-    let out = lamina_route::autoroute(
-        d,
-        &lamina_route::RouteOptions {
-            nets: Some(nets.clone()),
-            time_limit: Some(10.0),
-            ..Default::default()
-        },
-    )?;
-    d.routing.tracks.extend(out.tracks);
-    d.routing.vias.extend(out.vias);
+    let mut stuck: Vec<String> = Vec::new();
+    for t in &removed {
+        let (Some(&from), Some(&to)) = (t.points.first(), t.points.last()) else {
+            continue;
+        };
+        let walk = lamina_route::Walk {
+            net: t.net.clone(),
+            layer: t.layer,
+            width: t.width,
+            from,
+            to,
+            grid: (t.width / 2.0).clamp(0.05, 0.1),
+        };
+        match lamina_route::walkaround(d, &walk) {
+            Some(points) => {
+                let id = new_id(d, "t");
+                d.routing.tracks.push(Track {
+                    id,
+                    net: t.net.clone(),
+                    layer: t.layer,
+                    width: t.width,
+                    points: points.into_iter().map(p6).collect(),
+                });
+            }
+            None => {
+                if !stuck.contains(&t.net) {
+                    stuck.push(t.net.clone());
+                }
+            }
+        }
+    }
+    // A track with no path between its ends on its layer: let the router
+    // connect the net again, on any layer.
+    let mut why = String::new();
+    if !stuck.is_empty() {
+        let out = lamina_route::autoroute(
+            d,
+            &lamina_route::RouteOptions {
+                nets: Some(stuck.clone()),
+                time_limit: Some(10.0),
+                ..Default::default()
+            },
+        )?;
+        if let Some(f) = out.failed.first() {
+            why = format!(" ({})", f.reason);
+        }
+        d.routing.tracks.extend(out.tracks);
+        d.routing.vias.extend(out.vias);
+    }
     // A failure of a connection that was open before the push does not count.
     if open_of(d) > open_before {
-        let why = out
-            .failed
-            .first()
-            .map(|f| format!(" ({})", f.reason))
-            .unwrap_or_default();
         return Err(format!(
             "There is no room to move {} aside{why}. Use walkaround (Shift+R), or route on another layer.",
             nets.join(", ")
@@ -922,8 +966,17 @@ mod tests {
             width: 0.25,
             points: vec![Point::new(15.0, 4.0), Point::new(15.0, 16.0)],
         });
+        // A hand-set width on the track of A.
+        for t in d.routing.tracks.iter_mut().filter(|t| t.net == "A") {
+            t.width = 0.4;
+        }
+        let tracks_of_a = d.routing.tracks.iter().filter(|t| t.net == "A").count();
         let msg = push_aside(&mut d, "X", &["tx".to_string()], &[]).unwrap();
         assert!(msg.contains('A'), "{msg}");
+        // The moved track keeps its width, and no piece of it stays behind.
+        let a: Vec<&Track> = d.routing.tracks.iter().filter(|t| t.net == "A").collect();
+        assert_eq!(a.len(), tracks_of_a, "{a:?}");
+        assert!(a.iter().all(|t| (t.width - 0.4).abs() < 1e-9), "{a:?}");
         let a = lamina_drc::analyze(&d);
         assert!(
             a.ratsnest.is_empty(),

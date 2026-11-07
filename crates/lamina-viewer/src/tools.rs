@@ -90,6 +90,18 @@ impl RouteMode {
     }
 }
 
+/// The result of a push for the route to the pointer, to show it before the click.
+pub struct PushPreview {
+    /// The route that the preview is for (see `App::push_key`).
+    pub key: String,
+    /// The tracks that the push takes out.
+    pub removed: Vec<String>,
+    /// The tracks that the push puts in their place.
+    pub added: Vec<lamina_model::Track>,
+    /// Why the push cannot be done, if it cannot.
+    pub error: Option<String>,
+}
+
 /// An action of the right-click menu.
 #[derive(Clone)]
 enum MenuAct {
@@ -965,8 +977,99 @@ impl App {
         true
     }
 
+    /// A key for the route in progress with the segments to `target`.
+    fn push_key(&self, target: Point) -> String {
+        format!(
+            "{:?}{:?}{}{}",
+            self.route, target, self.diagonal_first, self.grid_i
+        )
+    }
+
+    /// Push mode: when the pointer stops, find what the push does to the other
+    /// tracks for the route to the pointer, as other editors show it live.
+    fn update_push_preview(&mut self, ctx: &egui::Context, target: Point) {
+        let Some(r) = &self.route else {
+            self.push_preview = None;
+            return;
+        };
+        if self.route_mode != RouteMode::Push {
+            self.push_preview = None;
+            return;
+        }
+        let key = self.push_key(target);
+        if self.push_preview.as_ref().is_some_and(|p| p.key == key) {
+            return;
+        }
+        let waited = match &self.push_wait {
+            Some((k, t)) if *k == key => t.elapsed(),
+            _ => {
+                self.push_wait = Some((key, Instant::now()));
+                ctx.request_repaint_after(std::time::Duration::from_millis(160));
+                return;
+            }
+        };
+        if waited < std::time::Duration::from_millis(150) {
+            ctx.request_repaint_after(std::time::Duration::from_millis(160) - waited);
+            return;
+        }
+        let Some(l) = &self.loaded else { return };
+        let mut d = l.data.clone();
+        let mut draft = r.clone();
+        let last = *draft.runs.last().unwrap().1.last().unwrap();
+        if target.dist(last) > 1e-9 {
+            draft
+                .runs
+                .last_mut()
+                .unwrap()
+                .1
+                .extend(posture(last, target, self.diagonal_first));
+        }
+        let old: Vec<String> = d.routing.tracks.iter().map(|t| t.id.clone()).collect();
+        let old_vias: Vec<String> = d.routing.vias.iter().map(|v| v.id.clone()).collect();
+        let result = edits::add_route(&mut d, &draft).and_then(|_| {
+            let new: Vec<String> = d
+                .routing
+                .tracks
+                .iter()
+                .map(|t| t.id.clone())
+                .filter(|id| !old.contains(id))
+                .collect();
+            let new_vias: Vec<String> = d
+                .routing
+                .vias
+                .iter()
+                .map(|v| v.id.clone())
+                .filter(|id| !old_vias.contains(id))
+                .collect();
+            edits::push_aside(&mut d, &draft.net, &new, &new_vias)
+        });
+        let now: Vec<&String> = d.routing.tracks.iter().map(|t| &t.id).collect();
+        let (removed, added, error) = match result {
+            Ok(_) => (
+                old.iter().filter(|id| !now.contains(id)).cloned().collect(),
+                d.routing
+                    .tracks
+                    .iter()
+                    .filter(|t| t.net != draft.net && !old.contains(&t.id))
+                    .cloned()
+                    .collect(),
+                None,
+            ),
+            Err(e) => (Vec::new(), Vec::new(), Some(e)),
+        };
+        self.push_preview = Some(PushPreview {
+            key: self.push_key(target),
+            removed,
+            added,
+            error,
+        });
+        self.push_wait = None;
+        self.dirty = true;
+    }
+
     fn route_input(&mut self, resp: &egui::Response, p: Point, ps: Point) {
         let Some(r) = &self.route else {
+            self.push_preview = None;
             if resp.clicked() {
                 self.start_route(p);
             }
@@ -975,6 +1078,8 @@ impl App {
         let li = self.index_of(r.runs.last().unwrap().0);
         let hit = self.magnet(p, Some(li), Some(&r.net));
         let target = hit.as_ref().map(|m| m.at).unwrap_or(ps);
+        self.update_push_preview(&resp.ctx, target);
+        let Some(r) = &self.route else { return };
         if resp.clicked() || resp.double_clicked() {
             let diag = self.diagonal_first;
             let start = r.runs[0].1[0];
@@ -989,6 +1094,18 @@ impl App {
                 on_tracks |= t;
                 on_other |= o;
                 prev = p;
+            }
+            if self.route_mode == RouteMode::Push && on_tracks && !on_other {
+                if let Some(e) = self
+                    .push_preview
+                    .as_ref()
+                    .filter(|pv| pv.key == self.push_key(target))
+                    .and_then(|pv| pv.error.clone())
+                {
+                    self.say(e, false);
+                    self.dirty = true;
+                    return;
+                }
             }
             let walk = target.dist(last) > 1e-6
                 && match self.route_mode {
@@ -1331,7 +1448,7 @@ impl App {
                         "Walkaround routing: a segment goes around the copper of other nets"
                     }
                     RouteMode::Push => {
-                        "Push routing: the tracks of other nets in the way move aside when the route is done"
+                        "Push routing: the tracks of other nets in the way move aside. Stop the pointer to see where they go"
                     }
                 },
                 true,
@@ -1751,6 +1868,48 @@ impl App {
             self.ghost_part(painter, xf, &pl.refdes, &placement, ACCENT);
         }
 
+        // Push preview: the tracks that move, where they go.
+        if let (Some(pv), Some(r), Some(p)) = (&self.push_preview, &self.route, cur) {
+            let li = self.index_of(r.runs.last().unwrap().0);
+            let target = self
+                .magnet(p, Some(li), Some(&r.net))
+                .map(|m| m.at)
+                .unwrap_or_else(|| snap_pt(p, self.grid()));
+            if pv.key == self.push_key(target) {
+                for t in l
+                    .data
+                    .routing
+                    .tracks
+                    .iter()
+                    .filter(|t| pv.removed.contains(&t.id))
+                {
+                    // Cover the old place of the track.
+                    self.track_line(
+                        painter,
+                        xf,
+                        &t.points,
+                        t.width * 1.6,
+                        CANVAS_EDGE.gamma_multiply(0.9),
+                    );
+                }
+                for t in &pv.added {
+                    let c = self.layer_color(self.index_of(t.layer));
+                    self.track_line(
+                        painter,
+                        xf,
+                        &t.points,
+                        t.width,
+                        Color32::from_rgb(c.r(), c.g(), c.b()).gamma_multiply(0.8),
+                    );
+                    for w in t.points.windows(2) {
+                        painter.line_segment(
+                            [xf.to_screen(w[0]), xf.to_screen(w[1])],
+                            Stroke::new(1.0, ACCENT),
+                        );
+                    }
+                }
+            }
+        }
         // Route draft.
         if let (Some(r), Some(p)) = (&self.route, cur) {
             for (layer, pts) in &r.runs {
@@ -1812,8 +1971,26 @@ impl App {
                 match (bad, self.route_mode) {
                     (true, RouteMode::Walkaround) =>
                         " · too close: a click goes around".to_string(),
-                    (true, RouteMode::Push) =>
-                        " · too close: tracks move aside at the end".to_string(),
+                    (true, RouteMode::Push) => {
+                        match self
+                            .push_preview
+                            .as_ref()
+                            .filter(|pv| pv.key == self.push_key(target))
+                        {
+                            Some(PushPreview { error: Some(_), .. }) => {
+                                " · push: no room to move the tracks aside".to_string()
+                            }
+                            Some(pv) => format!(
+                                " · push: {} aside",
+                                if pv.removed.len() == 1 {
+                                    "1 track moves".to_string()
+                                } else {
+                                    format!("{} tracks move", pv.removed.len())
+                                }
+                            ),
+                            None => " · push: stop the pointer to see it".to_string(),
+                        }
+                    }
                     (true, RouteMode::Direct) => " · too close".to_string(),
                     (false, m) => format!(" · {}", m.name()),
                 }

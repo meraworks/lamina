@@ -130,6 +130,11 @@ pub(crate) struct App {
     models: bool,
     /// How the route tool treats the copper of other nets.
     route_mode: tools::RouteMode,
+    /// Push mode: what the push does to the other tracks for the route to the
+    /// pointer, made when the pointer stops.
+    push_preview: Option<tools::PushPreview>,
+    /// The route to the pointer that waits for a push preview, and since when.
+    push_wait: Option<(String, Instant)>,
     grid_i: usize,
     /// The right-click menu: where it was opened and what was under the pointer.
     menu: Option<(Point, Option<Pick>)>,
@@ -222,6 +227,8 @@ impl App {
             single: false,
             models: true,
             route_mode: tools::RouteMode::Walkaround,
+            push_preview: None,
+            push_wait: None,
             grid_i: 2,
             menu: None,
             active: 0,
