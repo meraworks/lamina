@@ -991,26 +991,36 @@ impl App {
     fn update_push_preview(&mut self, ctx: &egui::Context, target: Point) {
         let Some(r) = &self.route else {
             self.push_preview = None;
+            self.seg_preview = None;
             return;
         };
+        let key = self.push_key(target);
+        // 1. The segment that a click adds (the walkaround path, if it goes
+        // around), once the pointer stops for a moment.
+        if self.seg_preview.as_ref().is_none_or(|(k, _)| *k != key) {
+            let wait = std::time::Duration::from_millis(40);
+            let waited = match &self.push_wait {
+                Some((k, t)) if *k == key => t.elapsed(),
+                _ => {
+                    self.push_wait = Some((key, Instant::now()));
+                    ctx.request_repaint_after(wait + std::time::Duration::from_millis(5));
+                    return;
+                }
+            };
+            if waited < wait {
+                ctx.request_repaint_after(wait - waited + std::time::Duration::from_millis(5));
+                return;
+            }
+            let seg = self.next_segment(target).map_err(str::to_string);
+            self.seg_preview = Some((key.clone(), seg));
+            self.dirty = true;
+        }
+        // 2. Push mode: what the push does to the other tracks.
         if self.route_mode != RouteMode::Push {
             self.push_preview = None;
             return;
         }
-        let key = self.push_key(target);
         if self.push_preview.as_ref().is_some_and(|p| p.key == key) {
-            return;
-        }
-        let waited = match &self.push_wait {
-            Some((k, t)) if *k == key => t.elapsed(),
-            _ => {
-                self.push_wait = Some((key, Instant::now()));
-                ctx.request_repaint_after(std::time::Duration::from_millis(160));
-                return;
-            }
-        };
-        if waited < std::time::Duration::from_millis(150) {
-            ctx.request_repaint_after(std::time::Duration::from_millis(160) - waited);
             return;
         }
         // A result of the worker thread for this route.
@@ -1019,33 +1029,31 @@ impl App {
                 self.push_job = None;
                 if pv.key == key {
                     self.push_preview = Some(pv);
-                    self.push_wait = None;
                     self.dirty = true;
                 }
                 return;
             }
             // The worker is busy with this or an older route; look again soon.
-            ctx.request_repaint_after(std::time::Duration::from_millis(60));
+            ctx.request_repaint_after(std::time::Duration::from_millis(30));
             return;
         }
-        // The segment that a click adds, as the click makes it.
         let li = self.index_of(r.runs.last().unwrap().0);
         let last = *r.runs.last().unwrap().1.last().unwrap();
-        let seg = match self.next_segment(target) {
-            Ok(seg) => seg,
-            Err(e) => {
+        let seg = match self.seg_preview.as_ref().map(|(_, s)| s.clone()) {
+            Some(Ok(seg)) => seg,
+            Some(Err(e)) => {
                 self.push_preview = Some(PushPreview {
                     key,
                     removed: Vec::new(),
                     added: Vec::new(),
-                    error: Some(e.to_string()),
+                    error: Some(e),
                 });
-                self.push_wait = None;
                 self.dirty = true;
                 return;
             }
+            None => return,
         };
-        // A preview only when the segment is on tracks of other nets.
+        // A push only when the segment is on tracks of other nets.
         let mut prev = last;
         let mut on_tracks = false;
         for &p in &seg {
@@ -1053,7 +1061,12 @@ impl App {
             prev = p;
         }
         if !on_tracks {
-            self.push_preview = None;
+            self.push_preview = Some(PushPreview {
+                key,
+                removed: Vec::new(),
+                added: Vec::new(),
+                error: None,
+            });
             return;
         }
         let Some(l) = &self.loaded else { return };
@@ -1982,10 +1995,28 @@ impl App {
                 .magnet(p, Some(li), Some(&r.net))
                 .map(|m| m.at)
                 .unwrap_or_else(|| snap_pt(p, self.grid()));
+            // The line to the pointer is the segment that a click adds: the
+            // walkaround path when it goes around, else the straight segments.
             let mut pts = vec![last];
-            pts.extend(posture(last, target, self.diagonal_first));
+            let walked = match self
+                .seg_preview
+                .as_ref()
+                .filter(|(k, _)| *k == self.push_key(target))
+            {
+                Some((_, Ok(seg))) => {
+                    pts.extend(seg.iter().copied());
+                    *seg != posture(last, target, self.diagonal_first)
+                }
+                _ => {
+                    pts.extend(posture(last, target, self.diagonal_first));
+                    false
+                }
+            };
+            // The first segment of a walk can start in a band where the last
+            // corner is; it is not an error of this segment.
             let bad = pts
                 .windows(2)
+                .skip(usize::from(walked && pts.len() > 2))
                 .any(|w| self.conflicts(w[0], w[1], li, &r.net, r.width));
             let c = self.layer_color(li);
             let col = if bad {

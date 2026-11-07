@@ -598,12 +598,20 @@ pub fn push_aside(
     // A track with no clear path between its ends on its layer: let the router
     // connect the net again, on any layer.
     let mut why = String::new();
-    if !stuck.is_empty() {
+    for n in &stuck {
+        // The router routes the net with the width of its moved track, so
+        // that a width set by hand stays.
+        let width = removed
+            .iter()
+            .filter(|t| &t.net == n)
+            .map(|t| t.width)
+            .fold(0.0, f64::max);
         let out = lamina_route::autoroute(
             d,
             &lamina_route::RouteOptions {
-                nets: Some(stuck.clone()),
+                nets: Some(vec![n.clone()]),
                 time_limit: Some(10.0),
+                track_width: (width > 0.0).then_some(width),
                 ..Default::default()
             },
         )?;

@@ -48,6 +48,9 @@ pub struct RouteOptions {
     /// The maximum number of rip-up-and-reroute passes (default 40).
     #[serde(default)]
     pub passes: Option<u32>,
+    /// The width of all new tracks in mm (default: the width of the net class).
+    #[serde(default)]
+    pub track_width: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
@@ -215,6 +218,8 @@ struct Ctx<'a> {
     deadline: Instant,
     net_ids: BTreeMap<String, u32>,
     net_class: Vec<Option<String>>,
+    /// The track width that the options set, instead of the class width.
+    width: Option<f64>,
     geo: lamina_geom::BoardGeometry,
     profiles: Vec<Statics>,
     hist: Vec<f32>,
@@ -323,6 +328,7 @@ impl<'a> Ctx<'a> {
                 + Duration::from_secs_f64(opt.time_limit.unwrap_or(60.0).clamp(1.0, 3600.0)),
             net_ids,
             net_class,
+            width: opt.track_width.filter(|w| *w > 0.0),
             geo: lamina_geom::build(d),
             profiles: Vec::new(),
             hist: vec![0.0; n],
@@ -339,7 +345,7 @@ impl<'a> Ctx<'a> {
         let r = &self.d.board.rules;
         let class = self.class_of(Some(net));
         let nc = r.class(class);
-        let mut w = r.track_width_for(class);
+        let mut w = self.width.unwrap_or_else(|| r.track_width_for(class));
         if narrow {
             w = w.min(r.min_track_width);
         }

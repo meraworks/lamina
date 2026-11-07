@@ -135,6 +135,9 @@ pub(crate) struct App {
     push_preview: Option<tools::PushPreview>,
     /// The route to the pointer that waits for a push preview, and since when.
     push_wait: Option<(String, Instant)>,
+    /// The segment that a click adds for the route to the pointer, made when
+    /// the pointer stops for a moment: (key, points or why there is none).
+    seg_preview: Option<(String, Result<Vec<Point>, String>)>,
     /// The worker thread that makes a push preview.
     push_job: Option<std::sync::mpsc::Receiver<tools::PushPreview>>,
     grid_i: usize,
@@ -231,6 +234,7 @@ impl App {
             route_mode: tools::RouteMode::Walkaround,
             push_preview: None,
             push_wait: None,
+            seg_preview: None,
             push_job: None,
             grid_i: 2,
             menu: None,

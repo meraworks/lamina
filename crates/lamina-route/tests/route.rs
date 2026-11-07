@@ -233,3 +233,20 @@ fn walkaround_to_the_same_point_does_not_fail() {
     assert_eq!(pts.first(), Some(&w.from));
     assert_eq!(pts.last(), Some(&w.to));
 }
+
+#[test]
+fn a_track_width_in_the_options_is_used() {
+    let d = board();
+    let opt = RouteOptions {
+        nets: Some(vec!["A".into()]),
+        track_width: Some(0.4),
+        ..Default::default()
+    };
+    let out = autoroute(&d, &opt).unwrap();
+    assert!(!out.tracks.is_empty());
+    assert!(
+        out.tracks.iter().all(|t| (t.width - 0.4).abs() < 1e-9),
+        "{:?}",
+        out.tracks
+    );
+}
