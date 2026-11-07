@@ -1074,6 +1074,10 @@ pub fn walkaround(d: &ProjectData, w: &Walk) -> Option<Vec<Point>> {
     let id = *ctx.net_ids.get(&w.net)?;
     let mut p = ctx.profile_for(&w.net, false);
     p.hw = w.width / 2.0;
+    // The search checks the clearance at cell centres, and a straight line
+    // between two cells can pass up to 0.71 pitch from them. A margin keeps
+    // the exact clearance.
+    p.cl += 0.75 * ctx.g.pitch;
     let pi = ctx.statics(p, &[]);
     // The time limit is for the search, not for the setup.
     ctx.deadline = Instant::now() + Duration::from_secs(1);

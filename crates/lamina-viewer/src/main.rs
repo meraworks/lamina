@@ -135,6 +135,8 @@ pub(crate) struct App {
     push_preview: Option<tools::PushPreview>,
     /// The route to the pointer that waits for a push preview, and since when.
     push_wait: Option<(String, Instant)>,
+    /// The worker thread that makes a push preview.
+    push_job: Option<std::sync::mpsc::Receiver<tools::PushPreview>>,
     grid_i: usize,
     /// The right-click menu: where it was opened and what was under the pointer.
     menu: Option<(Point, Option<Pick>)>,
@@ -229,6 +231,7 @@ impl App {
             route_mode: tools::RouteMode::Walkaround,
             push_preview: None,
             push_wait: None,
+            push_job: None,
             grid_i: 2,
             menu: None,
             active: 0,
@@ -356,6 +359,8 @@ impl App {
                     self.loaded = Some(l);
                     self.error = None;
                     self.last_reload = Some(now);
+                    // A preview of the board before the reload is stale.
+                    self.push_preview = None;
                     self.dirty = true;
                 }
                 Msg::Error(e) => self.error = Some(e),

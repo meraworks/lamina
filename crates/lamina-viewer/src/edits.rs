@@ -425,11 +425,14 @@ pub struct Route {
 /// Route again the tracks of other nets that are too close to the new tracks
 /// `new` of `net`, so that they go around them. If a net cannot be routed
 /// again, the edit fails and nothing changes.
+/// With `router` false, a track with no path between its ends makes the push
+/// fail, and the autorouter does not run (for a fast preview).
 pub fn push_aside(
     d: &mut ProjectData,
     net: &str,
     new: &[String],
     new_vias: &[String],
+    router: bool,
 ) -> EditResult {
     use lamina_geom::Prim;
     let caps = |t: &Track| -> Vec<Prim> {
@@ -508,10 +511,31 @@ pub fn push_aside(
         .collect();
     d.routing.tracks.retain(|t| !hit.contains(&t.id));
     let mut stuck: Vec<String> = Vec::new();
+    let mut moved: Vec<String> = Vec::new();
     for t in &removed {
         let (Some(&from), Some(&to)) = (t.points.first(), t.points.last()) else {
             continue;
         };
+        // Another track or a via of the net joins this track at a middle
+        // corner. A new path between the two ends only would cut it off.
+        let inner = &t.points[1..t.points.len().saturating_sub(1)];
+        let joined = d.routing.tracks.iter().any(|o| {
+            o.net == t.net
+                && [o.points.first(), o.points.last()]
+                    .into_iter()
+                    .flatten()
+                    .any(|e| inner.iter().any(|p| p.dist(*e) < 1e-6))
+        }) || d
+            .routing
+            .vias
+            .iter()
+            .any(|v| v.net == t.net && inner.iter().any(|p| p.dist(v.at) < 1e-6));
+        if joined {
+            if !stuck.contains(&t.net) {
+                stuck.push(t.net.clone());
+            }
+            continue;
+        }
         let walk = lamina_route::Walk {
             net: t.net.clone(),
             layer: t.layer,
@@ -523,6 +547,7 @@ pub fn push_aside(
         match lamina_route::walkaround(d, &walk) {
             Some(points) => {
                 let id = new_id(d, "t");
+                moved.push(id.clone());
                 d.routing.tracks.push(Track {
                     id,
                     net: t.net.clone(),
@@ -538,7 +563,39 @@ pub fn push_aside(
             }
         }
     }
-    // A track with no path between its ends on its layer: let the router
+    // A last check with exact geometry: the walk is on a grid, and it can
+    // start in a band. A moved track that is too close to other copper goes
+    // out again, and its net goes to the router.
+    let geo = lamina_geom::build(d);
+    let layers = d.board.stackup.copper_layers;
+    let mut bad: Vec<String> = Vec::new();
+    for t in d.routing.tracks.iter().filter(|t| moved.contains(&t.id)) {
+        let Some(c) = t.layer.copper() else { continue };
+        let li = c.index(layers);
+        let ours = caps(t);
+        let too_close = geo.copper.iter().any(|it| {
+            it.layer == li
+                && it.net.as_deref() != Some(t.net.as_str())
+                && ours.iter().any(|cap| {
+                    let clr = clearance(&t.net).max(it.net.as_deref().map_or(0.0, clearance));
+                    cap.distance(&it.prim) < clr - 1e-6
+                })
+        });
+        if too_close {
+            bad.push(t.id.clone());
+            if !stuck.contains(&t.net) {
+                stuck.push(t.net.clone());
+            }
+        }
+    }
+    d.routing.tracks.retain(|t| !bad.contains(&t.id));
+    if !stuck.is_empty() && !router {
+        return Err(format!(
+            "There is no room to move {} aside on its layer.",
+            stuck.join(", ")
+        ));
+    }
+    // A track with no clear path between its ends on its layer: let the router
     // connect the net again, on any layer.
     let mut why = String::new();
     if !stuck.is_empty() {
@@ -971,7 +1028,7 @@ mod tests {
             t.width = 0.4;
         }
         let tracks_of_a = d.routing.tracks.iter().filter(|t| t.net == "A").count();
-        let msg = push_aside(&mut d, "X", &["tx".to_string()], &[]).unwrap();
+        let msg = push_aside(&mut d, "X", &["tx".to_string()], &[], true).unwrap();
         assert!(msg.contains('A'), "{msg}");
         // The moved track keeps its width, and no piece of it stays behind.
         let a: Vec<&Track> = d.routing.tracks.iter().filter(|t| t.net == "A").collect();

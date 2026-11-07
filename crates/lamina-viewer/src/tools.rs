@@ -979,9 +979,10 @@ impl App {
 
     /// A key for the route in progress with the segments to `target`.
     fn push_key(&self, target: Point) -> String {
+        // The time of the last reload makes a preview of an older board stale.
         format!(
-            "{:?}{:?}{}{}",
-            self.route, target, self.diagonal_first, self.grid_i
+            "{:?}{:?}{}{}{:?}",
+            self.route, target, self.diagonal_first, self.grid_i, self.last_reload
         )
     }
 
@@ -1012,59 +1013,165 @@ impl App {
             ctx.request_repaint_after(std::time::Duration::from_millis(160) - waited);
             return;
         }
+        // A result of the worker thread for this route.
+        if let Some(rx) = &self.push_job {
+            if let Ok(pv) = rx.try_recv() {
+                self.push_job = None;
+                if pv.key == key {
+                    self.push_preview = Some(pv);
+                    self.push_wait = None;
+                    self.dirty = true;
+                }
+                return;
+            }
+            // The worker is busy with this or an older route; look again soon.
+            ctx.request_repaint_after(std::time::Duration::from_millis(60));
+            return;
+        }
+        // The segment that a click adds, as the click makes it.
+        let li = self.index_of(r.runs.last().unwrap().0);
+        let last = *r.runs.last().unwrap().1.last().unwrap();
+        let seg = match self.next_segment(target) {
+            Ok(seg) => seg,
+            Err(e) => {
+                self.push_preview = Some(PushPreview {
+                    key,
+                    removed: Vec::new(),
+                    added: Vec::new(),
+                    error: Some(e.to_string()),
+                });
+                self.push_wait = None;
+                self.dirty = true;
+                return;
+            }
+        };
+        // A preview only when the segment is on tracks of other nets.
+        let mut prev = last;
+        let mut on_tracks = false;
+        for &p in &seg {
+            on_tracks |= self.blockers(prev, p, li, &r.net, r.width).0;
+            prev = p;
+        }
+        if !on_tracks {
+            self.push_preview = None;
+            return;
+        }
         let Some(l) = &self.loaded else { return };
         let mut d = l.data.clone();
         let mut draft = r.clone();
-        let last = *draft.runs.last().unwrap().1.last().unwrap();
-        if target.dist(last) > 1e-9 {
-            draft
-                .runs
-                .last_mut()
-                .unwrap()
-                .1
-                .extend(posture(last, target, self.diagonal_first));
-        }
-        let old: Vec<String> = d.routing.tracks.iter().map(|t| t.id.clone()).collect();
-        let old_vias: Vec<String> = d.routing.vias.iter().map(|v| v.id.clone()).collect();
-        let result = edits::add_route(&mut d, &draft).and_then(|_| {
-            let new: Vec<String> = d
-                .routing
-                .tracks
-                .iter()
-                .map(|t| t.id.clone())
-                .filter(|id| !old.contains(id))
-                .collect();
-            let new_vias: Vec<String> = d
-                .routing
-                .vias
-                .iter()
-                .map(|v| v.id.clone())
-                .filter(|id| !old_vias.contains(id))
-                .collect();
-            edits::push_aside(&mut d, &draft.net, &new, &new_vias)
-        });
-        let now: Vec<&String> = d.routing.tracks.iter().map(|t| &t.id).collect();
-        let (removed, added, error) = match result {
-            Ok(_) => (
-                old.iter().filter(|id| !now.contains(id)).cloned().collect(),
-                d.routing
+        draft.runs.last_mut().unwrap().1.extend(seg);
+        // The push runs on a worker thread, so that the window does not stop.
+        let (tx, rx) = std::sync::mpsc::channel();
+        self.push_job = Some(rx);
+        let ctx = ctx.clone();
+        std::thread::spawn(move || {
+            let old: Vec<String> = d.routing.tracks.iter().map(|t| t.id.clone()).collect();
+            let old_vias: Vec<String> = d.routing.vias.iter().map(|v| v.id.clone()).collect();
+            let result = edits::add_route(&mut d, &draft).and_then(|_| {
+                let new: Vec<String> = d
+                    .routing
                     .tracks
                     .iter()
-                    .filter(|t| t.net != draft.net && !old.contains(&t.id))
-                    .cloned()
-                    .collect(),
-                None,
-            ),
-            Err(e) => (Vec::new(), Vec::new(), Some(e)),
-        };
-        self.push_preview = Some(PushPreview {
-            key: self.push_key(target),
-            removed,
-            added,
-            error,
+                    .map(|t| t.id.clone())
+                    .filter(|id| !old.contains(id))
+                    .collect();
+                let new_vias: Vec<String> = d
+                    .routing
+                    .vias
+                    .iter()
+                    .map(|v| v.id.clone())
+                    .filter(|id| !old_vias.contains(id))
+                    .collect();
+                edits::push_aside(&mut d, &draft.net, &new, &new_vias, false)
+            });
+            let now: Vec<&String> = d.routing.tracks.iter().map(|t| &t.id).collect();
+            let (removed, added, error) = match result {
+                Ok(_) => (
+                    old.iter().filter(|id| !now.contains(id)).cloned().collect(),
+                    d.routing
+                        .tracks
+                        .iter()
+                        .filter(|t| t.net != draft.net && !old.contains(&t.id))
+                        .cloned()
+                        .collect(),
+                    None,
+                ),
+                Err(e) => (Vec::new(), Vec::new(), Some(e)),
+            };
+            let _ = tx.send(PushPreview {
+                key,
+                removed,
+                added,
+                error,
+            });
+            ctx.request_repaint();
         });
-        self.push_wait = None;
-        self.dirty = true;
+    }
+
+    /// The points that a click to `target` adds to the route in progress: the
+    /// straight segments, or the walkaround path in the modes that go around.
+    fn next_segment(&self, target: Point) -> Result<Vec<Point>, &'static str> {
+        let Some(r) = &self.route else {
+            return Ok(Vec::new());
+        };
+        let li = self.index_of(r.runs.last().unwrap().0);
+        let last = *r.runs.last().unwrap().1.last().unwrap();
+        let pts = posture(last, target, self.diagonal_first);
+        let mut prev = last;
+        let (mut on_tracks, mut on_other) = (false, false);
+        for &p in &pts {
+            let (t, o) = self.blockers(prev, p, li, &r.net, r.width);
+            on_tracks |= t;
+            on_other |= o;
+            prev = p;
+        }
+        let walk = target.dist(last) > 1e-6
+            && match self.route_mode {
+                RouteMode::Direct => false,
+                RouteMode::Walkaround => on_tracks || on_other,
+                // Tracks move aside when the route is done; pads and vias do not.
+                RouteMode::Push => on_other,
+            };
+        if !walk {
+            return Ok(pts);
+        }
+        let w = lamina_route::Walk {
+            net: r.net.clone(),
+            layer: r.runs.last().unwrap().0,
+            width: r.width,
+            from: last,
+            to: target,
+            grid: (self.grid() / 2.0).clamp(0.05, 0.25),
+        };
+        // In push mode the walk goes around pads and vias only: the tracks of
+        // other nets move aside later.
+        let path = self.loaded.as_ref().and_then(|l| {
+            if self.route_mode == RouteMode::Push {
+                let mut d = l.data.clone();
+                d.routing.tracks.retain(|t| t.net == r.net);
+                lamina_route::walkaround(&d, &w)
+            } else {
+                lamina_route::walkaround(&l.data, &w)
+            }
+        });
+        let Some(path) = path else {
+            return Err(
+                "There is no clear path to here on this layer. Add a corner, or V for a via.",
+            );
+        };
+        // A last check with exact geometry: the search is on a grid. The first
+        // segment can start in a band where the user put the last corner, so it
+        // is not checked. In push mode only pads and vias count.
+        let clear = path.windows(2).skip(1).all(|s| {
+            let (t, o) = self.blockers(s[0], s[1], li, &r.net, r.width);
+            !o && (self.route_mode == RouteMode::Push || !t)
+        });
+        if !clear {
+            return Err(
+                "The path around the copper is too close at one place. Add a corner nearer to the gap.",
+            );
+        }
+        Ok(path.into_iter().skip(1).collect())
     }
 
     fn route_input(&mut self, resp: &egui::Response, p: Point, ps: Point) {
@@ -1081,21 +1188,9 @@ impl App {
         self.update_push_preview(&resp.ctx, target);
         let Some(r) = &self.route else { return };
         if resp.clicked() || resp.double_clicked() {
-            let diag = self.diagonal_first;
             let start = r.runs[0].1[0];
             let last = *r.runs.last().unwrap().1.last().unwrap();
-            let mut pts = posture(last, target, diag);
-            // Walkaround, as in other editors: if the straight segments break
-            // the clearance, find a path around the copper of other nets.
-            let mut prev = last;
-            let (mut on_tracks, mut on_other) = (false, false);
-            for &p in &pts {
-                let (t, o) = self.blockers(prev, p, li, &r.net, r.width);
-                on_tracks |= t;
-                on_other |= o;
-                prev = p;
-            }
-            if self.route_mode == RouteMode::Push && on_tracks && !on_other {
+            if self.route_mode == RouteMode::Push {
                 if let Some(e) = self
                     .push_preview
                     .as_ref()
@@ -1107,56 +1202,14 @@ impl App {
                     return;
                 }
             }
-            let walk = target.dist(last) > 1e-6
-                && match self.route_mode {
-                    RouteMode::Direct => false,
-                    RouteMode::Walkaround => on_tracks || on_other,
-                    // Tracks move aside when the route is done; pads and vias do not.
-                    RouteMode::Push => on_other,
-                };
-            if walk {
-                let walk = lamina_route::Walk {
-                    net: r.net.clone(),
-                    layer: r.runs.last().unwrap().0,
-                    width: r.width,
-                    from: last,
-                    to: target,
-                    grid: (self.grid() / 2.0).clamp(0.05, 0.25),
-                };
-                match self
-                    .loaded
-                    .as_ref()
-                    .and_then(|l| lamina_route::walkaround(&l.data, &walk))
-                {
-                    // A last check with exact geometry: the search is on a grid.
-                    // The first segment can start in a band where the user put
-                    // the last corner, so it is not checked.
-                    Some(path)
-                        if path
-                            .windows(2)
-                            .skip(1)
-                            .all(|s| !self.conflicts(s[0], s[1], li, &r.net, r.width)) =>
-                    {
-                        pts = path.into_iter().skip(1).collect()
-                    }
-                    Some(_) => {
-                        self.say(
-                            "The path around the copper is too close at one place. Add a corner nearer to the gap.",
-                            false,
-                        );
-                        self.dirty = true;
-                        return;
-                    }
-                    None => {
-                        self.say(
-                            "There is no clear path to here on this layer. Add a corner, or V for a via.",
-                            false,
-                        );
-                        self.dirty = true;
-                        return;
-                    }
+            let pts = match self.next_segment(target) {
+                Ok(pts) => pts,
+                Err(e) => {
+                    self.say(e, false);
+                    self.dirty = true;
+                    return;
                 }
-            }
+            };
             let r = self.route.as_mut().unwrap();
             if target.dist(last) > 1e-9 {
                 r.runs.last_mut().unwrap().1.extend(pts);
@@ -1224,7 +1277,7 @@ impl App {
                             .map(|v| v.id.clone())
                             .filter(|id| !before_vias.contains(id))
                             .collect();
-                        let pushed = edits::push_aside(d, &r.net, &new, &new_vias)?;
+                        let pushed = edits::push_aside(d, &r.net, &new, &new_vias, true)?;
                         Ok(if pushed.is_empty() {
                             added
                         } else {
@@ -1978,7 +2031,7 @@ impl App {
                             .filter(|pv| pv.key == self.push_key(target))
                         {
                             Some(PushPreview { error: Some(_), .. }) => {
-                                " · push: no room to move the tracks aside".to_string()
+                                " · push: no room on this layer, a click adds nothing".to_string()
                             }
                             Some(pv) => format!(
                                 " · push: {} aside",
