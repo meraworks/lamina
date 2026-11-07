@@ -20,7 +20,10 @@ Options:
   --size WxH     the window size in points (default 1600x900)
   --scale F      pixels for each point (default 1)
   --3d           start in the 3D view
-  --out FILE     the image to save after the last step (default shot.png)
+  --out FILE     the PNG image to save after the last step (default shot.png)
+  --edit         let the steps change the board files. Without it, the
+                 viewer does not write to the board: a drag or a delete
+                 shows in the image only
 
 Steps:
   key:K          press a key, for example key:2, key:F, key:Escape, key:ctrl+z
@@ -52,6 +55,7 @@ struct Opts {
     scale: f32,
     three_d: bool,
     out: PathBuf,
+    edit: bool,
     steps: Vec<String>,
 }
 
@@ -59,6 +63,7 @@ fn parse(args: &[String]) -> Result<Opts, String> {
     let mut size = Vec2::new(1600.0, 900.0);
     let mut scale = 1.0;
     let mut three_d = false;
+    let mut edit = false;
     let mut out = PathBuf::from("shot.png");
     let mut root = None;
     let mut steps = Vec::new();
@@ -73,19 +78,25 @@ fn parse(args: &[String]) -> Result<Opts, String> {
             "-h" | "--help" => return Err("usage".into()),
             "--size" => {
                 let v = value()?;
-                let (w, h) = v.split_once('x').ok_or(format!("usage: bad size {v}"))?;
-                size = Vec2::new(num(w)?, num(h)?);
+                let (w, h) = v
+                    .split_once(['x', 'X'])
+                    .ok_or(format!("usage: bad size {v}"))?;
+                size = Vec2::new(positive(w)?, positive(h)?);
             }
-            "--scale" => scale = num(&value()?)?,
+            "--scale" => scale = positive(&value()?)?,
             "--3d" => three_d = true,
-            "--out" => out = PathBuf::from(value()?),
+            "--edit" => edit = true,
+            "--out" => out = png(&value()?)?,
             s if s.starts_with('-') => return Err(format!("usage: {s} is not a known option")),
             // The first argument that is not a step is the board. A Windows
             // path has a colon too, so a folder that exists is the board.
             s if root.is_none() && (is_step(s).is_none() || Path::new(s).exists()) => {
                 root = Some(PathBuf::from(s))
             }
-            s => steps.push(s.to_string()),
+            s => {
+                check(s)?;
+                steps.push(s.to_string())
+            }
         }
     }
     Ok(Opts {
@@ -94,8 +105,57 @@ fn parse(args: &[String]) -> Result<Opts, String> {
         scale,
         three_d,
         out,
+        edit,
         steps,
     })
+}
+
+/// A number that is more than zero.
+fn positive(s: &str) -> Result<f32, String> {
+    let v = num(s)?;
+    if !(v > 0.0 && v.is_finite()) {
+        return Err(format!("usage: {s} must be more than 0"));
+    }
+    Ok(v)
+}
+
+fn png(s: &str) -> Result<PathBuf, String> {
+    if !s.to_ascii_lowercase().ends_with(".png") {
+        return Err(format!("usage: {s}: the image must be a .png file"));
+    }
+    Ok(PathBuf::from(s))
+}
+
+/// Find the errors in a step before the board loads, so that a typing error
+/// does not wait for the load.
+fn check(step: &str) -> Result<(), String> {
+    let (verb, arg) = is_step(step).ok_or(format!("usage: {step} is not a known step"))?;
+    match verb {
+        "key" => {
+            let name = modifiers(arg).1;
+            Key::from_name(name).ok_or(format!("usage: {name} is not a key name"))?;
+        }
+        "hover" | "click" | "rclick" => {
+            nums(arg, 2)?;
+        }
+        "drag" => {
+            nums(arg, 4)?;
+        }
+        "scroll" => {
+            nums(arg, 3)?;
+        }
+        "wait" => {
+            let ms = num(arg)?;
+            if !(0.0..=600_000.0).contains(&ms) {
+                return Err(format!("usage: wait:{arg} must be 0 to 600000 ms"));
+            }
+        }
+        "shot" => {
+            png(arg)?;
+        }
+        _ => {}
+    }
+    Ok(())
 }
 
 const VERBS: [&str; 9] = [
@@ -139,10 +199,21 @@ fn run(args: &[String]) -> Result<(), String> {
             s.remember = false;
             s
         });
-    settle(&mut h, Duration::from_secs(20))?;
+    if !o.edit {
+        // Without an editor, the viewer does not write to the board files.
+        for b in &mut h.state_mut().boards {
+            b.editor = None;
+        }
+    }
+    if let Err(e) = settle(&mut h, Duration::from_secs(20)) {
+        // Save the image anyway: it shows the error panel of the viewer.
+        save(&mut h, &o.out)?;
+        return Err(e);
+    }
     for step in &o.steps {
         play(&mut h, step)?;
     }
+    idle(&mut h);
     save(&mut h, &o.out)
 }
 
@@ -177,6 +248,9 @@ fn settle(h: &mut Harness<'_, Shell>, max: Duration) -> Result<(), String> {
     let mut quiet = 0;
     while Instant::now() < end {
         frames(h, 1);
+        if let Some(e) = h.state().boards.iter().find_map(|b| b.error.clone()) {
+            return Err(format!("the board did not load: {e}"));
+        }
         let ready = h.state().boards.iter().all(|b| b.loaded.is_some());
         quiet = if ready { quiet + 1 } else { 0 };
         // A few more frames after the load, for the fit and the GPU images.
@@ -185,6 +259,24 @@ fn settle(h: &mut Harness<'_, Shell>, max: Duration) -> Result<(), String> {
         }
     }
     Err("the board did not load in time".into())
+}
+
+/// Run frames until the editor has written all the changes and the viewer
+/// has read the board again, so that the image shows the result of the steps.
+fn idle(h: &mut Harness<'_, Shell>) {
+    let end = Instant::now() + Duration::from_secs(10);
+    while Instant::now() < end {
+        let busy = h
+            .state()
+            .boards
+            .iter()
+            .any(|b| b.editor.as_ref().is_some_and(|e| e.busy > 0));
+        if !busy {
+            break;
+        }
+        frames(h, 1);
+    }
+    frames(h, 3);
 }
 
 fn frames(h: &mut Harness<'_, Shell>, n: usize) {
@@ -259,7 +351,7 @@ fn play(h: &mut Harness<'_, Shell>, step: &str) -> Result<(), String> {
             }
         }
         "shot" => {
-            frames(h, 3);
+            idle(h);
             return save(h, Path::new(arg));
         }
         _ => unreachable!("is_step returns known verbs only"),
@@ -322,6 +414,12 @@ mod tests {
     fn bad_input_is_refused() {
         assert!(parse(&args(&["key:2"])).is_err());
         assert!(parse(&args(&["b", "--size", "10"])).is_err());
+        assert!(parse(&args(&["b", "--size", "0x10"])).is_err());
+        assert!(parse(&args(&["b", "--out", "a.jpg"])).is_err());
+        assert!(parse(&args(&["b", "key:NoSuchKey"])).is_err());
+        assert!(parse(&args(&["b", "wait:inf"])).is_err());
+        assert!(parse(&args(&["b", "hover:1"])).is_err());
+        assert!(parse(&args(&["b", "--size", "800X600"])).is_ok());
         assert!(nums("1,2", 3).is_err());
     }
 }

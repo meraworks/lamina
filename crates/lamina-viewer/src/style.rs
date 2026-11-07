@@ -42,7 +42,19 @@ static WIDE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(
 /// True if the text has characters that the UI fonts do not have: Chinese,
 /// Japanese or Korean. Part data from vendors often has them.
 pub fn needs_wide(text: &str) -> bool {
-    text.chars().any(|c| c >= '\u{2E80}')
+    text.chars().any(|c| {
+        matches!(c,
+            '\u{2E80}'..='\u{9FFF}'   // CJK radicals, kana, ideographs
+            | '\u{AC00}'..='\u{D7AF}' // Hangul
+            | '\u{F900}'..='\u{FAFF}' // CJK compatibility ideographs
+            | '\u{FF00}'..='\u{FFEF}' // full-width forms
+        )
+    })
+}
+
+/// True after `install_wide` added the font.
+pub fn has_wide() -> bool {
+    WIDE.load(std::sync::atomic::Ordering::Relaxed)
 }
 
 /// Add a system font for Chinese, Japanese and Korean text, after the UI

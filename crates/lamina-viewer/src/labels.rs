@@ -71,9 +71,12 @@ fn choices(pad: PadView, number: &str, name: Option<&str>, advance: f32) -> Vec<
     let num = chars(number);
     let mut out = Vec::new();
     if let Some(name) = name.filter(|n| !n.is_empty() && *n != number) {
-        let head = name.split('/').next().unwrap_or(name);
+        let head = name.split('/').next().unwrap_or(name).trim();
         for text in [name, head] {
-            if out.iter().any(|f: &Fit| f.name.as_deref() == Some(text)) {
+            if text.is_empty()
+                || text == number
+                || out.iter().any(|f: &Fit| f.name.as_deref() == Some(text))
+            {
                 continue;
             }
             let stacked = fits(2.0, num.max(chars(text)));
@@ -133,7 +136,7 @@ pub fn fit(pad: PadView, number: &str, name: Option<&str>, advance: f32, size: f
 /// vertical label reads from the bottom to the top.
 pub fn upright(angle: f32) -> f32 {
     let mut a = (angle + PI).rem_euclid(2.0 * PI) - PI;
-    // Snap angles that are almost square, so labels do not tilt by a hair.
+    // Snap angles that are almost square, so that labels do not tilt by a very small angle.
     for q in [-PI, -FRAC_PI_2, 0.0, FRAC_PI_2, PI] {
         if (a - q).abs() < 1e-3 {
             a = q;
@@ -241,6 +244,16 @@ mod tests {
         let f = fit(p, "1", Some("P1.00/XL1"), ADV, size).unwrap();
         assert_eq!(f.name.as_deref(), Some("P1.00"), "{f:?}");
         assert_eq!(f.size, size);
+    }
+
+    #[test]
+    fn a_name_that_starts_with_a_slash_keeps_the_number_centred() {
+        // `/CS` has an empty first part. If the full name does not fit, the
+        // label is the number only, not the number over an empty line.
+        let f = best(pad(12.0, 30.0), "1", Some("/CS")).unwrap();
+        assert_ne!(f.name.as_deref(), Some(""));
+        let g = best(pad(14.0, 60.0), "3", Some("3/ADC")).unwrap();
+        assert_ne!(g.name.as_deref(), Some("3"));
     }
 
     #[test]

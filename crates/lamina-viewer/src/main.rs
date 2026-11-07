@@ -312,8 +312,9 @@ impl App {
                         self.g3d = Some(gpu.upload_3d(&l.s3, &l.s2, &mut self.cache));
                     }
                     // Vendor part data can have Chinese text; then the viewer needs a wide font.
-                    self.needs_wide =
-                        serde_json::to_string(&l.data.parts).is_ok_and(|t| style::needs_wide(&t));
+                    self.needs_wide = !style::has_wide()
+                        && serde_json::to_string(&l.data.parts)
+                            .is_ok_and(|t| style::needs_wide(&t));
                     self.loaded = Some(l);
                     self.error = None;
                     self.last_reload = Some(now);
@@ -1562,6 +1563,15 @@ impl App {
                 Side::Top => lamina_model::Copper::Top,
                 Side::Bottom => lamina_model::Copper::Bottom,
             };
+            // No work for a part that is not on the screen.
+            let near = painter.clip_rect().expand(100.0);
+            if !fp
+                .pads
+                .iter()
+                .any(|pad| near.contains(xf.to_screen(pl.transform(pad.at))))
+            {
+                continue;
+            }
             let side_shows = self.is_visible(SceneLayer::Copper(copper.index(n)));
             let any_shows = (0..n).any(|i| self.is_visible(SceneLayer::Copper(i)));
             let views: Vec<(&lamina_model::Pad, labels::PadView)> = fp
@@ -2286,10 +2296,17 @@ more boards, click + in the top bar or drop a folder on the window.
 
 fn main() -> eframe::Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    #[cfg(feature = "headless")]
     if args.first().is_some_and(|a| a == "shot") {
         attach_console();
+        #[cfg(feature = "headless")]
         std::process::exit(shot::main(&args[1..]));
+        #[cfg(not(feature = "headless"))]
+        {
+            eprintln!(
+                "This build has no shot command. Build it with `cargo build -p lamina-viewer --features headless`."
+            );
+            std::process::exit(2);
+        }
     }
     if args.iter().any(|a| a.starts_with('-')) {
         attach_console();

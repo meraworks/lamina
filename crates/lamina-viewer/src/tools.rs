@@ -988,6 +988,7 @@ impl App {
                     self.route_via(Some(to));
                 } else {
                     self.active = to;
+                    self.dirty = true;
                 }
             }
         }
@@ -1584,6 +1585,7 @@ impl App {
                         if n == 2 {
                             self.active = if self.active == 0 { 0 } else { n - 1 };
                         }
+                        self.dirty = true;
                     }
                     if widgets::pill(ui, None, &fmt_grid(self.grid()))
                         .on_hover_text("Grid · N / Shift+N")
