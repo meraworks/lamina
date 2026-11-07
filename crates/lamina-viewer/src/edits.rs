@@ -947,9 +947,110 @@ pub fn add_pair_route(d: &mut ProjectData, r: &Route, partner: &str, gap: f64) -
     let other = best.ok_or_else(|| {
         format!("There is no room for the {partner} track beside the route. Route it with more room, or route {partner} alone.")
     })?;
+    let before: Vec<String> = with_route
+        .routing
+        .tracks
+        .iter()
+        .map(|t| t.id.clone())
+        .collect();
     *d = with_route;
     let b = add_route(d, &other)?;
-    Ok(format!("{a}. Pair: {b}"))
+    let matched = match_pair_length(d, &r.net, partner, &before);
+    Ok(format!("{a}. Pair: {b}. {matched}"))
+}
+
+/// Make the two nets of a pair the same length, as matched-length routing
+/// in other editors does: the shorter route gets meanders on its longest
+/// segment. `old` are the ids of the tracks before the partner route; the
+/// route of the first net is in it too, so the new tracks of both nets are
+/// found by their nets and the tracks of the last two routes.
+fn match_pair_length(d: &mut ProjectData, net: &str, partner: &str, old: &[String]) -> String {
+    let len = |t: &Track| t.points.windows(2).map(|w| w[0].dist(w[1])).sum::<f64>();
+    // The new tracks: the partner's are not in `old`; the first net's are the
+    // ones that `old` added last (the tracks of `net` with the highest ids).
+    let partner_new: Vec<&Track> = d
+        .routing
+        .tracks
+        .iter()
+        .filter(|t| t.net == partner && !old.contains(&t.id))
+        .collect();
+    let first_new: Vec<&Track> = {
+        let n = d
+            .routing
+            .tracks
+            .iter()
+            .filter(|t| t.net == partner && !old.contains(&t.id))
+            .count();
+        let mut v: Vec<&Track> = d.routing.tracks.iter().filter(|t| t.net == net).collect();
+        let keep = n.min(v.len());
+        v.split_off(v.len() - keep)
+    };
+    let (la, lb) = (
+        first_new.iter().map(|t| len(t)).sum::<f64>(),
+        partner_new.iter().map(|t| len(t)).sum::<f64>(),
+    );
+    if (la - lb).abs() < 0.05 {
+        return format!("Lengths match ({la:.2} mm)");
+    }
+    let (short, extra) = if la < lb {
+        (&first_new, lb - la)
+    } else {
+        (&partner_new, la - lb)
+    };
+    // Spread the extra length over the segments of the shorter route, the
+    // longest first, in smaller parts when a segment has no room for all.
+    let ids: Vec<String> = short.iter().map(|t| t.id.clone()).collect();
+    let mut left = extra;
+    for _round in 0..12 {
+        if left < 0.05 {
+            break;
+        }
+        let before = left;
+        let mut segs: Vec<(String, usize, f64)> = d
+            .routing
+            .tracks
+            .iter()
+            .filter(|t| ids.contains(&t.id))
+            .flat_map(|t| {
+                t.points
+                    .windows(2)
+                    .enumerate()
+                    .map(|(i, w)| (t.id.clone(), i, w[0].dist(w[1])))
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+        segs.sort_by(|x, y| y.2.total_cmp(&x.2));
+        for (id, seg, _) in segs.into_iter().take(12) {
+            if left < 0.05 {
+                break;
+            }
+            let Some(total) = d.routing.tracks.iter().find(|t| t.id == id).map(len) else {
+                continue;
+            };
+            let mut part = left;
+            while part >= 0.2 {
+                if tune_length(d, &id, seg, total + part).is_ok() {
+                    left -= part;
+                    break;
+                }
+                part /= 2.0;
+            }
+            // The segment numbers of the track changed; take the list again.
+            if left < before - 1e-9 {
+                break;
+            }
+        }
+        if left > before - 1e-9 {
+            break;
+        }
+    }
+    if left < 0.05 {
+        format!("Lengths matched to {:.2} mm", la.max(lb))
+    } else {
+        format!(
+            "The lengths differ by {left:.2} mm; there is no more room for meanders. Tune a segment with \"tune to\"."
+        )
+    }
 }
 
 /// True if the point is inside the closed ring (even-odd rule).
@@ -2013,7 +2114,7 @@ mod tests {
         };
         add_pair_route(&mut d, &r, "USB_DM", 0.2).unwrap();
         let dm = d.routing.tracks.iter().find(|t| t.net == "USB_DM").unwrap();
-        assert_eq!(dm.points.len(), 3);
+        assert!(dm.points.len() >= 3, "{:?}", dm.points);
         // The gap is the same on the straight part and at the corner.
         let dp = d.routing.tracks.iter().find(|t| t.net == "USB_DP").unwrap();
         let caps = |t: &Track| -> Vec<lamina_geom::Prim> {
@@ -2077,6 +2178,58 @@ mod tests {
         let (v1, v2) = (&d.routing.vias[0], &d.routing.vias[1]);
         assert_ne!(v1.net, v2.net);
         assert!(v1.at.dist(v2.at) >= v1.diameter / 2.0 + v2.diameter / 2.0 + 0.2 - 1e-6);
+        let a = lamina_drc::analyze(&d);
+        let errors: Vec<_> = a
+            .violations
+            .iter()
+            .filter(|v| v.severity == Severity::Error)
+            .collect();
+        assert!(errors.is_empty(), "{errors:#?}");
+    }
+
+    #[test]
+    fn a_pair_route_gets_matched_lengths() {
+        let mut d = ProjectData::new("t");
+        d.board.outline = Some(Contour::rect(0.0, 0.0, 60.0, 40.0));
+        for n in ["D+", "D-"] {
+            d.nets.nets.insert(
+                n.into(),
+                Net {
+                    pads: Vec::new(),
+                    class: None,
+                },
+            );
+        }
+        // A corner: the inner and the outer track are not the same length.
+        let r = Route {
+            net: "D+".into(),
+            width: 0.2,
+            runs: vec![(
+                Layer::Copper(Copper::Top),
+                vec![
+                    Point::new(5.0, 10.0),
+                    Point::new(35.0, 10.0),
+                    Point::new(35.0, 30.0),
+                ],
+            )],
+            vias: Vec::new(),
+        };
+        let msg = add_pair_route(&mut d, &r, "D-", 0.2).unwrap();
+        assert!(msg.contains("matched") || msg.contains("match"), "{msg}");
+        let len = |n: &str| {
+            d.routing
+                .tracks
+                .iter()
+                .filter(|t| t.net == n)
+                .map(|t| t.points.windows(2).map(|w| w[0].dist(w[1])).sum::<f64>())
+                .sum::<f64>()
+        };
+        assert!(
+            (len("D+") - len("D-")).abs() < 0.05,
+            "{} {}",
+            len("D+"),
+            len("D-")
+        );
         let a = lamina_drc::analyze(&d);
         let errors: Vec<_> = a
             .violations
