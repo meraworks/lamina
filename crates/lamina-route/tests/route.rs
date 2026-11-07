@@ -193,8 +193,8 @@ fn walkaround_goes_around_copper_of_other_nets() {
     assert_eq!(pts.first(), Some(&from));
     assert_eq!(pts.last(), Some(&to));
     assert!(pts.len() > 2, "the path must turn around U1: {pts:?}");
-    // Between the end points, the corners are at 0, 45 or 90 degrees.
-    for w in pts[1..pts.len() - 1].windows(2) {
+    // All segments are at 0, 45 or 90 degrees, also the end segments.
+    for w in pts.windows(2) {
         let (dx, dy) = ((w[1].x - w[0].x).abs(), (w[1].y - w[0].y).abs());
         assert!(
             dx < 1e-6 || dy < 1e-6 || (dx - dy).abs() < 1e-6,
@@ -215,4 +215,21 @@ fn walkaround_goes_around_copper_of_other_nets() {
         .filter(|v| v.severity == Severity::Error)
         .collect();
     assert!(errors.is_empty(), "{errors:#?}");
+}
+
+#[test]
+fn walkaround_to_the_same_point_does_not_fail() {
+    let d = board();
+    let p = Point::new(10.0, 3.0);
+    let w = Walk {
+        net: "A".into(),
+        layer: Layer::Copper(Copper::Top),
+        width: 0.25,
+        from: p,
+        to: Point::new(10.01, 3.0),
+        grid: 0.1,
+    };
+    let pts = walkaround(&d, &w).expect("a path");
+    assert_eq!(pts.first(), Some(&w.from));
+    assert_eq!(pts.last(), Some(&w.to));
 }

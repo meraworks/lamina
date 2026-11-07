@@ -370,6 +370,12 @@ impl App {
             {
                 continue;
             }
+            let theirs = it
+                .net
+                .as_deref()
+                .and_then(|n| d.nets.nets.get(n))
+                .and_then(|n| n.class.clone());
+            let clr = clr.max(d.board.rules.clearance_for(theirs.as_deref()));
             if it.prim.distance(&cap) < clr - 1e-6 {
                 if matches!(it.owner, Owner::Track { .. }) {
                     found.0 = true;
@@ -984,12 +990,13 @@ impl App {
                 on_other |= o;
                 prev = p;
             }
-            let walk = match self.route_mode {
-                RouteMode::Direct => false,
-                RouteMode::Walkaround => on_tracks || on_other,
-                // Tracks move aside when the route is done; pads and vias do not.
-                RouteMode::Push => on_other,
-            };
+            let walk = target.dist(last) > 1e-6
+                && match self.route_mode {
+                    RouteMode::Direct => false,
+                    RouteMode::Walkaround => on_tracks || on_other,
+                    // Tracks move aside when the route is done; pads and vias do not.
+                    RouteMode::Push => on_other,
+                };
             if walk {
                 let walk = lamina_route::Walk {
                     net: r.net.clone(),
@@ -1004,7 +1011,25 @@ impl App {
                     .as_ref()
                     .and_then(|l| lamina_route::walkaround(&l.data, &walk))
                 {
-                    Some(path) => pts = path.into_iter().skip(1).collect(),
+                    // A last check with exact geometry: the search is on a grid.
+                    // The first segment can start in a band where the user put
+                    // the last corner, so it is not checked.
+                    Some(path)
+                        if path
+                            .windows(2)
+                            .skip(1)
+                            .all(|s| !self.conflicts(s[0], s[1], li, &r.net, r.width)) =>
+                    {
+                        pts = path.into_iter().skip(1).collect()
+                    }
+                    Some(_) => {
+                        self.say(
+                            "The path around the copper is too close at one place. Add a corner nearer to the gap.",
+                            false,
+                        );
+                        self.dirty = true;
+                        return;
+                    }
                     None => {
                         self.say(
                             "There is no clear path to here on this layer. Add a corner, or V for a via.",
@@ -1065,6 +1090,8 @@ impl App {
                     self.commit(move |d| {
                         let before: Vec<String> =
                             d.routing.tracks.iter().map(|t| t.id.clone()).collect();
+                        let before_vias: Vec<String> =
+                            d.routing.vias.iter().map(|v| v.id.clone()).collect();
                         let added = edits::add_route(d, &r)?;
                         let new: Vec<String> = d
                             .routing
@@ -1073,7 +1100,14 @@ impl App {
                             .map(|t| t.id.clone())
                             .filter(|id| !before.contains(id))
                             .collect();
-                        let pushed = edits::push_aside(d, &r.net, &new)?;
+                        let new_vias: Vec<String> = d
+                            .routing
+                            .vias
+                            .iter()
+                            .map(|v| v.id.clone())
+                            .filter(|id| !before_vias.contains(id))
+                            .collect();
+                        let pushed = edits::push_aside(d, &r.net, &new, &new_vias)?;
                         Ok(if pushed.is_empty() {
                             added
                         } else {
@@ -1303,7 +1337,7 @@ impl App {
                 true,
             );
             self.dirty = true;
-        } else if k(Key::R) {
+        } else if k(Key::R) && self.route.is_none() {
             let by = if shift { -90.0 } else { 90.0 };
             let dragging_parts = matches!(
                 self.gesture,

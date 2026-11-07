@@ -425,7 +425,12 @@ pub struct Route {
 /// Route again the tracks of other nets that are too close to the new tracks
 /// `new` of `net`, so that they go around them. If a net cannot be routed
 /// again, the edit fails and nothing changes.
-pub fn push_aside(d: &mut ProjectData, net: &str, new: &[String]) -> EditResult {
+pub fn push_aside(
+    d: &mut ProjectData,
+    net: &str,
+    new: &[String],
+    new_vias: &[String],
+) -> EditResult {
     use lamina_geom::Prim;
     let caps = |t: &Track| -> Vec<Prim> {
         t.points
@@ -442,22 +447,35 @@ pub fn push_aside(d: &mut ProjectData, net: &str, new: &[String]) -> EditResult 
         let class = d.nets.nets.get(n).and_then(|x| x.class.clone());
         rules.clearance_for(class.as_deref())
     };
-    let ours: Vec<(Layer, Vec<Prim>)> = d
+    let mut ours: Vec<(Option<Layer>, Vec<Prim>)> = d
         .routing
         .tracks
         .iter()
         .filter(|t| new.contains(&t.id))
-        .map(|t| (t.layer, caps(t)))
+        .map(|t| (Some(t.layer), caps(t)))
         .collect();
+    // A via is on all copper layers.
+    for v in d.routing.vias.iter().filter(|v| new_vias.contains(&v.id)) {
+        ours.push((
+            None,
+            vec![Prim::Circle {
+                c: v.at,
+                r: v.diameter / 2.0,
+            }],
+        ));
+    }
     let mut hit: Vec<String> = Vec::new();
     let mut nets: Vec<String> = Vec::new();
     for t in d.routing.tracks.iter().filter(|t| t.net != net) {
         let clr = clearance(net).max(clearance(&t.net));
         let theirs = caps(t);
-        let close = ours.iter().filter(|(l, _)| *l == t.layer).any(|(_, ps)| {
-            ps.iter()
-                .any(|a| theirs.iter().any(|b| a.distance(b) < clr - 1e-6))
-        });
+        let close = ours
+            .iter()
+            .filter(|(l, _)| l.is_none_or(|l| l == t.layer))
+            .any(|(_, ps)| {
+                ps.iter()
+                    .any(|a| theirs.iter().any(|b| a.distance(b) < clr - 1e-6))
+            });
         if close {
             hit.push(t.id.clone());
             if !nets.contains(&t.net) {
@@ -468,6 +486,16 @@ pub fn push_aside(d: &mut ProjectData, net: &str, new: &[String]) -> EditResult 
     if hit.is_empty() {
         return Ok(String::new());
     }
+    // The open connections of the pushed nets before the push. After it, there
+    // must not be more.
+    let open_of = |d: &ProjectData| {
+        lamina_drc::analyze(d)
+            .ratsnest
+            .iter()
+            .filter(|r| nets.contains(&r.net))
+            .count()
+    };
+    let open_before = open_of(d);
     d.routing.tracks.retain(|t| !hit.contains(&t.id));
     let out = lamina_route::autoroute(
         d,
@@ -477,15 +505,20 @@ pub fn push_aside(d: &mut ProjectData, net: &str, new: &[String]) -> EditResult 
             ..Default::default()
         },
     )?;
-    if let Some(f) = out.failed.first() {
-        return Err(format!(
-            "There is no room to move {} aside ({}). Use walkaround (Shift+R), or route on another layer.",
-            nets.join(", "),
-            f.reason
-        ));
-    }
     d.routing.tracks.extend(out.tracks);
     d.routing.vias.extend(out.vias);
+    // A failure of a connection that was open before the push does not count.
+    if open_of(d) > open_before {
+        let why = out
+            .failed
+            .first()
+            .map(|f| format!(" ({})", f.reason))
+            .unwrap_or_default();
+        return Err(format!(
+            "There is no room to move {} aside{why}. Use walkaround (Shift+R), or route on another layer.",
+            nets.join(", ")
+        ));
+    }
     Ok(format!(
         "Moved {} track{} of {} aside",
         hit.len(),
@@ -889,7 +922,7 @@ mod tests {
             width: 0.25,
             points: vec![Point::new(15.0, 4.0), Point::new(15.0, 16.0)],
         });
-        let msg = push_aside(&mut d, "X", &["tx".to_string()]).unwrap();
+        let msg = push_aside(&mut d, "X", &["tx".to_string()], &[]).unwrap();
         assert!(msg.contains('A'), "{msg}");
         let a = lamina_drc::analyze(&d);
         assert!(

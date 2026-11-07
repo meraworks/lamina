@@ -222,6 +222,16 @@ struct Ctx<'a> {
 
 impl<'a> Ctx<'a> {
     fn new(d: &'a ProjectData, opt: &RouteOptions) -> Result<Ctx<'a>, String> {
+        Ctx::new_in(d, opt, None)
+    }
+
+    /// A context whose grid covers only `window` (and the board), for a
+    /// fast search near a few points.
+    fn new_in(
+        d: &'a ProjectData,
+        opt: &RouteOptions,
+        window: Option<Rect>,
+    ) -> Result<Ctx<'a>, String> {
         let outline = d
             .board
             .outline
@@ -229,6 +239,16 @@ impl<'a> Ctx<'a> {
             .ok_or("the board outline is not set")?
             .flatten(0.01);
         let bb = Rect::from_points(outline.iter().copied()).ok_or("the board outline is empty")?;
+        let bb = match window {
+            Some(w) => Rect {
+                min: Point::new(bb.min.x.max(w.min.x), bb.min.y.max(w.min.y)),
+                max: Point::new(bb.max.x.min(w.max.x), bb.max.y.min(w.max.y)),
+            },
+            None => bb,
+        };
+        if bb.min.x >= bb.max.x || bb.min.y >= bb.max.y {
+            return Err("the window is outside the board".into());
+        }
         let mut pitch = opt.grid.unwrap_or(0.1).clamp(0.02, 1.0);
         let nl = d.board.stackup.copper_layers as usize;
         while (bb.width() / pitch) * (bb.height() / pitch) * nl as f64 > 6.0e6 {
@@ -1017,9 +1037,6 @@ fn in_conflict(ctx: &Ctx, r: &mut Routed) -> Vec<usize> {
     bad
 }
 
-/// Route all unrouted connections that the options select. Then repair the
-/// connections that fail: rip up the new wires around them, and route all of
-/// them again on a grid with half the pitch.
 /// One track for the walkaround mode of interactive routing.
 #[derive(Debug, Clone)]
 pub struct Walk {
@@ -1046,11 +1063,20 @@ pub fn walkaround(d: &ProjectData, w: &Walk) -> Option<Vec<Point>> {
         time_limit: Some(1.0),
         ..Default::default()
     };
-    let mut ctx = Ctx::new(d, &opt).ok()?;
+    // Search only near the two points, so that a click stays fast on a large board.
+    let span = w.from.dist(w.to);
+    let m = 3.0 + 0.5 * span;
+    let window = Rect {
+        min: Point::new(w.from.x.min(w.to.x) - m, w.from.y.min(w.to.y) - m),
+        max: Point::new(w.from.x.max(w.to.x) + m, w.from.y.max(w.to.y) + m),
+    };
+    let mut ctx = Ctx::new_in(d, &opt, Some(window)).ok()?;
     let id = *ctx.net_ids.get(&w.net)?;
     let mut p = ctx.profile_for(&w.net, false);
     p.hw = w.width / 2.0;
     let pi = ctx.statics(p, &[]);
+    // The time limit is for the search, not for the setup.
+    ctx.deadline = Instant::now() + Duration::from_secs(1);
     let g = &ctx.g;
     let l = w.layer.copper()?.index(g.nl as u8) as usize;
     let cell = |pt: Point| -> Option<usize> {
@@ -1059,11 +1085,47 @@ pub fn walkaround(d: &ProjectData, w: &Walk) -> Option<Vec<Point>> {
             .then(|| g.idx(l, x as usize, y as usize))
     };
     let (a, b) = (cell(w.from)?, cell(w.to)?);
+    let st = &ctx.profiles[pi];
+    let open = |c: usize| st.owner[c] == FREE || st.owner[c] == id;
+    // The end must be clear: else the track ends too close to other copper.
+    if !open(b) {
+        return None;
+    }
+    if a == b {
+        return Some(vec![w.from, w.to]);
+    }
+    // A start in the clearance band of other copper (a corner that the user
+    // put there) starts the search from the nearest clear cells.
+    let sources: Vec<usize> = if open(a) {
+        vec![a]
+    } else {
+        let (ax, ay) = (
+            (a % g.plane() % g.nx) as isize,
+            (a % g.plane() / g.nx) as isize,
+        );
+        let reach = ((st.p.hw + st.p.cl) / g.pitch).ceil() as isize + 2;
+        let mut near = Vec::new();
+        for dy in -reach..=reach {
+            for dx in -reach..=reach {
+                let (x, y) = (ax + dx, ay + dy);
+                if x >= 0 && y >= 0 && (x as usize) < g.nx && (y as usize) < g.ny {
+                    let c = g.idx(l, x as usize, y as usize);
+                    if open(c) {
+                        near.push(c);
+                    }
+                }
+            }
+        }
+        near
+    };
+    if sources.is_empty() {
+        return None;
+    }
     let mut s = Search::new(g.plane() * g.nl);
     let q = Query {
         net: id,
         pi,
-        sources: &[a],
+        sources: &sources,
         targets: &[b],
         goals: &[w.to],
         via_cost: 1.0e9,
@@ -1071,6 +1133,9 @@ pub fn walkaround(d: &ProjectData, w: &Walk) -> Option<Vec<Point>> {
         vias: &[],
     };
     let path = astar(&ctx, &mut s, &q)?;
+    if path.len() < 2 {
+        return Some(vec![w.from, w.to]);
+    }
     // Make the path clean: from each kept point, go to the farthest point of
     // the path that two straight segments reach on free cells, one at 0 or 90
     // degrees and one at 45 degrees, as the route preview of the editors does.
@@ -1114,7 +1179,8 @@ pub fn walkaround(d: &ProjectData, w: &Walk) -> Option<Vec<Point>> {
     let mut i = 0;
     while i < path.len() - 1 {
         let a = xy(path[i]);
-        let mut j = path.len() - 1;
+        // Look ahead a limited number of cells, so that the time stays small.
+        let mut j = (path.len() - 1).min(i + 400);
         let mut via = None;
         while j > i + 1 {
             if let Some(c) = corner(a, xy(path[j])) {
@@ -1138,6 +1204,30 @@ pub fn walkaround(d: &ProjectData, w: &Walk) -> Option<Vec<Point>> {
         let p = at(c);
         pts.push(Point::new(json::round6(p.x), json::round6(p.y)));
     }
+    // The end segments go to the click points, which are not on the grid.
+    // Put a knee in each, so that all segments are at 0, 45 or 90 degrees.
+    let knee = |a: Point, b: Point| -> Option<Point> {
+        let (dx, dy) = (b.x - a.x, b.y - a.y);
+        let m = dx.abs().min(dy.abs());
+        if m < 1e-6 || (dx.abs() - dy.abs()).abs() < 1e-6 {
+            return None;
+        }
+        Some(Point::new(
+            json::round6(a.x + dx.signum() * m),
+            json::round6(a.y + dy.signum() * m),
+        ))
+    };
+    if pts.len() >= 2 {
+        if let Some(k) = knee(pts[0], pts[1]) {
+            pts.insert(1, k);
+        }
+        let n = pts.len();
+        if let Some(k) = knee(w.to, pts[n - 1]) {
+            pts.push(k);
+        }
+    } else if let Some(k) = knee(w.from, w.to) {
+        pts.push(k);
+    }
     // Remove the middle points of straight runs.
     let mut k = 1;
     while k + 1 < pts.len() {
@@ -1154,6 +1244,9 @@ pub fn walkaround(d: &ProjectData, w: &Walk) -> Option<Vec<Point>> {
     Some(pts)
 }
 
+/// Route all unrouted connections that the options select. Then repair the
+/// connections that fail: rip up the new wires around them, and route all of
+/// them again on a grid with half the pitch.
 pub fn autoroute(d: &ProjectData, opt: &RouteOptions) -> Result<RouteOutcome, String> {
     let start = Instant::now();
     let limit = opt.time_limit.unwrap_or(60.0).clamp(1.0, 3600.0);
