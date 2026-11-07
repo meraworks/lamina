@@ -169,3 +169,50 @@ fn vias_respect_copper_on_layers_the_router_may_not_use() {
     assert!(out.vias.is_empty(), "{:?}", out.vias);
     assert_eq!(out.failed.len(), 1);
 }
+
+#[test]
+fn walkaround_goes_around_copper_of_other_nets() {
+    let mut d = board();
+    // U1 is between R1.2 and R2.1. A straight track would cross its pads.
+    let pad = |l: &str| {
+        let pr: PadRef = l.parse().unwrap();
+        let pl = d.placement.placements[&pr.part];
+        let fp = &d.footprints[&d.parts.parts[&pr.part].footprint];
+        pl.transform(fp.pad(&pr.pad).unwrap().at)
+    };
+    let (from, to) = (pad("R1.2"), pad("R2.1"));
+    let w = Walk {
+        net: "A".into(),
+        layer: Layer::Copper(Copper::Top),
+        width: d.board.rules.track_width,
+        from,
+        to,
+        grid: 0.1,
+    };
+    let pts = walkaround(&d, &w).expect("a path");
+    assert_eq!(pts.first(), Some(&from));
+    assert_eq!(pts.last(), Some(&to));
+    assert!(pts.len() > 2, "the path must turn around U1: {pts:?}");
+    // Between the end points, the corners are at 0, 45 or 90 degrees.
+    for w in pts[1..pts.len() - 1].windows(2) {
+        let (dx, dy) = ((w[1].x - w[0].x).abs(), (w[1].y - w[0].y).abs());
+        assert!(
+            dx < 1e-6 || dy < 1e-6 || (dx - dy).abs() < 1e-6,
+            "{w:?} is not octilinear"
+        );
+    }
+    d.routing.tracks.push(Track {
+        id: "t1".into(),
+        net: "A".into(),
+        layer: Layer::Copper(Copper::Top),
+        width: w.width,
+        points: pts,
+    });
+    let a = lamina_drc::analyze(&d);
+    let errors: Vec<_> = a
+        .violations
+        .iter()
+        .filter(|v| v.severity == Severity::Error)
+        .collect();
+    assert!(errors.is_empty(), "{errors:#?}");
+}

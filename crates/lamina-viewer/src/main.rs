@@ -128,6 +128,8 @@ pub(crate) struct App {
     single: bool,
     /// The 3D view draws the part bodies.
     models: bool,
+    /// Walkaround routing: a segment that breaks the clearance goes around the copper.
+    walk: bool,
     grid_i: usize,
     /// The right-click menu: where it was opened and what was under the pointer.
     menu: Option<(Point, Option<Pick>)>,
@@ -219,6 +221,7 @@ impl App {
             turn: 0.0,
             single: false,
             models: true,
+            walk: true,
             grid_i: 2,
             menu: None,
             active: 0,

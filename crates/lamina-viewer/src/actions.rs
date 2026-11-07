@@ -505,6 +505,7 @@ impl App {
             ("Shift+click / Ctrl+click", "Add to the selection"),
             ("X", "Route. V adds a via, / flips the bend"),
             ("W / Shift+W", "While routing: wider / narrower track"),
+            ("Shift+R", "While routing: walkaround on or off"),
             ("V", "Via tool"),
             ("Z / K / O", "Pour / keep-out / outline"),
             ("D", "Measure (click two points)"),

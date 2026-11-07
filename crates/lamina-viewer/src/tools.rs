@@ -42,7 +42,7 @@ impl Tool {
                 "Click to select · Shift+click adds · drag to move · drag empty space to box-select · right-click for the menu · right-drag to pan"
             }
             Tool::Route => {
-                "Click a pad to start · click to add corners · V via and switch layer · / bend · W / Shift+W width · Backspace undo corner · Enter finish · Esc cancel"
+                "Click a pad to start · click to add corners · V via and switch layer · / bend · W / Shift+W width · Shift+R walkaround on/off · Backspace undo corner · Enter finish · Esc cancel"
             }
             Tool::Via => "Click the copper of a net to put a via there",
             Tool::Zone => {
@@ -929,10 +929,43 @@ impl App {
         if resp.clicked() || resp.double_clicked() {
             let diag = self.diagonal_first;
             let start = r.runs[0].1[0];
-            let r = self.route.as_mut().unwrap();
             let last = *r.runs.last().unwrap().1.last().unwrap();
+            let mut pts = posture(last, target, diag);
+            // Walkaround, as in other editors: if the straight segments break
+            // the clearance, find a path around the copper of other nets.
+            let mut prev = last;
+            let bad = pts.iter().any(|&p| {
+                let b = self.conflicts(prev, p, li, &r.net, r.width);
+                prev = p;
+                b
+            });
+            if bad && self.walk {
+                let walk = lamina_route::Walk {
+                    net: r.net.clone(),
+                    layer: r.runs.last().unwrap().0,
+                    width: r.width,
+                    from: last,
+                    to: target,
+                    grid: (self.grid() / 2.0).clamp(0.05, 0.25),
+                };
+                match self
+                    .loaded
+                    .as_ref()
+                    .and_then(|l| lamina_route::walkaround(&l.data, &walk))
+                {
+                    Some(path) => pts = path.into_iter().skip(1).collect(),
+                    None => {
+                        self.say(
+                            "There is no clear path to here on this layer. Add a corner, or V for a via.",
+                            false,
+                        );
+                        self.dirty = true;
+                        return;
+                    }
+                }
+            }
+            let r = self.route.as_mut().unwrap();
             if target.dist(last) > 1e-9 {
-                let pts = posture(last, target, diag);
                 r.runs.last_mut().unwrap().1.extend(pts);
             }
             let moved = r.runs.iter().map(|x| x.1.len()).sum::<usize>() > 1;
@@ -1181,7 +1214,18 @@ impl App {
         if k(Key::Home) {
             self.fit_2d(size_px);
         }
-        if k(Key::R) {
+        if shift && k(Key::R) && self.tool == Tool::Route {
+            self.walk = !self.walk;
+            self.say(
+                if self.walk {
+                    "Walkaround routing: a segment goes around the copper of other nets"
+                } else {
+                    "Direct routing: a segment goes straight, and shows the clearance errors"
+                },
+                true,
+            );
+            self.dirty = true;
+        } else if k(Key::R) {
             let by = if shift { -90.0 } else { 90.0 };
             let dragging_parts = matches!(
                 self.gesture,
@@ -1653,7 +1697,11 @@ impl App {
                 SceneLayer::Copper(li).name(self.copper_count()),
                 r.width,
                 length,
-                if bad { " · too close" } else { "" }
+                match (bad, self.walk) {
+                    (true, true) => " · too close: a click goes around",
+                    (true, false) => " · too close",
+                    _ => "",
+                }
             );
             // A dark tag, so that the text reads over copper and pad labels.
             let color = if bad { ERROR } else { TEXT };

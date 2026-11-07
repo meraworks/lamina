@@ -1020,6 +1020,140 @@ fn in_conflict(ctx: &Ctx, r: &mut Routed) -> Vec<usize> {
 /// Route all unrouted connections that the options select. Then repair the
 /// connections that fail: rip up the new wires around them, and route all of
 /// them again on a grid with half the pitch.
+/// One track for the walkaround mode of interactive routing.
+#[derive(Debug, Clone)]
+pub struct Walk {
+    pub net: String,
+    /// The copper layer of the track.
+    pub layer: Layer,
+    /// The track width in mm.
+    pub width: f64,
+    pub from: Point,
+    pub to: Point,
+    /// The grid pitch of the search in mm.
+    pub grid: f64,
+}
+
+/// The corners of a track from `w.from` to `w.to` on one copper layer that
+/// keeps the clearance to the copper of other nets, as in the walkaround
+/// mode of other layout editors. The first point is `w.from` and the last
+/// point is `w.to`. `None` if there is no path, or if the search takes more
+/// than about one second.
+pub fn walkaround(d: &ProjectData, w: &Walk) -> Option<Vec<Point>> {
+    let opt = RouteOptions {
+        layers: Some(vec![w.layer]),
+        grid: Some(w.grid),
+        time_limit: Some(1.0),
+        ..Default::default()
+    };
+    let mut ctx = Ctx::new(d, &opt).ok()?;
+    let id = *ctx.net_ids.get(&w.net)?;
+    let mut p = ctx.profile_for(&w.net, false);
+    p.hw = w.width / 2.0;
+    let pi = ctx.statics(p, &[]);
+    let g = &ctx.g;
+    let l = w.layer.copper()?.index(g.nl as u8) as usize;
+    let cell = |pt: Point| -> Option<usize> {
+        let (x, y) = g.cell(pt);
+        (x >= 0 && y >= 0 && (x as usize) < g.nx && (y as usize) < g.ny)
+            .then(|| g.idx(l, x as usize, y as usize))
+    };
+    let (a, b) = (cell(w.from)?, cell(w.to)?);
+    let mut s = Search::new(g.plane() * g.nl);
+    let q = Query {
+        net: id,
+        pi,
+        sources: &[a],
+        targets: &[b],
+        goals: &[w.to],
+        via_cost: 1.0e9,
+        mode: Mode::Strict,
+        vias: &[],
+    };
+    let path = astar(&ctx, &mut s, &q)?;
+    // Make the path clean: from each kept point, go to the farthest point of
+    // the path that two straight segments reach on free cells, one at 0 or 90
+    // degrees and one at 45 degrees, as the route preview of the editors does.
+    let st = &ctx.profiles[pi];
+    let free = |c: usize| st.owner[c] == FREE || st.owner[c] == id;
+    let xy = |c: usize| {
+        let r = c % g.plane();
+        ((r % g.nx) as isize, (r / g.nx) as isize)
+    };
+    let (first, last) = (path[0], path[path.len() - 1]);
+    // A straight line between two cells at 0, 45 or 90 degrees on free cells.
+    let line = |(ax, ay): (isize, isize), (bx, by): (isize, isize)| {
+        let (dx, dy) = ((bx - ax).abs(), (by - ay).abs());
+        if dx != 0 && dy != 0 && dx != dy {
+            return false;
+        }
+        let steps = dx.max(dy).max(1);
+        (0..=steps).all(|t| {
+            let x = ax + (bx - ax) * t / steps;
+            let y = ay + (by - ay) * t / steps;
+            if x < 0 || y < 0 || x as usize >= g.nx || y as usize >= g.ny {
+                return false;
+            }
+            let c = g.idx(l, x as usize, y as usize);
+            // The ends are on the pads or tracks of the net; they can be in a
+            // clearance band.
+            c == first || c == last || free(c)
+        })
+    };
+    // The corner of a clear two-segment path from a to b, if there is one.
+    let corner = |a: (isize, isize), b: (isize, isize)| -> Option<(isize, isize)> {
+        let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+        let m = dx.abs().min(dy.abs());
+        let diag_first = (a.0 + dx.signum() * m, a.1 + dy.signum() * m);
+        let straight_first = (b.0 - dx.signum() * m, b.1 - dy.signum() * m);
+        [straight_first, diag_first]
+            .into_iter()
+            .find(|&c| line(a, c) && line(c, b))
+    };
+    let mut cells: Vec<(isize, isize)> = vec![xy(path[0])];
+    let mut i = 0;
+    while i < path.len() - 1 {
+        let a = xy(path[i]);
+        let mut j = path.len() - 1;
+        let mut via = None;
+        while j > i + 1 {
+            if let Some(c) = corner(a, xy(path[j])) {
+                via = Some(c);
+                break;
+            }
+            j -= 1;
+        }
+        // The next cell of the path is always one step away.
+        let c = via.unwrap_or(xy(path[j]));
+        if c != a {
+            cells.push(c);
+        }
+        cells.push(xy(path[j]));
+        i = j;
+    }
+    cells.dedup();
+    let at = |(x, y): (isize, isize)| g.center(x as usize, y as usize);
+    let mut pts = vec![w.from];
+    for &c in &cells[1..cells.len().saturating_sub(1)] {
+        let p = at(c);
+        pts.push(Point::new(json::round6(p.x), json::round6(p.y)));
+    }
+    // Remove the middle points of straight runs.
+    let mut k = 1;
+    while k + 1 < pts.len() {
+        let (a, b, c) = (pts[k - 1], pts[k], pts[k + 1]);
+        let cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+        if k > 1 && cross.abs() < 1e-9 {
+            pts.remove(k);
+        } else {
+            k += 1;
+        }
+    }
+    pts.push(w.to);
+    pts.dedup_by(|a, b| a.dist(*b) < 1e-9);
+    Some(pts)
+}
+
 pub fn autoroute(d: &ProjectData, opt: &RouteOptions) -> Result<RouteOutcome, String> {
     let start = Instant::now();
     let limit = opt.time_limit.unwrap_or(60.0).clamp(1.0, 3600.0);
