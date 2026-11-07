@@ -507,8 +507,8 @@ impl App {
             ("W / Shift+W", "While routing: wider / narrower track"),
             ("Shift+R", "While routing: direct, walkaround or push mode"),
             (
-                "Drag a track",
-                "In push mode, the tracks of other nets move aside",
+                "Drag a track or part",
+                "In push mode, its tracks follow and other tracks move aside",
             ),
             ("V", "Via tool"),
             ("Z / K / O", "Pour / keep-out / outline"),
