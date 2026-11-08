@@ -708,6 +708,7 @@ mod tests {
             Net {
                 pads: vec![],
                 class: None,
+                ..Default::default()
             },
         );
         let h = search(&d, "r1");
@@ -728,6 +729,7 @@ mod tests {
             Net {
                 pads: vec!["R1.1".parse().unwrap()],
                 class: None,
+                ..Default::default()
             },
         );
         d.nets.nets.insert(
@@ -735,6 +737,7 @@ mod tests {
             Net {
                 pads: vec!["R2.1".parse().unwrap()],
                 class: None,
+                ..Default::default()
             },
         );
         assert_eq!(nets_of_parts(&d, &["R1".into()]), vec!["A".to_string()]);

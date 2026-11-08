@@ -632,6 +632,7 @@ mod tests {
             Net {
                 pads: vec![PadRef::new("R1", "2"), PadRef::new("J1", "1")],
                 class: Some("power".into()),
+                ..Default::default()
             },
         );
         d.nets.nets.insert(
@@ -639,6 +640,7 @@ mod tests {
             Net {
                 pads: vec![PadRef::new("R1", "1"), PadRef::new("R2", "1")],
                 class: None,
+                ..Default::default()
             },
         );
         d.board.rules.net_classes.insert(

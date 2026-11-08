@@ -1740,6 +1740,7 @@ mod tests {
             Net {
                 pads: Vec::new(),
                 class: None,
+                ..Default::default()
             },
         );
         d.routing.tracks.push(Track {
@@ -1918,6 +1919,7 @@ mod tests {
             Net {
                 pads: vec!["R1.2".parse().unwrap(), "R2.1".parse().unwrap()],
                 class: None,
+                ..Default::default()
             },
         );
         d.nets.nets.insert(
@@ -1925,6 +1927,7 @@ mod tests {
             Net {
                 pads: Vec::new(),
                 class: None,
+                ..Default::default()
             },
         );
         let out = lamina_route::autoroute(&d, &Default::default()).unwrap();
@@ -1980,6 +1983,7 @@ mod tests {
             Net {
                 pads: vec!["R1.2".parse().unwrap(), "R2.1".parse().unwrap()],
                 class: None,
+                ..Default::default()
             },
         );
         d.nets.nets.insert(
@@ -1987,6 +1991,7 @@ mod tests {
             Net {
                 pads: Vec::new(),
                 class: None,
+                ..Default::default()
             },
         );
         let out = lamina_route::autoroute(&d, &Default::default()).unwrap();
@@ -2029,6 +2034,7 @@ mod tests {
             Net {
                 pads: vec!["R1.2".parse().unwrap(), "R2.1".parse().unwrap()],
                 class: None,
+                ..Default::default()
             },
         );
         d.nets.nets.insert(
@@ -2036,6 +2042,7 @@ mod tests {
             Net {
                 pads: Vec::new(),
                 class: None,
+                ..Default::default()
             },
         );
         let out = lamina_route::autoroute(&d, &Default::default()).unwrap();
@@ -2084,6 +2091,7 @@ mod tests {
             Net {
                 pads: vec!["R1.2".parse().unwrap(), "R2.1".parse().unwrap()],
                 class: None,
+                ..Default::default()
             },
         );
         let out = lamina_route::autoroute(&d, &Default::default()).unwrap();
@@ -2119,6 +2127,7 @@ mod tests {
             Net {
                 pads: Vec::new(),
                 class: None,
+                ..Default::default()
             },
         );
         d.routing.tracks.push(Track {
@@ -2154,6 +2163,7 @@ mod tests {
                 Net {
                     pads: Vec::new(),
                     class: None,
+                    ..Default::default()
                 },
             );
         }
@@ -2212,6 +2222,7 @@ mod tests {
                 Net {
                     pads: Vec::new(),
                     class: None,
+                    ..Default::default()
                 },
             );
         }
@@ -2258,6 +2269,7 @@ mod tests {
                 Net {
                     pads: Vec::new(),
                     class: None,
+                    ..Default::default()
                 },
             );
         }

@@ -1457,6 +1457,7 @@ mod tests {
                     PadRef::new("J1", "1"),
                 ],
                 class: None,
+                ..Default::default()
             },
         );
         d.nets.nets.insert(
@@ -1468,6 +1469,7 @@ mod tests {
                     PadRef::new("Q1", "1"),
                 ],
                 class: None,
+                ..Default::default()
             },
         );
         d.routing.tracks.push(Track {

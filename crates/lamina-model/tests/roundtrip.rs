@@ -55,6 +55,7 @@ fn sample() -> ProjectData {
         Net {
             pads: vec!["R1.1".parse().unwrap()],
             class: None,
+            ..Default::default()
         },
     );
     d.placement

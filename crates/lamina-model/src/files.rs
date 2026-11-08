@@ -440,6 +440,18 @@ pub struct Net {
     /// The name of a net class in the board rules.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub class: Option<String>,
+    /// Minimum total track length in mm, not a pad-to-pad path length.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub length_min: Option<f64>,
+    /// Maximum total track length in mm.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub length_max: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub skew_group: Option<String>,
+    /// Maximum spread of total track lengths in the group, in mm.
+    /// The smallest supplied limit among group members applies.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_skew: Option<f64>,
 }
 
 impl NetsFile {

@@ -199,6 +199,7 @@ mod tests {
                 Net {
                     pads: vec![],
                     class: None,
+                    ..Default::default()
                 },
             );
         }

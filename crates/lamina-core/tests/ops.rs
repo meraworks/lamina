@@ -406,6 +406,7 @@ fn kicad_footprint_import_and_board_round_trip() {
             Net {
                 pads: vec!["Q1.2".parse().unwrap(), "R1.1".parse().unwrap()],
                 class: None,
+                ..Default::default()
             },
         )]
         .into(),
@@ -522,6 +523,7 @@ fn router_exchange_writes_a_design_and_reads_the_session_back() {
             Net {
                 pads: vec!["R1.2".parse().unwrap(), "R2.1".parse().unwrap()],
                 class: None,
+                ..Default::default()
             },
         )]
         .into(),
@@ -615,6 +617,7 @@ fn add_pair(p: &mut Project, r: &str, s: &str, group: &str, n: &str) {
             Net {
                 pads: pads.iter().map(|p| p.parse().unwrap()).collect(),
                 class: None,
+                ..Default::default()
             },
         );
     }
@@ -1288,6 +1291,7 @@ fn pin_names_check_the_nets_and_the_pins_tool_lists_them() {
                 Net {
                     pads: vec!["U9.1".parse().unwrap(), "R1.1".parse().unwrap()],
                     class: None,
+                    ..Default::default()
                 },
             ),
             (
@@ -1295,6 +1299,7 @@ fn pin_names_check_the_nets_and_the_pins_tool_lists_them() {
                 Net {
                     pads: vec!["U9.2".parse().unwrap(), "R1.2".parse().unwrap()],
                     class: None,
+                    ..Default::default()
                 },
             ),
             (
@@ -1302,6 +1307,7 @@ fn pin_names_check_the_nets_and_the_pins_tool_lists_them() {
                 Net {
                     pads: vec!["U9.3".parse().unwrap(), "R1.2".parse().unwrap()],
                     class: None,
+                    ..Default::default()
                 },
             ),
         ]
@@ -1337,6 +1343,7 @@ fn pin_names_check_the_nets_and_the_pins_tool_lists_them() {
                 Net {
                     pads: vec!["U9.2".parse().unwrap(), "R1.1".parse().unwrap()],
                     class: None,
+                    ..Default::default()
                 },
             ),
             (
@@ -1344,6 +1351,7 @@ fn pin_names_check_the_nets_and_the_pins_tool_lists_them() {
                 Net {
                     pads: vec!["U9.1".parse().unwrap(), "R1.2".parse().unwrap()],
                     class: None,
+                    ..Default::default()
                 },
             ),
         ]

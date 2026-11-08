@@ -1154,6 +1154,7 @@ mod tests {
             Net {
                 pads: pads.iter().map(|p| p.parse().unwrap()).collect(),
                 class: None,
+                ..Default::default()
             },
         );
     }

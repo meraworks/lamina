@@ -26,6 +26,7 @@ fn thermal_spokes_count_connections_to_the_pour() {
         Net {
             pads: vec!["U1.1".parse().unwrap()],
             class: None,
+            ..Default::default()
         },
     );
     d.routing.zones.push(Zone {

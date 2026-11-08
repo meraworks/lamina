@@ -21,6 +21,7 @@ fn board() -> ProjectData {
     let net = |pads: &[&str]| Net {
         pads: pads.iter().map(|p| p.parse().unwrap()).collect(),
         class: None,
+        ..Default::default()
     };
     d.nets.nets.insert("A".into(), net(&["R1.2", "R2.1"]));
     d.nets.nets.insert("B".into(), net(&["U1.1", "R1.1"]));
@@ -130,6 +131,7 @@ fn crossing_bus_is_negotiated_clean() {
                     format!("U2.{k}").parse().unwrap(),
                 ],
                 class: None,
+                ..Default::default()
             },
         );
     }
@@ -168,6 +170,7 @@ fn vias_respect_copper_on_layers_the_router_may_not_use() {
     let net = |pads: &[&str]| Net {
         pads: pads.iter().map(|p| p.parse().unwrap()).collect(),
         class: None,
+        ..Default::default()
     };
     d.nets.nets.insert("A".into(), net(&["R1.1", "R2.1"]));
     d.nets.nets.insert("B".into(), net(&[]));
