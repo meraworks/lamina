@@ -166,6 +166,11 @@ goes left and negative right, each offset by half the gap plus half the width.
 Both tracks are committed together; new DRC errors refuse the operation.
 Sharp reversals and bends too short for the inner track are refused.
 
+`tune_length` takes `net`, `track`, a zero-based `segment`, a total-net `target`,
+maximum `amplitude`, and leg `spacing`, all lengths in mm. It inserts meanders
+to the left of the selected segment and preserves its endpoints. Spacing must
+allow the track width and clearance; new DRC errors refuse the change.
+
 Use `exclude_violation` with a `rule`, the `items` from `check`, and a nonempty
 `reason` to accept a specific violation. The match uses item IDs, so it stays
 after an item moves. `exclusions` lists the saved reasons and hidden violations.

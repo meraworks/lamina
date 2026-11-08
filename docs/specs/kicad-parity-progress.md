@@ -235,3 +235,16 @@ Tasks 0–2 are implemented and verified. Task 3 is in progress; Tasks 4–12 ar
 - route_diff_pair is available to MCP, always uses strict commit, and rejects
   bends that reverse or collapse the inner offset segment.
 - Pair routing: added a failing cross-item ID collision regression and fixed allocation to reserve all item IDs. Targeted test, formatting, workspace clippy and workspace tests passed (session 38556).
+
+## Task 10: length tuning
+
+- Added tests for reaching total-net length with multiple tracks, preserving
+  endpoints, invalid net/segment/dimensions, and atomic refusal of new shorts.
+  Tests failed on missing API, then both passed.
+- MCP tune_length accepts net, track, zero-based segment, target, maximum
+  amplitude and leg spacing. It keeps endpoints, checks available space and
+  minimum leg spacing, and always uses strict commit.
+- Ruling: amplitude is a maximum; the final meander height is reduced to hit
+  the target exactly. Meanders go left of the selected segment. The target is
+  the track-length sum documented by net_lengths, not an electrical path length.
+- Task 10: formatting, workspace clippy and workspace tests passed (session 58534).

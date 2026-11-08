@@ -20,6 +20,8 @@ pub mod render;
 pub mod route;
 pub mod status;
 pub mod text;
+pub mod tuning;
+pub use tuning::TuneLength;
 
 pub use board::{RectSpec, SetOutline, SetRules, SetStackup, UseFabPreset};
 pub use format::{

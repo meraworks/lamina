@@ -227,6 +227,16 @@ impl Lamina {
         self.with(|proj| proj.route_diff_pair(p))
     }
 
+    /// Lengthen a selected segment with a serpentine to reach a net's total
+    /// track length. Amplitude and spacing are in mm. Always refuses new DRC errors.
+    #[tool(annotations(title = "Tune length"))]
+    async fn tune_length(
+        &self,
+        Parameters(p): Parameters<TuneLength>,
+    ) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.tune_length(p))
+    }
+
     /// The board formats that Lamina reads or writes: id, extensions and
     /// what each one holds.
     #[tool(annotations(title = "Formats", read_only_hint = true))]
