@@ -168,76 +168,7 @@ pub fn classify(name: &str, text: &str) -> FabLayer {
 /// Make one ring from a polygon with holes. A zero-width cut connects each
 /// hole to the outside, as in Gerber regions.
 pub fn keyhole(p: &Polygon<f64>) -> Vec<Point> {
-    let pts = |ls: &geo::LineString<f64>| -> Vec<Point> {
-        let mut v: Vec<Point> = ls.coords().map(|c| Point::new(r6(c.x), r6(c.y))).collect();
-        if v.len() > 1 && v[0] == *v.last().unwrap() {
-            v.pop();
-        }
-        v
-    };
-    // The outer ring is counter-clockwise and the holes are clockwise, so the cuts subtract.
-    let mut outer = pts(p.exterior());
-    if lamina_geom::prim::ring_area(&outer) < 0.0 {
-        outer.reverse();
-    }
-    let mut holes: Vec<Vec<Point>> = p
-        .interiors()
-        .iter()
-        .map(pts)
-        .filter(|h| h.len() >= 3)
-        .map(|mut h| {
-            if lamina_geom::prim::ring_area(&h) > 0.0 {
-                h.reverse();
-            }
-            h
-        })
-        .collect();
-    // Do the rightmost holes first, so that their cuts do not cross the cuts of other holes.
-    holes.sort_by(|a, b| {
-        let mx = |h: &Vec<Point>| h.iter().map(|q| q.x).fold(f64::MIN, f64::max);
-        mx(b).total_cmp(&mx(a))
-    });
-    for h in holes {
-        let (hi, hp) = h
-            .iter()
-            .enumerate()
-            .max_by(|a, b| a.1.x.total_cmp(&b.1.x))
-            .map(|(i, q)| (i, *q))
-            .unwrap();
-        // Find the nearest outer vertex. The cut to it must not cross an edge.
-        let mut order: Vec<usize> = (0..outer.len()).collect();
-        order.sort_by(|&a, &b| outer[a].dist(hp).total_cmp(&outer[b].dist(hp)));
-        let clear = |oi: usize, outer: &[Point]| -> bool {
-            let op = outer[oi];
-            let n = outer.len();
-            for k in 0..n {
-                let (a, b) = (outer[k], outer[(k + 1) % n]);
-                if k == oi || (k + 1) % n == oi {
-                    continue;
-                }
-                if lamina_geom::prim::segments_intersect(hp, op, a, b) {
-                    return false;
-                }
-            }
-            true
-        };
-        let oi = order
-            .iter()
-            .take(64)
-            .copied()
-            .find(|&oi| clear(oi, &outer))
-            .unwrap_or(order[0]);
-        let op = outer[oi];
-        let mut ring: Vec<Point> = Vec::with_capacity(outer.len() + h.len() + 2);
-        ring.extend_from_slice(&outer[..=oi]);
-        for k in 0..=h.len() {
-            ring.push(h[(hi + k) % h.len()]);
-        }
-        ring.push(op);
-        ring.extend_from_slice(&outer[oi + 1..]);
-        outer = ring;
-    }
-    outer
+    lamina_geom::fill::keyhole(p)
 }
 
 /// The board that `import` makes from a set of fab files.

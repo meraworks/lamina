@@ -168,6 +168,7 @@ pub fn export_project(d: &ProjectData, name: &str) -> String {
             "min_via_annular_width": r.min_annular_ring,
             "min_via_diameter": r.min_via_drill + 2.0 * r.min_annular_ring,
             "min_hole_to_hole": r.hole_to_hole,
+            "min_hole_clearance": r.clearance,
             "min_copper_edge_clearance": r.copper_to_edge,
         }}},
         "meta": {"filename": format!("{name}.kicad_pro"), "version": 3},
@@ -183,6 +184,17 @@ pub fn export_project(d: &ProjectData, name: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn exported_hole_clearance_uses_the_board_clearance() {
+        let mut d = ProjectData::new("rules");
+        d.board.rules.clearance = 0.127;
+        let value: Value = serde_json::from_str(&export_project(&d, "rules")).unwrap();
+        assert_eq!(
+            value["board"]["design_settings"]["rules"]["min_hole_clearance"],
+            0.127
+        );
+    }
 
     #[test]
     fn wildcards() {

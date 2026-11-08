@@ -122,3 +122,48 @@ Tasks 0–2 are implemented and verified. Task 3 is in progress; Tasks 4–12 ar
   intersections to each pad's neighborhood.
 - All DRC tests pass. Full workspace verification is running in session 39343.
   Task 4 commit remains; do not claim exact thermal-count parity with KiCad refill.
+- Task 4 workspace checks passed; committed as `9a73f2a`.
+
+## Task 5
+
+- Added a failing export test for filled polygons and unchanged zone outlines on
+  reimport. It now passes.
+- KiCad depends on lamina-geom and writes fill polygons on each zone layer.
+- Moved the existing Gerber keyhole converter into lamina-geom; the Gerber adapter
+  delegates to it and filled polygons expose a keyhole method.
+- Remaining: hole-area and wider round-trip tests, KiCad without refill on the
+  collar copy (zero unconnected required), review Task 4 thermal differences on
+  exported fills, workspace checks and commit.
+- KiCad/export suites passed. Filled-zone test checks hole exclusion, copper area,
+  Y flip and outline preservation.
+- KiCad no-refill check reads the fills and reports 0 unconnected items, but 287
+  violations: 214 clearance, 32 hole clearance, 4 edge clearance, and the baseline
+  library/silk/mask/courtyard cases. No thermal warnings with these exported fills.
+  Evidence: `%TEMP%/lamina-parity-collar/filled-drc.json`.
+- Clearance examples are about 0.004 mm short. A new test proved inflated circle
+  chords fell inside the requested clearance. Added the polygon tolerance to
+  positive inflation. Geometry/DRC/KiCad tests are running; this fix needs a new
+  no-refill comparison. Hole/edge rule differences remain to investigate.
+- Tolerance fix removed all 214 copper-clearance errors. Added failing tests and
+  fixes for routed-slot copper-to-edge spacing and explicit export of Lamina's
+  hole clearance. Both tests pass. Next report (`filled-drc-fixed.json`) has 40
+  violations, 0 unconnected, and only 3 geometric errors: slot/zone intersections.
+- A diamond-hole regression proved the old nearest-vertex keyhole cut can cross
+  the hole itself. Replaced it with a rightward ray from the rightmost hole point
+  to the nearest boundary. Regression passes. This needs full exporter tests and
+  another no-refill real-board check before commit.
+- Geometry/export/KiCad tests passed. Corrected keyhole export passes KiCad DRC
+  without refill with 0 unconnected and 37 violations: library 31, NPTH courtyard
+  1, silk overlap 2, solder mask bridge 3. No copper/hole/edge clearance errors.
+  Evidence: `%TEMP%/lamina-parity-collar/filled-drc-keyhole.json`.
+- Final Task 5 workspace checks are running before commit.
+- Commit/check process is exec session 70255. Clippy passed; workspace tests are
+  building. The command commits only Task 5 files on success.
+
+## Task 6 preparation
+
+- Added `crates/lamina-kicad/tests/footprint_library.rs`. It requires a table with
+  `${KIPRJMOD}/board.pretty`, safe file names, one library member for every board
+  footprint (including board holes), and no placement in the library root.
+- Test not run yet: wait for session 70255, then run it and observe the missing
+  library failure before implementing companions and shared footprint naming.

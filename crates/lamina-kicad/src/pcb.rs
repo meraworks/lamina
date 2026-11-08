@@ -721,6 +721,8 @@ pub fn export_board_with(d: &ProjectData, model_dir: Option<&std::path::Path>) -
                 .child(n("uuid").str(uuid(&format!("via:{}", v.id)))),
         );
     }
+    let geometry = lamina_geom::build(d);
+    let fills = lamina_geom::fill::fill_zones(d, &geometry);
     for z in &d.routing.zones {
         let net = z
             .net
@@ -733,26 +735,38 @@ pub fn export_board_with(d: &ProjectData, model_dir: Option<&std::path::Path>) -
             PadConnection::None => n("connect_pads").sym("no"),
         }
         .child(n("clearance").num(z.clearance.unwrap_or(d.board.rules.clearance)));
-        root = root.child(
-            n("zone")
-                .child(net)
-                .child(n("net_name").str(z.net.clone().unwrap_or_default()))
-                .child(layers_node(&z.layers))
-                .child(n("uuid").str(uuid(&format!("zone:{}", z.id))))
-                .child(n("name").str(&z.id))
-                .child(n("hatch").sym("edge").num(0.5))
-                .child(n("priority").num(z.priority as f64))
-                .child(connect)
-                .child(n("min_thickness").num(z.min_width.unwrap_or(d.board.rules.min_track_width)))
-                .child(n("filled_areas_thickness").sym("no"))
-                .child(
-                    n("fill")
-                        .sym("yes")
-                        .child(n("thermal_gap").num(z.thermal_gap))
-                        .child(n("thermal_bridge_width").num(z.thermal_spoke)),
-                )
-                .child(polygon_node(&z.outline)),
-        );
+        let mut zone = n("zone")
+            .child(net)
+            .child(n("net_name").str(z.net.clone().unwrap_or_default()))
+            .child(layers_node(&z.layers))
+            .child(n("uuid").str(uuid(&format!("zone:{}", z.id))))
+            .child(n("name").str(&z.id))
+            .child(n("hatch").sym("edge").num(0.5))
+            .child(n("priority").num(z.priority as f64))
+            .child(connect)
+            .child(n("min_thickness").num(z.min_width.unwrap_or(d.board.rules.min_track_width)))
+            .child(n("filled_areas_thickness").sym("no"))
+            .child(
+                n("fill")
+                    .sym("yes")
+                    .child(n("thermal_gap").num(z.thermal_gap))
+                    .child(n("thermal_bridge_width").num(z.thermal_spoke)),
+            )
+            .child(polygon_node(&z.outline));
+        for fill in fills.iter().filter(|f| f.zone == z.id) {
+            for polygon in &fill.polygons {
+                let mut pts = n("pts");
+                for p in polygon.keyhole() {
+                    pts = pts.child(n("xy").num(p.x).num(-p.y));
+                }
+                zone = zone.child(
+                    n("filled_polygon")
+                        .child(n("layer").str(layer_to_kicad(fill.layer)))
+                        .child(pts),
+                );
+            }
+        }
+        root = root.child(zone);
     }
     for k in &d.routing.keepouts {
         let allow = |b: bool| if b { "not_allowed" } else { "allowed" };

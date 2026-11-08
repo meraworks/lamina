@@ -28,6 +28,8 @@ fn mp(p: Polygon<f64>) -> MultiPolygon<f64> {
 
 /// The prim made larger by `d` (exact for circles and capsules).
 pub fn inflate(p: &Prim, d: f64) -> MultiPolygon<f64> {
+    // Polygon chords must stay outside the requested clearance boundary.
+    let d = if d > 0.0 { d + TOL } else { d };
     match p {
         Prim::Circle { c, r } => mp(gpoly(&circle_points(*c, r + d, TOL))),
         Prim::Capsule { a, b, r } => mp(gpoly(&capsule_points(*a, *b, r + d, TOL))),
@@ -109,6 +111,12 @@ pub struct FillPolygon {
 }
 
 impl FillPolygon {
+    pub fn keyhole(&self) -> Vec<Point> {
+        keyhole(&Polygon::new(
+            ring(&self.outer),
+            self.holes.iter().map(|h| ring(h)).collect(),
+        ))
+    }
     pub fn prim(&self) -> Prim {
         Prim::Poly {
             outer: self.outer.clone(),
@@ -193,7 +201,12 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
             }
             for dr in &g.drills {
                 if !dr.plated {
-                    obstacles.push(inflate(&dr.prim, zc));
+                    let clearance = if matches!(dr.prim, Prim::Capsule { .. }) {
+                        zc.max(rules.copper_to_edge)
+                    } else {
+                        zc
+                    };
+                    obstacles.push(inflate(&dr.prim, clearance));
                 }
             }
             for k in &d.routing.keepouts {
@@ -377,4 +390,166 @@ fn bbox_of(m: &MultiPolygon<f64>) -> Rect {
         min: Point::new(0.0, 0.0),
         max: Point::new(0.0, 0.0),
     })
+}
+
+/// Convert holes to zero-width cuts in one ring.
+pub fn keyhole(p: &Polygon<f64>) -> Vec<Point> {
+    let pts = |ls: &geo::LineString<f64>| -> Vec<Point> {
+        let mut v: Vec<Point> = ls
+            .coords()
+            .map(|c| Point::new((c.x * 1e6).round() / 1e6, (c.y * 1e6).round() / 1e6))
+            .collect();
+        if v.len() > 1 && v[0] == *v.last().unwrap() {
+            v.pop();
+        }
+        v
+    };
+    // The outer ring is counter-clockwise and the holes are clockwise, so the cuts subtract.
+    let mut outer = pts(p.exterior());
+    if crate::prim::ring_area(&outer) < 0.0 {
+        outer.reverse();
+    }
+    let mut holes: Vec<Vec<Point>> = p
+        .interiors()
+        .iter()
+        .map(pts)
+        .filter(|h| h.len() >= 3)
+        .map(|mut h| {
+            if crate::prim::ring_area(&h) > 0.0 {
+                h.reverse();
+            }
+            h
+        })
+        .collect();
+    // Do the rightmost holes first, so that their cuts do not cross the cuts of other holes.
+    holes.sort_by(|a, b| {
+        let mx = |h: &Vec<Point>| h.iter().map(|q| q.x).fold(f64::MIN, f64::max);
+        mx(b).total_cmp(&mx(a))
+    });
+    for h in holes {
+        let (hi, hp) = h
+            .iter()
+            .enumerate()
+            .max_by(|a, b| a.1.x.total_cmp(&b.1.x))
+            .map(|(i, q)| (i, *q))
+            .unwrap();
+        // Join the rightmost hole point to the first boundary on its right.
+        let hit = (0..outer.len())
+            .filter_map(|i| {
+                let a = outer[i];
+                let b = outer[(i + 1) % outer.len()];
+                if (a.y - b.y).abs() < 1e-12 {
+                    return None;
+                }
+                let t = (hp.y - a.y) / (b.y - a.y);
+                let x = a.x + t * (b.x - a.x);
+                if (0.0..=1.0).contains(&t) && x >= hp.x {
+                    Some((i, Point::new(x, hp.y)))
+                } else {
+                    None
+                }
+            })
+            .min_by(|a, b| a.1.x.total_cmp(&b.1.x));
+        let (edge, op) = hit.expect("a polygon hole has an outer edge to its right");
+        let oi = edge + 1;
+        outer.insert(oi, op);
+        let mut ring: Vec<Point> = Vec::with_capacity(outer.len() + h.len() + 2);
+        ring.extend_from_slice(&outer[..=oi]);
+        for k in 0..=h.len() {
+            ring.push(h[(hi + k) % h.len()]);
+        }
+        ring.push(op);
+        ring.extend_from_slice(&outer[oi + 1..]);
+        outer = ring;
+    }
+    outer
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn keyhole_cut_does_not_cross_the_hole() {
+        let hole = vec![
+            Point::new(2.0, 3.0),
+            Point::new(3.0, 2.0),
+            Point::new(4.0, 3.0),
+            Point::new(3.0, 4.0),
+        ];
+        let polygon = FillPolygon {
+            outer: vec![
+                Point::new(0.0, 0.0),
+                Point::new(100.0, 0.0),
+                Point::new(100.0, 10.0),
+                Point::new(0.0, 10.0),
+            ],
+            holes: vec![hole.clone()],
+        };
+        let ring = polygon.keyhole();
+        for edge in ring.windows(2) {
+            if ring
+                .windows(2)
+                .any(|other| other[0] == edge[1] && other[1] == edge[0])
+            {
+                for fraction in [0.1, 0.5, 0.9] {
+                    let mid = Point::new(
+                        edge[0].x + fraction * (edge[1].x - edge[0].x),
+                        edge[0].y + fraction * (edge[1].y - edge[0].y),
+                    );
+                    assert!(!crate::prim::ring_contains(&hole, mid));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn routed_holes_keep_the_board_edge_clearance() {
+        let mut d = ProjectData::new("slot");
+        d.board.outline = Some(Contour::rect(0.0, 0.0, 20.0, 20.0));
+        d.board.rules.clearance = 0.1;
+        d.board.rules.copper_to_edge = 0.3;
+        d.board.holes.push(Hole {
+            id: "slot".into(),
+            at: Point::new(10.0, 10.0),
+            drill: Drill::Slot {
+                width: 1.0,
+                height: 3.0,
+            },
+            plated: false,
+            pad_diameter: None,
+            net: None,
+            rotation: 0.0,
+        });
+        d.routing.zones.push(Zone {
+            id: "z".into(),
+            net: None,
+            layers: vec![Layer::TOP],
+            outline: Contour::rect(1.0, 1.0, 18.0, 18.0),
+            priority: 0,
+            clearance: None,
+            min_width: None,
+            pad_connection: PadConnection::Solid,
+            thermal_gap: 0.3,
+            thermal_spoke: 0.3,
+        });
+        let g = crate::build(&d);
+        let fills = fill_zones(&d, &g);
+        assert!(!fills[0].polygons.is_empty());
+        for polygon in &fills[0].polygons {
+            assert!(polygon.prim().distance(&g.drills[0].prim) >= 0.3 - 1e-6);
+        }
+    }
+
+    #[test]
+    fn inflated_round_obstacles_keep_the_requested_clearance() {
+        let center = Point::new(0.0, 0.0);
+        let obstacle = Prim::Circle { c: center, r: 0.5 };
+        let poly = inflate(&obstacle, 0.2);
+        for edge in poly.0[0].exterior().0.windows(2) {
+            let a = Point::new(edge[0].x, edge[0].y);
+            let b = Point::new(edge[1].x, edge[1].y);
+            assert!(crate::prim::seg_point(a, b, center) >= 0.7 - 1e-9);
+        }
+    }
 }
