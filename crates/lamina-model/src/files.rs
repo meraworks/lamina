@@ -154,6 +154,8 @@ fn default_silk_text_height() -> f64 {
 /// Design rules. All sizes are in mm.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Rules {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub custom: Vec<crate::rules::CustomRule>,
     #[serde(default = "default_thermal_spokes")]
     pub min_thermal_spokes: u8,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -194,6 +196,7 @@ pub struct Rules {
 impl Default for Rules {
     fn default() -> Self {
         Rules {
+            custom: Vec::new(),
             min_thermal_spokes: default_thermal_spokes(),
             exclusions: Vec::new(),
             severities: BTreeMap::new(),
