@@ -128,6 +128,8 @@ pub(crate) struct App {
     single: bool,
     /// The 3D view draws the part bodies.
     models: bool,
+    /// The part under the pointer in 3D.
+    hover3d: Option<String>,
     /// How the route tool treats the copper of other nets.
     route_mode: tools::RouteMode,
     /// Push mode: what the push does to the other tracks for the route to the
@@ -233,6 +235,7 @@ impl App {
             turn: 0.0,
             single: false,
             models: true,
+            hover3d: None,
             route_mode: tools::RouteMode::Walkaround,
             push_preview: None,
             seg_preview: None,
@@ -1433,6 +1436,26 @@ impl App {
             Mode::ThreeD => {
                 self.cursor_mm = None;
                 self.hover = None;
+                // Hover and click a part, as in the 3D view of other editors.
+                let aspect = rect.width() / rect.height().max(1.0);
+                let before = self.hover3d.clone();
+                self.hover3d = hover_pos.filter(|p| rect.contains(*p)).and_then(|pos| {
+                    let ndc = [
+                        (pos.x - rect.left()) / rect.width() * 2.0 - 1.0,
+                        1.0 - (pos.y - rect.top()) / rect.height() * 2.0,
+                    ];
+                    let (o, dir) = self.cam.ray(aspect, ndc);
+                    self.part_under_ray(o, dir)
+                });
+                if self.hover3d != before {
+                    self.dirty = true;
+                }
+                if resp.clicked() {
+                    let shift = ui.input(|i| i.modifiers.shift || i.modifiers.command);
+                    let hit = self.hover3d.clone().map(edits::Sel::Part);
+                    self.select(hit, shift);
+                    self.dirty = true;
+                }
                 if inside && (scroll != 0.0 || zoom_gesture != 1.0) {
                     let factor = (-(scroll * 0.0018)).exp() / zoom_gesture;
                     // Zoom toward the point of the board plane under the pointer, as in
@@ -1568,10 +1591,11 @@ impl App {
             widgets::hint(&painter, rect, self.tool_hint());
             self.toolbar(ui, rect);
         } else {
+            self.outlines_3d(&painter, rect);
             widgets::hint(
                 &painter,
                 rect,
-                "Drag to orbit · right-drag to pan · scroll to zoom at the pointer · T top · B bottom · I or F reset · P parts",
+                "Click a part to select it · drag to orbit · right-drag to pan · scroll to zoom at the pointer · T top · B bottom · I or F reset · P parts",
             );
             // The view buttons, and the Board menu, which works from 3D too.
             let bar = ERect::from_min_size(
@@ -1748,6 +1772,139 @@ impl App {
 }
 
 impl App {
+    /// The box of a part in 3D: its courtyard on the board, and the heights
+    /// of its bottom and top (mm). A part on the bottom hangs below the board.
+    fn part_box_3d(&self, refdes: &str) -> Option<(Vec<Point>, f32, f32)> {
+        let l = self.loaded.as_ref()?;
+        let d = &l.data;
+        let pl = d.placement.placements.get(refdes)?;
+        let fp = d
+            .parts
+            .parts
+            .get(refdes)
+            .and_then(|p| d.footprints.get(&p.footprint))?;
+        let ring = lamina_geom::courtyard(fp, pl)?;
+        let t = d.board.stackup.thickness as f32;
+        let h = fp.height.unwrap_or(1.5).max(0.2) as f32;
+        Some(match pl.side {
+            Side::Top => (ring, t, t + h),
+            Side::Bottom => (ring, -h, 0.0),
+        })
+    }
+
+    /// The nearest part that a ray of the 3D view meets (its box).
+    fn part_under_ray(&self, o: [f32; 3], d: [f32; 3]) -> Option<String> {
+        let l = self.loaded.as_ref()?;
+        let mut best: Option<(f32, String)> = None;
+        for refdes in l.data.placement.placements.keys() {
+            let Some((ring, z0, z1)) = self.part_box_3d(refdes) else {
+                continue;
+            };
+            let Some(b) = Rect::from_points(ring.iter().copied()) else {
+                continue;
+            };
+            let lo = [b.min.x as f32, b.min.y as f32, z0];
+            let hi = [b.max.x as f32, b.max.y as f32, z1];
+            // The slab test of a ray and an axis-aligned box.
+            let (mut t0, mut t1) = (0.0f32, f32::INFINITY);
+            let mut hit = true;
+            for i in 0..3 {
+                if d[i].abs() < 1e-9 {
+                    if o[i] < lo[i] || o[i] > hi[i] {
+                        hit = false;
+                        break;
+                    }
+                } else {
+                    let (a, c) = ((lo[i] - o[i]) / d[i], (hi[i] - o[i]) / d[i]);
+                    t0 = t0.max(a.min(c));
+                    t1 = t1.min(a.max(c));
+                    if t0 > t1 {
+                        hit = false;
+                        break;
+                    }
+                }
+            }
+            if hit && best.as_ref().is_none_or(|(t, _)| t0 < *t) {
+                best = Some((t0, refdes.clone()));
+            }
+        }
+        best.map(|(_, r)| r)
+    }
+
+    /// The outlines of the selected parts and of the part under the pointer
+    /// over the 3D image, and the name of the part under the pointer.
+    fn outlines_3d(&self, painter: &egui::Painter, rect: ERect) {
+        let aspect = rect.width() / rect.height().max(1.0);
+        let to_screen = |p: [f32; 3]| {
+            self.cam.project(aspect, p).map(|n| {
+                Pos2::new(
+                    rect.left() + (n[0] + 1.0) / 2.0 * rect.width(),
+                    rect.top() + (1.0 - n[1]) / 2.0 * rect.height(),
+                )
+            })
+        };
+        let draw = |refdes: &str, color: Color32, width: f32| {
+            let Some((ring, z0, z1)) = self.part_box_3d(refdes) else {
+                return;
+            };
+            for z in [z0, z1] {
+                let pts: Option<Vec<Pos2>> = ring
+                    .iter()
+                    .map(|p| to_screen([p.x as f32, p.y as f32, z]))
+                    .collect();
+                if let Some(pts) = pts {
+                    painter.add(egui::Shape::closed_line(pts, Stroke::new(width, color)));
+                }
+            }
+            for p in &ring {
+                if let (Some(a), Some(b)) = (
+                    to_screen([p.x as f32, p.y as f32, z0]),
+                    to_screen([p.x as f32, p.y as f32, z1]),
+                ) {
+                    painter.line_segment([a, b], Stroke::new(width * 0.7, color));
+                }
+            }
+        };
+        for s in &self.sel {
+            if let edits::Sel::Part(r) = s {
+                draw(r, ACCENT, 2.0);
+            }
+        }
+        if let Some(h) = &self.hover3d {
+            if !self
+                .sel
+                .iter()
+                .any(|s| matches!(s, edits::Sel::Part(r) if r == h))
+            {
+                draw(h, ACCENT.gamma_multiply(0.6), 1.4);
+            }
+            if let Some((ring, _, z1)) = self.part_box_3d(h) {
+                let n = ring.len().max(1) as f64;
+                let c = ring.iter().fold(Point::new(0.0, 0.0), |a, p| a.add(*p));
+                if let Some(at) = to_screen([(c.x / n) as f32, (c.y / n) as f32, z1]) {
+                    let value = self
+                        .loaded
+                        .as_ref()
+                        .and_then(|l| l.data.parts.parts.get(h))
+                        .and_then(|p| p.value.clone())
+                        .unwrap_or_default();
+                    let g = painter.layout_no_wrap(
+                        format!("{h}  {value}").trim().to_string(),
+                        mono(11.0),
+                        TEXT,
+                    );
+                    let pos = at + Vec2::new(10.0, -10.0 - g.size().y);
+                    painter.rect_filled(
+                        ERect::from_min_size(pos, g.size()).expand2(Vec2::new(6.0, 3.0)),
+                        4.0,
+                        RAISED,
+                    );
+                    painter.galley(pos, g, TEXT);
+                }
+            }
+        }
+    }
+
     /// Highlight a net, or clear the highlight with `None`.
     pub(crate) fn highlight_net(&mut self, net: Option<String>) {
         self.hl = match (net, &self.loaded) {

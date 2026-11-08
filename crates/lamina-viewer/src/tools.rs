@@ -629,7 +629,7 @@ impl App {
         }
     }
 
-    fn select(&mut self, hit: Option<Sel>, shift: bool) {
+    pub(crate) fn select(&mut self, hit: Option<Sel>, shift: bool) {
         match hit {
             Some(h) if shift => {
                 if let Some(i) = self.sel.iter().position(|s| s.same_item(&h)) {

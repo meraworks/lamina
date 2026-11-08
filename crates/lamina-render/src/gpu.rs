@@ -161,6 +161,22 @@ impl Camera {
         (t > 0.0).then(|| (a + d * t).into())
     }
 
+    /// The ray under a point of the view: its start and its direction (unit
+    /// length). `ndc` is the point in -1..1 on both axes, with y up.
+    pub fn ray(&self, aspect: f32, ndc: [f32; 2]) -> ([f32; 3], [f32; 3]) {
+        let inv = self.view_proj(aspect).inverse();
+        let a = inv.project_point3(Vec3::new(ndc[0], ndc[1], 0.0));
+        let b = inv.project_point3(Vec3::new(ndc[0], ndc[1], 1.0));
+        (a.into(), (b - a).normalize_or_zero().into())
+    }
+
+    /// The point of the view (-1..1 on both axes, y up) where a point of the
+    /// world shows, or `None` if it is behind the camera.
+    pub fn project(&self, aspect: f32, p: [f32; 3]) -> Option<[f32; 2]> {
+        let c = self.view_proj(aspect) * Vec3::from(p).extend(1.0);
+        (c.w > 1e-6).then(|| [c.x / c.w, c.y / c.w])
+    }
+
     /// Move the camera nearer (`factor` below 1) or farther, so that the point
     /// `at` stays at the same place in the view.
     pub fn zoom_about(&mut self, at: [f32; 3], factor: f32) {
@@ -245,6 +261,18 @@ mod camera_tests {
         let vp = cam.view_proj(1.0);
         let at = |x: f32, y: f32| vp.project_point3(Vec3::new(x, y, 0.0));
         assert!(at(20.0, 25.0).y > at(20.0, 5.0).y);
+    }
+
+    #[test]
+    fn a_ray_goes_through_the_projected_point() {
+        let cam = Camera::frame([0.0, 0.0, 0.0], [40.0, 30.0, 1.6]);
+        let p = [12.0, 7.0, 1.6];
+        let n = cam.project(1.5, p).unwrap();
+        let (o, d) = cam.ray(1.5, n);
+        // The distance from p to the ray is near zero.
+        let (o, d, p) = (Vec3::from(o), Vec3::from(d), Vec3::from(p));
+        let t = (p - o).dot(d);
+        assert!((o + d * t - p).length() < 1e-2);
     }
 
     #[test]
