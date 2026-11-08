@@ -167,3 +167,12 @@ Tasks 0–2 are implemented and verified. Task 3 is in progress; Tasks 4–12 ar
   footprint (including board holes), and no placement in the library root.
 - Test not run yet: wait for session 70255, then run it and observe the missing
   library failure before implementing companions and shared footprint naming.
+- Task 5 checks passed and committed as `a11b97e`.
+- Task 6 test failed on the missing table, then passed with companion export.
+  Board and library share safe encoded IDs; long names are bounded and collision
+  cases are tested. Library footprints are at the origin and include board holes.
+- All 21 KiCad tests pass. Clippy passed. Workspace tests are running in session
+  88815. Task 6 is not committed yet.
+- Real-board no-refill DRC: 6 violations, 0 unconnected, 0 library warnings (was
+  31). Remaining: NPTH courtyard 1, silk 2, mask 3. Evidence:
+  `%TEMP%/lamina-parity-collar/library-drc.json`.

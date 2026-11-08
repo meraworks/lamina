@@ -150,6 +150,10 @@ to a thermal zone than `min_thermal_spokes` (default 2). It counts surviving pou
 arms and same-net tracks from the pad into the fill. It checks Lamina's fill;
 another program that fills the zones again can report different counts.
 
+KiCad board export includes filled zones, a project rules file, a `.pretty`
+footprint library, and an `fp-lib-table` with project-relative paths. Keep these
+files together when you share the board. The library includes mounting holes.
+
 ## Viewer
 
 ```

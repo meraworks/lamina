@@ -111,9 +111,31 @@ impl BoardFormat for KicadFormat {
 
     fn companions(&self, data: &ProjectData, path: &Path) -> Vec<(PathBuf, String)> {
         let name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("board");
-        vec![(
+        let mut files = vec![(
             path.with_extension("kicad_pro"),
             crate::export_project(data, name),
-        )]
+        )];
+        let parent = path.parent().unwrap_or(Path::new("."));
+        let library = format!("{name}.pretty");
+        let table = lamina_model::sexpr::n("fp_lib_table")
+            .child(
+                lamina_model::sexpr::n("lib")
+                    .child(lamina_model::sexpr::n("name").str("lamina"))
+                    .child(lamina_model::sexpr::n("type").str("KiCad"))
+                    .child(lamina_model::sexpr::n("uri").str(format!("${{KIPRJMOD}}/{library}")))
+                    .child(lamina_model::sexpr::n("options").str(""))
+                    .child(lamina_model::sexpr::n("descr").str("Lamina board footprints")),
+            )
+            .done();
+        files.push((
+            parent.join("fp-lib-table"),
+            lamina_model::sexpr::write(&table),
+        ));
+        files.extend(
+            crate::pcb::library_footprints(data)
+                .into_iter()
+                .map(|(id, text)| (parent.join(&library).join(format!("{id}.kicad_mod")), text)),
+        );
+        files
     }
 }

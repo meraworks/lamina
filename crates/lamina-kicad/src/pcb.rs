@@ -934,6 +934,66 @@ fn shape_node(shape: &Shape, layer: &str, width: f64, filled: bool, id: &str) ->
     shape_node_with(shape, "gr", layer, width, filled, id, &|p| (p.x, -p.y))
 }
 
+fn library_id(id: &str) -> String {
+    let mut name = String::from("fp_");
+    for byte in id.bytes() {
+        if byte.is_ascii_alphanumeric() || byte == b'-' {
+            name.push(byte as char);
+        } else {
+            name.push_str(&format!("_{byte:02x}"));
+        }
+    }
+    if name.len() > 120 {
+        name.truncate(120);
+        name.push_str(&uuid(id));
+    }
+    name
+}
+
+pub(crate) fn library_footprints(d: &ProjectData) -> BTreeMap<String, String> {
+    let serialize = |node: Node, name: &str| {
+        let Sx::List(mut items) = node.done() else {
+            unreachable!()
+        };
+        items[1] = Sx::str(name);
+        items.retain(|item| !item.is("at") && !item.is("uuid"));
+        items.insert(2, n("version").num(20240108.0).done());
+        items.insert(3, n("generator").str("lamina").done());
+        sexpr::write(&Sx::List(items))
+    };
+    let mut files = BTreeMap::new();
+    for fp in d.footprints.values() {
+        let default_part = Part::new(&fp.id);
+        let part = d
+            .parts
+            .parts
+            .values()
+            .find(|p| p.footprint == fp.id)
+            .unwrap_or(&default_part);
+        let name = library_id(&fp.id);
+        let node = footprint_node(
+            "REF**",
+            part,
+            &Placement::at(0.0, 0.0),
+            fp,
+            &BTreeMap::new(),
+            &|_| None,
+            None,
+        );
+        files.insert(name.clone(), serialize(node, &name));
+    }
+    for (i, hole) in d.board.holes.iter().enumerate() {
+        let mut hole = hole.clone();
+        hole.at = Point::new(0.0, 0.0);
+        let name = format!("hole_{}", library_id(&hole.id));
+        files.insert(
+            name.clone(),
+            serialize(hole_node(i, &hole, &|_| None), &name),
+        );
+    }
+    files
+}
+
 fn footprint_node(
     refdes: &str,
     part: &Part,
@@ -1001,7 +1061,7 @@ fn footprint_node(
         attr = attr.sym("exclude_from_bom");
     }
     let mut node = n("footprint")
-        .str(format!("lamina:{}", fp.id))
+        .str(format!("lamina:{}", library_id(&fp.id)))
         .child(n("layer").str(side_cu))
         .child(n("uuid").str(uuid(&format!("fp:{refdes}"))))
         .child(n("at").num(pl.x).num(-pl.y).num(orient))
@@ -1024,7 +1084,7 @@ fn footprint_node(
         ))
         .child(prop(
             "Footprint",
-            &format!("lamina:{}", fp.id),
+            &format!("lamina:{}", library_id(&fp.id)),
             &lname(FpLayer::Fab),
             (Point::new(0.0, 0.0), 1.27, 0.0),
             true,
@@ -1266,7 +1326,7 @@ fn hole_node(i: usize, h: &Hole, net_node: &dyn Fn(&str) -> Option<Node>) -> Nod
         pad = pad.child(net);
     }
     n("footprint")
-        .str(format!("lamina:Hole_{}", h.id))
+        .str(format!("lamina:hole_{}", library_id(&h.id)))
         .child(n("layer").str("F.Cu"))
         .child(n("uuid").str(uuid(&format!("hole:{}", h.id))))
         .child(n("at").num(h.at.x).num(-h.at.y))
