@@ -154,6 +154,8 @@ fn default_silk_text_height() -> f64 {
 /// Design rules. All sizes are in mm.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Rules {
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub severities: BTreeMap<String, RuleSeverity>,
     /// The fab preset that these rules came from, if there is one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub preset: Option<String>,
@@ -188,6 +190,7 @@ pub struct Rules {
 impl Default for Rules {
     fn default() -> Self {
         Rules {
+            severities: BTreeMap::new(),
             preset: None,
             clearance: 0.15,
             track_width: 0.25,
@@ -209,6 +212,14 @@ impl Default for Rules {
             net_classes: BTreeMap::new(),
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum RuleSeverity {
+    Error,
+    Warning,
+    Ignore,
 }
 
 impl Rules {
@@ -717,6 +728,20 @@ impl Violation {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rule_severity_round_trip_and_old_rules() {
+        let old = serde_json::to_value(Rules::default()).unwrap();
+        assert!(old.get("severities").is_none());
+        let mut rules: Rules = serde_json::from_value(old).unwrap();
+        assert!(rules.severities.is_empty());
+        rules
+            .severities
+            .insert("unrouted".into(), RuleSeverity::Ignore);
+        let value = serde_json::to_value(&rules).unwrap();
+        assert_eq!(value["severities"]["unrouted"], "ignore");
+        assert_eq!(serde_json::from_value::<Rules>(value).unwrap(), rules);
+    }
 
     #[test]
     fn padref_parse() {
