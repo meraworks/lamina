@@ -736,7 +736,10 @@ impl Lamina {
     /// board), `3d` (perspective with part models). In 3D, `yaw` and `pitch`
     /// turn the camera, `focus` points it at a part, a pad or a point,
     /// `region` fits a box, `zoom` moves it closer, and `hide` / `only`
-    /// select the parts to draw. The tool saves the PNG in cache/render.
+    /// select the parts to draw. In the `layers` view, `focus` also zooms to its target.
+    /// For an image that a person reviews, set `overview: true` with
+    /// `region` or `focus`: a small view of the whole board in the corner
+    /// marks where the close-up is. The tool saves the PNG in cache/render.
     #[tool(annotations(title = "Render", read_only_hint = true))]
     async fn render(&self, Parameters(p): Parameters<Render>) -> Result<CallToolResult, McpError> {
         let mut guard = self.project.lock().unwrap_or_else(|p| p.into_inner());

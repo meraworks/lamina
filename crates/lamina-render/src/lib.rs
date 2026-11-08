@@ -29,14 +29,17 @@ pub fn snapshot(
                 height,
                 layers: None,
                 region: None,
+                inset: None,
             };
-            let pm = raster::render_layers(s2, opts2d.unwrap_or(&def))
+            let mut pm = raster::render_layers(s2, opts2d.unwrap_or(&def))
                 .ok_or("the image size is not valid")?;
+            inset(&mut pm, s2, opts2d);
             Ok((raster::png(&pm)?, Vec::new()))
         }
         Snapshot::Side(side) => {
-            let pm = raster::render_side(s2, side, width, height)
+            let mut pm = raster::render_side(s2, side, width, height)
                 .ok_or("the image size is not valid")?;
+            inset(&mut pm, s2, opts2d);
             Ok((raster::png(&pm)?, Vec::new()))
         }
         Snapshot::View3D {
@@ -60,6 +63,7 @@ pub fn snapshot(
             let mut pm =
                 tiny_skia::Pixmap::new(width, height).ok_or("the image size is not valid")?;
             pm.data_mut().copy_from_slice(&rgba);
+            inset(&mut pm, s2, opts2d);
             let problems = scene
                 .problems
                 .iter()
@@ -67,5 +71,12 @@ pub fn snapshot(
                 .collect();
             Ok((raster::png(&pm)?, problems))
         }
+    }
+}
+
+/// The overview of `Options2D::inset`, if it is set.
+fn inset(pm: &mut tiny_skia::Pixmap, s2: &Scene2D, opts: Option<&raster::Options2D>) {
+    if let Some(mark) = opts.and_then(|o| o.inset) {
+        raster::draw_inset(pm, s2, mark);
     }
 }

@@ -215,6 +215,90 @@ pub fn render_layers(s: &Scene2D, opt: &Options2D) -> Option<Pixmap> {
     Some(pm)
 }
 
+/// A small overview of the whole board in the lower right corner of `pm`,
+/// with the box `mark` (mm) outlined on it, so that a close-up shows where it
+/// is on the board.
+pub fn draw_inset(pm: &mut Pixmap, s: &Scene2D, mark: Rect) {
+    let (w, h) = (pm.width(), pm.height());
+    let bb = pad_rect(s.bbox, 1.0);
+    let aspect = (bb.width() / bb.height().max(1e-3)) as f32;
+    // About a quarter of the shorter side of the image.
+    let side = (w.min(h) as f32 * 0.28).max(80.0);
+    let (iw, ih) = if aspect >= 1.0 {
+        (side, side / aspect)
+    } else {
+        (side * aspect, side)
+    };
+    let (iw, ih) = (iw.round().max(40.0) as u32, ih.round().max(40.0) as u32);
+    let opt = Options2D {
+        width: iw,
+        height: ih,
+        layers: None,
+        region: Some(bb),
+        inset: None,
+    };
+    let Some(mut ov) = render_layers(s, &opt) else {
+        return;
+    };
+    // The same view as `render_layers` uses for the overview.
+    let view = View::fit(bb, iw, ih, 12.0);
+    let ts = view.transform();
+    let mut mk = PathBuilder::new();
+    // At least a few pixels, so that a small close-up still shows.
+    let grow = (3.0 / view.scale) as f64;
+    let r = Rect {
+        min: Point::new(mark.min.x - grow, mark.min.y - grow),
+        max: Point::new(mark.max.x + grow, mark.max.y + grow),
+    };
+    mk.move_to(r.min.x as f32, r.min.y as f32);
+    mk.line_to(r.max.x as f32, r.min.y as f32);
+    mk.line_to(r.max.x as f32, r.max.y as f32);
+    mk.line_to(r.min.x as f32, r.max.y as f32);
+    mk.close();
+    if let Some(path) = mk.finish() {
+        let mut paint = Paint::default();
+        paint.set_color_rgba8(255, 214, 10, 70);
+        ov.fill_path(&path, &paint, FillRule::Winding, ts, None);
+        paint.set_color_rgba8(255, 214, 10, 255);
+        let stroke = Stroke {
+            width: 2.0 / view.scale,
+            ..Default::default()
+        };
+        ov.stroke_path(&path, &paint, &stroke, ts, None);
+    }
+    // A frame around the overview, then the overview in the corner.
+    let (x, y) = ((w - iw) as i32 - 12, (h - ih) as i32 - 12);
+    let mut frame = PathBuilder::new();
+    frame.push_rect(
+        tiny_skia::Rect::from_xywh(
+            x as f32 - 2.0,
+            y as f32 - 2.0,
+            iw as f32 + 4.0,
+            ih as f32 + 4.0,
+        )
+        .unwrap(),
+    );
+    if let Some(path) = frame.finish() {
+        let mut paint = Paint::default();
+        paint.set_color_rgba8(235, 235, 240, 255);
+        pm.fill_path(
+            &path,
+            &paint,
+            FillRule::Winding,
+            Transform::identity(),
+            None,
+        );
+    }
+    pm.draw_pixmap(
+        x,
+        y,
+        ov.as_ref(),
+        &tiny_skia::PixmapPaint::default(),
+        Transform::identity(),
+        None,
+    );
+}
+
 fn pad_rect(r: Rect, m: f64) -> Rect {
     Rect {
         min: Point::new(r.min.x - m, r.min.y - m),

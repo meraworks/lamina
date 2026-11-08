@@ -37,8 +37,9 @@ pub struct Render {
     /// the 3D view, the camera fits the box.
     #[serde(default)]
     pub region: Option<Rect>,
-    /// 3D view: point the camera at a part (`U1`), a pad (`U1.3`) or a point
-    /// (`{"x": 10, "y": 5}`). For a part, the camera fits the part.
+    /// Point the view at a part (`U1`), a pad (`U1.3`) or a point
+    /// (`{"x": 10, "y": 5}`). For a part, the view fits the part. In the `layers` view
+    /// without `region`, the image shows the area around the target.
     #[serde(default)]
     pub focus: Option<Target>,
     /// 3D view: move the camera closer. 1 is the default fit, 2 is two times
@@ -71,6 +72,11 @@ pub struct Render {
     /// The file name in cache/render. The default is the name of the view.
     #[serde(default)]
     pub name: Option<String>,
+    /// With `region` or `focus`: add a small overview of the whole board in
+    /// the corner, with the shown area marked. Use it for an image that a
+    /// person reviews, so that a close-up shows where it is on the board.
+    #[serde(default)]
+    pub overview: bool,
 }
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
@@ -158,11 +164,33 @@ impl Project {
                 zoom: p.zoom.unwrap_or(1.0),
             },
         };
+        // The area to mark on the overview: the region, or the frame of the
+        // focus target.
+        let inset = if p.overview {
+            p.region.or_else(|| {
+                frame.map(|(lo, hi)| Rect {
+                    min: Point::new(lo[0] as f64, lo[1] as f64),
+                    max: Point::new(hi[0] as f64, hi[1] as f64),
+                })
+            })
+        } else {
+            None
+        };
+        if p.overview && inset.is_none() {
+            notes.push("overview needs region or focus: the image shows the whole board.".into());
+        }
         let opts = Options2D {
             width: w,
             height: h,
             layers,
-            region: p.region,
+            // In 2D, a focus without a region zooms to the focus target too.
+            region: p.region.or_else(|| {
+                p.focus.as_ref().and(frame).map(|(lo, hi)| Rect {
+                    min: Point::new(lo[0] as f64, lo[1] as f64),
+                    max: Point::new(hi[0] as f64, hi[1] as f64),
+                })
+            }),
+            inset,
         };
         let renderer = self
             .ports

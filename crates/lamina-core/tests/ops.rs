@@ -1336,3 +1336,75 @@ fn pin_names_check_the_nets_and_the_pins_tool_lists_them() {
     );
     assert_eq!(p.pins(Pins { refdes: None }).unwrap().len(), 5);
 }
+
+#[test]
+fn a_close_up_can_have_a_board_overview() {
+    let (_t, mut p) = new_project();
+    add_resistor(&mut p, "R1");
+    p.place(Place {
+        refdes: "R1".into(),
+        x: 5.0,
+        y: 5.0,
+        rotation: None,
+        side: None,
+        locked: None,
+        strict: false,
+    })
+    .unwrap();
+    p.set_ports(Ports {
+        renderer: Some(std::sync::Arc::new(lamina_render::PngRenderer)),
+        ..p.ports().clone()
+    });
+    let r = p
+        .render(Render {
+            focus: Some(lamina_core::ops::place::Target::Name("R1.1".into())),
+            overview: true,
+            width: Some(600),
+            height: Some(400),
+            name: Some("closeup".into()),
+            ..Default::default()
+        })
+        .unwrap();
+    assert!(r.png.starts_with(b"\x89PNG"), "a PNG");
+    // Without region or focus, the overview has nothing to mark.
+    let r = p
+        .render(Render {
+            overview: true,
+            ..Default::default()
+        })
+        .unwrap();
+    assert!(
+        r.notes.iter().any(|n| n.contains("overview")),
+        "{:?}",
+        r.notes
+    );
+}
+
+/// Renders a close-up of a real board for a person to look at:
+/// `LAMINA_RENDER_BOARD=<dir> LAMINA_RENDER_FOCUS=U1.3 cargo test -- --ignored overview_of_a_real_board`
+#[test]
+#[ignore]
+fn overview_of_a_real_board() {
+    let dir = std::env::var("LAMINA_RENDER_BOARD").unwrap();
+    let focus = std::env::var("LAMINA_RENDER_FOCUS").unwrap_or("U1".into());
+    let mut p = open(std::path::Path::new(&dir)).unwrap();
+    p.set_ports(Ports {
+        renderer: Some(std::sync::Arc::new(lamina_render::PngRenderer)),
+        ..p.ports().clone()
+    });
+    for (view, name) in [
+        (lamina_core::ops::RenderView::Layers, "overview-2d"),
+        (lamina_core::ops::RenderView::View3D, "overview-3d"),
+    ] {
+        let r = p
+            .render(Render {
+                view,
+                focus: Some(lamina_core::ops::place::Target::Name(focus.clone())),
+                overview: true,
+                name: Some(name.into()),
+                ..Default::default()
+            })
+            .unwrap();
+        println!("{} {:?}", r.path, r.notes);
+    }
+}

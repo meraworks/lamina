@@ -30,6 +30,9 @@ pub struct Options2D {
     pub layers: Option<Vec<SceneLayer>>,
     /// Area of the board to show (default: whole board).
     pub region: Option<Rect>,
+    /// Draw a small overview of the whole board in a corner, with this box
+    /// marked, so that a close-up shows where it is on the board.
+    pub inset: Option<Rect>,
 }
 
 pub trait Renderer: Send + Sync {

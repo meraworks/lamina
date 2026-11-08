@@ -2639,6 +2639,7 @@ dependencies = [
  "lamina-model",
  "lamina-parts",
  "lamina-ports",
+ "lamina-render",
  "lamina-route",
  "lamina-scene",
  "lamina-specctra",

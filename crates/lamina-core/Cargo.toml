@@ -27,6 +27,7 @@ lamina-kicad.workspace = true
 lamina-export.workspace = true
 lamina-step.workspace = true
 lamina-specctra.workspace = true
+lamina-render.workspace = true
 
 [lints]
 workspace = true
