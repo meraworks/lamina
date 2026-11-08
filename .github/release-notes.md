@@ -1,11 +1,23 @@
-## Changes in 0.2.0
+## Changes in 0.2.1
 
-- Providers: parts, footprints and 3D models come from providers. A part is `provider:id`, for example `lcsc:C6186` or `kicad:LED_SMD:LED_0603_1608Metric`. The tools are `providers`, `search_parts`, `import_part` and `import_parts`. The vendor-named tools are gone.
-- Part library: each download also goes into a library on your computer (`LAMINA_LIB`, `%LOCALAPPDATA%\lamina\lib` or `~/.lamina/lib`). Imports look in the project cache, then in the library, then online. `lamina fetch` fills the library before you work without a network.
-- Board formats and routers: `formats`, `import_board`, `export_board`, `routers`, `export_for_router` and `import_router_session` replace the format-named tools.
-- Fabrication: `fabricators` lists the outputs; `export` takes one by id.
-- 3D view: `render` can focus a part, a pad or a region, zoom, hide parts and show only some parts.
-- Architecture: the core talks to the outside world through ports only. A new source, format or output is one type plus one line in `lamina-wiring`.
+Viewer, 2D:
+- Pin names and nets on the pads, fitted to each pad. Net names on tracks.
+- Net highlight (`` ` ``), single-layer mode (Shift+S), zoom keys (+ / -).
+- Rotate while you drag (R); a group turns about the part that you hold.
+- Box selection by track segment; a crossing box takes what it touches.
+- Copy and paste of tracks and vias (Ctrl+C / Ctrl+V).
+- Routing modes (Shift+R): direct, walkaround and push, with a live preview. A track or part drag pushes other tracks aside in push mode.
+- Differential pairs (Shift+D) with vias and matched lengths; length tuning with meanders ("tune to" in the inspector); teardrops (Board menu).
+- The active copper layer is the bright one. Track width keys while routing (W / Shift+W).
+
+Viewer, 3D:
+- Zoom at the pointer; top, bottom and reset views; part bodies on or off (T / B / I / P).
+- Hover and click parts; 2D and 3D share one selection.
+
+Tools:
+- `pins`: the pads of a part with their pin names and nets. A rule check warns when a ground pin is on a power net, or the reverse.
+- `render`: `overview: true` adds a board overview with the close-up marked. In the 2D layers view, `focus` zooms to a pad or part.
+- `lamina-viewer shot` (build with `--features headless`): the viewer without a window, for agents and tests.
 
 Each archive has two programs, the README and the licence files:
 
