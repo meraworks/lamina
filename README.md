@@ -138,6 +138,21 @@ Values are `error`, `warning`, and `ignore`. The map replaces the previous map;
 an empty map restores the defaults. Unknown check names are refused with a list
 of valid names. Ignoring `unrouted` hides its warnings but keeps the ratsnest.
 
+`set_rules` also accepts `custom`, an ordered JSON list, for example
+`{"rules":{"custom":[{"name":"bus clearance","when":{"net":"BUS*","layer":"top"},"clearance":0.4}]}}`.
+Selectors are optional `net` (`*` and `?` wildcards), `class`, and `layer`.
+Rules can set `clearance`, `min_track_width`, `min_via_drill`, and
+`min_annular_ring` in mm. Later matches override the fields they supply; a
+clearance between two nets uses the larger result. The list replaces the old
+list; `[]` clears it. Checks, pours and routing use the resolved limits.
+
+`net_lengths` returns total track length in mm and via count for each net.
+Lengths include branches and exclude via depth; they are not pad-to-pad paths.
+Use `set_nets` to set optional `length_min`, `length_max`, `skew_group` and
+`max_skew` on a net. DRC warns with `length_out_of_range` or
+`skew_out_of_range`. A group's smallest supplied `max_skew` limits the spread
+between its longest and shortest total track lengths.
+
 Use `exclude_violation` with a `rule`, the `items` from `check`, and a nonempty
 `reason` to accept a specific violation. The match uses item IDs, so it stays
 after an item moves. `exclusions` lists the saved reasons and hidden violations.

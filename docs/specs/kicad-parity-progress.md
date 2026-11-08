@@ -193,3 +193,20 @@ Tasks 0–2 are implemented and verified. Task 3 is in progress; Tasks 4–12 ar
 - Full workspace verification pending. No KiCad comparison is specified for
   custom JSON rules; these rules are enforced in Lamina.
 - Task 7: fmt, workspace clippy and workspace tests passed (session 30575).
+
+
+## Task 8: net lengths and limits
+
+- Model tests failed for missing fields and measurements, then both passed.
+- Model and mechanical literal updates committed as `422fc78`; formatting,
+  workspace clippy and workspace tests passed.
+- Length/skew DRC and malformed-limit tests each failed before implementation,
+  then passed. Exact bounds are accepted. Warnings name their member nets.
+- `net_lengths` is read-only and states units, branch summation and excluded via
+  depth. Limits are exposed through the existing typed `set_nets` schema.
+- Ruling: skew is the spread between the longest and shortest total track sums;
+  the strictest supplied max_skew in a group applies. This is documented in the
+  model and README. It is not a propagation delay or pad-to-pad path measurement.
+- Workspace checks and debug MCP build are running in session 11672. Runtime
+  test script: `target/parity-lengths-mcp.py`, using its own temporary board.
+- Task 8: fmt, workspace clippy/tests and debug MCP build passed. Headless MCP runtime verified read-only discovery, 5 mm measurement, length warnings and custom-width rules.

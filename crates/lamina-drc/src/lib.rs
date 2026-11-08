@@ -1,5 +1,6 @@
 //! Design rule checks, connectivity and fab presets.
 
+mod lengths;
 pub mod presets;
 mod silk;
 
@@ -23,10 +24,12 @@ pub const RULE_NAMES: &[&str] = &[
     "hole_to_hole",
     "isolated_copper",
     "keepout",
+    "length_out_of_range",
     "mask_bridge",
     "npth_inside_courtyard",
     "short",
     "short_nets",
+    "skew_out_of_range",
     "silk_overlap",
     "silk_text_size",
     "silk_to_edge",
@@ -120,7 +123,7 @@ pub fn analyze(d: &ProjectData) -> Analysis {
             .and_then(|n| d.nets.nets.get(n))
             .and_then(|n| n.class.clone())
     };
-    let mut v: Vec<Violation> = Vec::new();
+    let mut v: Vec<Violation> = lengths::check(d);
     for fill in &fills {
         for (pad, count) in &fill.thermal_spokes {
             if *count < rules.min_thermal_spokes {

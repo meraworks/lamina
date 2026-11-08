@@ -9,7 +9,8 @@ use crate::project::{OpResult, Project, Touched};
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct SetNets {
-    /// A map from the net name to its pads and an optional net class.
+    /// A map from net name to pads, optional class, length_min/length_max in mm,
+    /// and skew_group/max_skew. Length limits use the sum of all tracks.
     pub nets: BTreeMap<String, Net>,
     /// If true (default), replace the full netlist. If false, merge into it.
     #[serde(default = "super::yes")]
@@ -76,6 +77,33 @@ impl Project {
         for (name, net) in &p.nets {
             check_name(name)?;
             check_pads(&d, &net.pads)?;
+            for (field, value) in [
+                ("length_min", net.length_min),
+                ("length_max", net.length_max),
+                ("max_skew", net.max_skew),
+            ] {
+                if value.is_some_and(|v| !v.is_finite() || v < 0.0) {
+                    return Err(Error::invalid(format!(
+                        "Net {name}: {field} must be finite and at least 0 mm."
+                    )));
+                }
+            }
+            if net
+                .length_min
+                .zip(net.length_max)
+                .is_some_and(|(min, max)| min > max)
+            {
+                return Err(Error::invalid(format!(
+                    "Net {name}: length_min must not exceed length_max."
+                )));
+            }
+            if net.skew_group.as_ref().is_some_and(|g| g.trim().is_empty())
+                || (net.max_skew.is_some() && net.skew_group.is_none())
+            {
+                return Err(Error::invalid(format!(
+                    "Net {name}: give a non-empty skew_group when setting max_skew."
+                )));
+            }
         }
         let count = p.nets.len();
         if p.replace {

@@ -196,6 +196,17 @@ impl Lamina {
         self.with(|p| Ok(p.status()))
     }
 
+    /// Total track length in mm and via count for each net, including empty nets.
+    /// Length sums all branches; it is not the pad-to-pad path and excludes via depth.
+    #[tool(annotations(title = "Net lengths", read_only_hint = true))]
+    async fn net_lengths(&self) -> Result<CallToolResult, McpError> {
+        self.with(|p| Ok(serde_json::json!({
+            "units": "mm",
+            "measurement": "Sum of all track lengths, including branches; not the pad-to-pad path. Via depth is excluded.",
+            "nets": p.data.net_lengths()
+        })))
+    }
+
     /// The board formats that Lamina reads or writes: id, extensions and
     /// what each one holds.
     #[tool(annotations(title = "Formats", read_only_hint = true))]
