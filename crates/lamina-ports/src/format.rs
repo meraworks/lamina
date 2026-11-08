@@ -59,4 +59,14 @@ pub trait BoardFormat: Send + Sync {
         let _ = (data, path);
         Vec::new()
     }
+    /// Validate or merge a companion before any export files are written.
+    fn prepare_companion(
+        &self,
+        path: &Path,
+        generated: &str,
+        existing: Option<&str>,
+    ) -> Result<String, String> {
+        let _ = (path, existing);
+        Ok(generated.to_owned())
+    }
 }

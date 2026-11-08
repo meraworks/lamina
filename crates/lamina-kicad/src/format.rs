@@ -138,4 +138,44 @@ impl BoardFormat for KicadFormat {
         );
         files
     }
+    fn prepare_companion(
+        &self,
+        path: &Path,
+        generated: &str,
+        existing: Option<&str>,
+    ) -> Result<String, String> {
+        use lamina_model::sexpr::{self, Sx};
+        let Some(existing) =
+            existing.filter(|_| path.file_name().is_some_and(|n| n == "fp-lib-table"))
+        else {
+            return Ok(generated.to_owned());
+        };
+        let mut table =
+            sexpr::parse(existing).map_err(|e| format!("Cannot merge {}: {e}", path.display()))?;
+        if !table.is("fp_lib_table") {
+            return Err(format!(
+                "{} is not a footprint library table.",
+                path.display()
+            ));
+        }
+        let new = sexpr::parse(generated).map_err(|e| e.to_string())?;
+        let library = new.child("lib").ok_or("Missing generated library")?;
+        let matches: Vec<_> = table
+            .children("lib")
+            .filter(|lib| lib.child_text("name") == Some("lamina"))
+            .collect();
+        if !matches.is_empty() {
+            if matches.len() != 1
+                || matches[0].child_text("uri") != library.child_text("uri")
+                || matches[0].child_text("type") != library.child_text("type")
+            {
+                return Err("The lamina library name is already used by another export. Export into a separate folder.".into());
+            }
+            return Ok(existing.to_owned());
+        }
+        if let Sx::List(items) = &mut table {
+            items.push(library.clone());
+        }
+        Ok(sexpr::write(&table))
+    }
 }

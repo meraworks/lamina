@@ -285,8 +285,20 @@ impl Project {
         let text = format
             .write(&self.data, &self.root().join(MODEL_DIR))
             .map_err(Error::Invalid)?;
+        let mut companions = Vec::new();
+        for (extra, generated) in format.companions(&self.data, &path) {
+            let existing = match std::fs::read_to_string(&extra) {
+                Ok(text) => Some(text),
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => None,
+                Err(e) => return Err(Error::io(&extra, e)),
+            };
+            let prepared = format
+                .prepare_companion(&extra, &generated, existing.as_deref())
+                .map_err(Error::Invalid)?;
+            companions.push((extra, prepared));
+        }
         write_atomic(&path, text.as_bytes())?;
-        for (extra, text) in format.companions(&self.data, &path) {
+        for (extra, text) in companions {
             write_atomic(&extra, text.as_bytes())?;
         }
         Ok(BoardExported {

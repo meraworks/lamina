@@ -99,6 +99,39 @@ impl Project {
                 "The requested geometry exceeds the coordinate range.",
             ));
         }
+        let geometry = lamina_geom::build(&self.data);
+        let selected = lamina_geom::Owner::Track {
+            id: p.track.clone(),
+            seg: p.segment,
+        };
+        let old = geometry
+            .copper
+            .iter()
+            .find(|item| item.owner == selected)
+            .ok_or_else(|| Error::invalid("The selected segment has no copper geometry."))?;
+        let replacement: Vec<_> = points
+            .windows(2)
+            .map(|w| lamina_geom::Prim::Capsule {
+                a: w[0],
+                b: w[1],
+                r: track.width / 2.0,
+            })
+            .collect();
+        for item in &geometry.copper {
+            if item.owner != selected
+                && item.layer == old.layer
+                && item.net == old.net
+                && old.prim.distance(&item.prim) <= 1e-6
+                && !replacement
+                    .iter()
+                    .any(|prim| prim.distance(&item.prim) <= 1e-6)
+            {
+                return Err(Error::Refused(format!(
+                    "Tuning would disconnect {}. Choose a segment without an interior connection.",
+                    item.owner.label()
+                )));
+            }
+        }
         let mut d = self.data.clone();
         d.routing.tracks[track_index]
             .points

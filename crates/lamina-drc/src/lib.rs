@@ -129,9 +129,10 @@ pub fn analyze(d: &ProjectData) -> Analysis {
     let mut v: Vec<Violation> = lengths::check(d);
     v.extend(pairs::check(d));
     for fill in &fills {
-        for (pad, count) in &fill.thermal_spokes {
-            if *count < rules.min_thermal_spokes {
-                let mut violation = Violation::warning(
+        for thermal in &fill.pad_thermals {
+            let (pad, count) = (&thermal.pad, thermal.spokes);
+            if count < rules.min_thermal_spokes {
+                let violation = Violation::warning(
                     "starved_thermal",
                     format!(
                         "Pad {pad} has {count} spoke(s) to zone {}, but the minimum is {}",
@@ -139,10 +140,8 @@ pub fn analyze(d: &ProjectData) -> Analysis {
                     ),
                 )
                 .on(fill.layer)
-                .items([pad.clone(), fill.zone.clone()]);
-                if let Some(item) = g.copper.iter().find(|item| item.owner.label() == *pad) {
-                    violation = violation.at(item.prim.anchor());
-                }
+                .items([pad.clone(), fill.zone.clone()])
+                .at(thermal.at);
                 v.push(violation);
             }
         }

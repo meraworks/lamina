@@ -41,6 +41,29 @@ fn rules(a: &Analysis) -> Vec<&str> {
 }
 
 #[test]
+fn review_footprint_text_size_uses_placed_side_and_position() {
+    let mut d = board();
+    d.board.rules.min_silk_text_height = 3.0;
+    let pl = d.placement.placements.get_mut("R1").unwrap();
+    pl.side = Side::Bottom;
+    pl.rotation = 90.0;
+    let text = d.footprints["R_0603"]
+        .texts
+        .iter()
+        .find(|t| t.layer == FpLayer::Silk && t.text == "${ref}")
+        .unwrap();
+    let expected = pl.transform(text.at);
+    let a = analyze(&d);
+    let hit = a
+        .violations
+        .iter()
+        .find(|v| v.rule == "silk_text_size" && v.items == vec!["R1"])
+        .expect("small reference label");
+    assert_eq!(hit.at, Some(expected));
+    assert_eq!(hit.layer, Some(Layer::Silk(Side::Bottom)));
+}
+
+#[test]
 fn severity_overrides_preserve_connectivity() {
     let mut d = board();
     let original = analyze(&d);

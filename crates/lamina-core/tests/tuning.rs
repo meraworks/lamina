@@ -32,6 +32,65 @@ fn params() -> TuneLength {
 }
 
 #[test]
+fn review_tuning_preserves_interior_track_via_and_pad_contacts() {
+    for contact in ["track", "via", "pad"] {
+        let dir = tempfile::tempdir().unwrap();
+        let mut p = setup(dir.path());
+        match contact {
+            "track" => p.data.routing.tracks.push(Track {
+                id: "branch".into(),
+                net: "A".into(),
+                layer: Layer::TOP,
+                width: 0.25,
+                points: vec![Point::new(9.0, 2.0), Point::new(9.0, 5.0)],
+            }),
+            "via" => p.data.routing.vias.push(Via {
+                id: "v".into(),
+                net: "A".into(),
+                at: Point::new(9.0, 5.0),
+                diameter: 0.6,
+                drill: 0.3,
+                from: None,
+                to: None,
+            }),
+            _ => {
+                let mut fp = Footprint::new(
+                    "contact",
+                    Provenance::Manual {
+                        note: "test".into(),
+                    },
+                );
+                fp.pads.push(Pad::smd(
+                    "1",
+                    Point::new(0.0, 0.0),
+                    PadShape::Circle { diameter: 0.4 },
+                ));
+                p.data.footprints.insert("contact".into(), fp);
+                p.data.parts.parts.insert("J1".into(), Part::new("contact"));
+                p.data
+                    .placement
+                    .placements
+                    .insert("J1".into(), Placement::at(9.0, 5.0));
+                p.data
+                    .nets
+                    .nets
+                    .get_mut("A")
+                    .unwrap()
+                    .pads
+                    .push("J1.1".parse().unwrap());
+            }
+        }
+        let original = p.data.routing.clone();
+        let target = p.data.net_lengths()["A"].length + 4.0;
+        assert!(
+            p.tune_length(TuneLength { target, ..params() }).is_err(),
+            "detached {contact}"
+        );
+        assert_eq!(p.data.routing, original);
+    }
+}
+
+#[test]
 fn tuning_reaches_total_net_target_and_preserves_endpoints() {
     let dir = tempfile::tempdir().unwrap();
     let mut p = setup(dir.path());

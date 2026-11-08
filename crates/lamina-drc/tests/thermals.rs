@@ -2,6 +2,61 @@ use lamina_drc::analyze;
 use lamina_model::*;
 
 #[test]
+fn review_duplicate_pad_numbers_keep_separate_thermal_counts_and_positions() {
+    let mut d = ProjectData::new("duplicates");
+    d.board.outline = Some(Contour::rect(0.0, 0.0, 20.0, 20.0));
+    let mut fp = Footprint::new(
+        "pad",
+        Provenance::Manual {
+            note: "test".into(),
+        },
+    );
+    for x in [10.0, 13.0] {
+        fp.pads.push(Pad::smd(
+            "1",
+            Point::new(x, 10.0),
+            PadShape::Circle { diameter: 1.0 },
+        ));
+    }
+    d.footprints.insert("pad".into(), fp);
+    d.parts.parts.insert("U1".into(), Part::new("pad"));
+    d.placement
+        .placements
+        .insert("U1".into(), Placement::at(0.0, 0.0));
+    d.nets.nets.insert(
+        "GND".into(),
+        Net {
+            pads: vec!["U1.1".parse().unwrap()],
+            ..Default::default()
+        },
+    );
+    d.routing.zones.push(Zone {
+        id: "z".into(),
+        net: Some("GND".into()),
+        layers: vec![Layer::TOP],
+        outline: Contour::rect(10.0, 9.8, 5.0, 0.4),
+        priority: 0,
+        clearance: None,
+        min_width: Some(0.1),
+        pad_connection: PadConnection::Thermal,
+        thermal_gap: 0.3,
+        thermal_spoke: 0.3,
+    });
+    for _ in 0..2 {
+        let a = analyze(&d);
+        let hits: Vec<_> = a
+            .violations
+            .iter()
+            .filter(|v| v.rule == "starved_thermal")
+            .collect();
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0].at, Some(Point::new(10.0, 10.0)));
+        assert!(hits[0].message.contains("1 spoke"));
+        d.footprints.get_mut("pad").unwrap().pads.reverse();
+    }
+}
+
+#[test]
 fn thermal_spokes_count_connections_to_the_pour() {
     let mut d = ProjectData::new("thermal");
     d.board.outline = Some(Contour::rect(0.0, 0.0, 20.0, 20.0));

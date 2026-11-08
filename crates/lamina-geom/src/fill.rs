@@ -95,12 +95,21 @@ fn to_prims(m: &MultiPolygon<f64>) -> Vec<Prim> {
 /// The calculated fill of one zone on one layer.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ZoneFill {
+    #[serde(default)]
+    pub pad_thermals: Vec<PadThermal>,
     pub zone: String,
     pub net: Option<String>,
     pub layer: Layer,
     pub polygons: Vec<FillPolygon>,
     #[serde(default)]
     pub thermal_spokes: std::collections::BTreeMap<String, u8>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PadThermal {
+    pub pad: String,
+    pub at: Point,
+    pub spokes: u8,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -253,7 +262,7 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
             // Remove necks that are thinner than the minimum width.
             fill = fill.buffer(-min_w / 2.0).buffer(min_w / 2.0);
 
-            let mut thermal_spokes = std::collections::BTreeMap::new();
+            let mut counts = vec![0u8; thermal.len()];
             if !thermal.is_empty() {
                 let allowed = region.difference(&union_all(
                     g.copper
@@ -264,7 +273,7 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                 ));
                 let spoke = z.thermal_spoke.max(min_w);
                 let mut spokes = Vec::new();
-                for (label, p) in &thermal {
+                for (index, (_, p)) in thermal.iter().enumerate() {
                     let b = p.bbox();
                     let c = Point::new((b.min.x + b.max.x) / 2.0, (b.min.y + b.max.y) / 2.0);
                     let hx = b.width() / 2.0 + z.thermal_gap + min_w;
@@ -301,7 +310,7 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                             count += 1;
                         }
                     }
-                    thermal_spokes.insert(label.clone(), count);
+                    counts[index] = count;
                     spokes.push(mp(gpoly(&[
                         Point::new(c.x - hx, c.y - s),
                         Point::new(c.x + hx, c.y - s),
@@ -329,7 +338,7 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
             } else {
                 prims
             };
-            for (label, pad) in &thermal {
+            for (index, (_, pad)) in thermal.iter().enumerate() {
                 for track in d
                     .routing
                     .tracks
@@ -344,7 +353,7 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                                 && !pad.contains(ends[0])
                                 && kept.iter().any(|p| p.contains(ends[0])));
                         if joins {
-                            let count = thermal_spokes.entry(label.clone()).or_default();
+                            let count = &mut counts[index];
                             *count = count.saturating_add(1);
                         }
                     }
@@ -362,7 +371,24 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                     .collect(),
             );
             done.push((l, z.net.clone(), kept_mp));
+            let pad_thermals: Vec<_> = thermal
+                .iter()
+                .zip(counts)
+                .map(|((pad, prim), spokes)| PadThermal {
+                    pad: pad.clone(),
+                    at: prim.anchor(),
+                    spokes,
+                })
+                .collect();
+            let mut thermal_spokes = std::collections::BTreeMap::<String, u8>::new();
+            for pad in &pad_thermals {
+                thermal_spokes
+                    .entry(pad.pad.clone())
+                    .and_modify(|n| *n = (*n).min(pad.spokes))
+                    .or_insert(pad.spokes);
+            }
             out.push(ZoneFill {
+                pad_thermals,
                 thermal_spokes,
                 zone: z.id.clone(),
                 net: z.net.clone(),

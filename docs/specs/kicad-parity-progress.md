@@ -28,7 +28,7 @@ Follow `kicad-parity-plan.md` in task order.
 
 ## Remaining
 
-Tasks 0–2 are implemented and verified. Task 3 is in progress; Tasks 4–12 are pending.
+Tasks 0–12 and the final review fixes are implemented and verified.
 
 ## Task 1
 
@@ -284,3 +284,43 @@ Tasks 0–2 are implemented and verified. Task 3 is in progress; Tasks 4–12 ar
 - Real-board IPC-D-356 comparison against KiCad CLI: both contain 192 test-point
   records, all 192 match type, physical-layer access and X/Y coordinates.
   Evidence: `%TEMP%/lamina-parity-collar/{kicad.d356,ipc-parity/meratag-collar.d356}`.
+
+
+## Final review
+
+- Reviewed commits b36179e..fe9954f once. Four Important findings and one
+  initially Minor finding were reproduced by five failing regression tests.
+- Regraded the exclusion bypass as Important: malformed exclusions could hide
+  warnings without a valid reason, violating the mutation contract.
+- Final: fixed interior tuning disconnects -
+  review_tuning_preserves_interior_track_via_and_pad_contacts RED to GREEN.
+  A tune that removes any same-net copper contact is refused atomically.
+- Final: fixed duplicate-number thermal counts and markers -
+  review_duplicate_pad_numbers_keep_separate_thermal_counts_and_positions
+  RED to GREEN. Physical pads retain separate counts and positions; the legacy
+  electrical-label summary reports the minimum count.
+- Final: fixed destructive library-table export -
+  review_export_preserves_unrelated_libraries_and_refuses_conflicts_before_writing
+  RED to GREEN. Existing libraries survive; malformed tables and conflicting
+  lamina nicknames refuse export before any output file is changed.
+- Final: fixed footprint silkscreen text height checks -
+  review_footprint_text_size_uses_placed_side_and_position RED to GREEN.
+- Final: fixed set_rules bypass of exclusion validation -
+  review_rules_cannot_bypass_exclusion_validation RED to GREEN. Exclusions can only
+  be changed through exclude_violation/include_violation.
+- No deferred minor findings. No second review was dispatched.
+- Final: Ruling: exact thermal parity after KiCad refills is not claimed. The
+  two fill engines produce different geometry and zero-spoke behavior; expecting
+  identical warnings could miss a manufacturing concern. Inspect the actual fill.
+- Final: Ruling: the 192-record IPC comparison validates the tested board and
+  fields, not every fabrication service. A service with different format
+  expectations could reject an otherwise valid export.
+
+- Final verification: cargo fmt --all; workspace Clippy with warnings denied;
+  cargo test --workspace -j 2: 259 passed, 0 failed, 1 ignored. All five review
+  regressions are included in that suite. Log: target/parity-final-suite.log.
+- Fresh debug MCP build passed. The headless end-to-end workflow passed again:
+  pair routing, tuning, teardrops, read-only statistics and fabrication archive.
+- Fresh real-board IPC comparison: 192/192 records match KiCad type, physical
+  layer access and coordinates. Original collar_tag files were not modified.
+- Work stays committed locally on master; no push, tag or release.

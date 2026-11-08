@@ -1,6 +1,22 @@
 use lamina_core::*;
 
 #[test]
+fn review_rules_cannot_bypass_exclusion_validation() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut p = Project::create_with(dir.path(), "test", Ports::default()).unwrap();
+    p.exclude_violation(ExcludeViolation {
+        rule: "via_dangling".into(),
+        items: vec!["v1".into()],
+        reason: "Test point".into(),
+    })
+    .unwrap();
+    let before = p.data.board.rules.exclusions.clone();
+    let update = serde_json::from_value(serde_json::json!({"rules":{"exclusions":[{"rule":"via_dangling","items":["v1"],"reason":""}]}})).unwrap();
+    assert!(p.set_rules(update).is_err());
+    assert_eq!(p.data.board.rules.exclusions, before);
+}
+
+#[test]
 fn exclude_and_include_round_trip_with_a_required_reason() {
     let dir = tempfile::tempdir().unwrap();
     let mut p = Project::create_with(dir.path(), "test", Ports::default()).unwrap();

@@ -162,7 +162,8 @@ fn edge_clearance(silk: &[SilkItem], g: &BoardGeometry, need: f64) -> Vec<Violat
 /// Warn when board silkscreen text is too small for the fab to print.
 fn text_size(d: &ProjectData) -> Vec<Violation> {
     let min = d.board.rules.min_silk_text_height;
-    d.routing
+    let mut out: Vec<_> = d
+        .routing
         .texts
         .iter()
         .filter(|t| matches!(t.layer, Layer::Silk(_)) && t.size + 1e-6 < min)
@@ -180,7 +181,43 @@ fn text_size(d: &ProjectData) -> Vec<Violation> {
             .on(t.layer)
             .items([t.id.clone()])
         })
-        .collect()
+        .collect();
+    for (refdes, pl) in &d.placement.placements {
+        let Some(part) = d.parts.parts.get(refdes) else {
+            continue;
+        };
+        let Some(fp) = d.footprints.get(&part.footprint) else {
+            continue;
+        };
+        for t in fp
+            .texts
+            .iter()
+            .filter(|t| t.layer == FpLayer::Silk && t.size + 1e-6 < min)
+        {
+            let text = t
+                .text
+                .replace("${ref}", refdes)
+                .replace("${value}", part.value.as_deref().unwrap_or(""));
+            if text.trim().is_empty() {
+                continue;
+            }
+            out.push(
+                Violation::warning(
+                    "silk_text_size",
+                    format!(
+                        "The silkscreen text \"{}\" is {} mm high, but the minimum is {} mm",
+                        text,
+                        r3(t.size),
+                        r3(min)
+                    ),
+                )
+                .at(pl.transform(t.at))
+                .on(Layer::Silk(pl.side))
+                .items([refdes.clone()]),
+            );
+        }
+    }
+    out
 }
 
 /// Warn when too little solder mask stays between pads of two nets.
@@ -475,6 +512,7 @@ mod tests {
         }];
         let mut fills = vec![ZoneFill {
             thermal_spokes: Default::default(),
+            pad_thermals: Default::default(),
             zone: "gnd".into(),
             net: Some("GND".into()),
             layer: Layer::TOP,

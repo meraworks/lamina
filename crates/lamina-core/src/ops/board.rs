@@ -175,6 +175,11 @@ impl Project {
             .as_object_mut()
             .expect("rules serialize to an object");
         for (k, v) in p.rules {
+            if k == "exclusions" {
+                return Err(Error::invalid(
+                    "Use exclude_violation or include_violation to change exclusions.",
+                ));
+            }
             if k == "net_classes" {
                 let classes = obj
                     .entry("net_classes")
