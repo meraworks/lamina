@@ -1,7 +1,8 @@
 //! Draw lists shared by the PNG renderer and the live viewer.
 
-pub mod font;
 pub mod theme;
+
+pub use lamina_geom::font;
 
 use std::path::{Path, PathBuf};
 
@@ -223,12 +224,12 @@ fn text_geoms(
     size: f64,
     rotation: f64,
     width: f64,
-    tf: &dyn Fn(Point) -> Point,
+    side: Side,
 ) -> Vec<Geom> {
-    font::text_strokes(text, at, size, rotation)
+    font::side_text_strokes(text, at, size, rotation, side)
         .into_iter()
-        .map(|s| Geom::Stroke {
-            pts: s.into_iter().map(tf).collect(),
+        .map(|pts| Geom::Stroke {
+            pts,
             width,
             closed: false,
         })
@@ -351,35 +352,14 @@ pub fn build_2d(d: &ProjectData, a: &Analysis) -> Scene2D {
             if text.trim().is_empty() {
                 continue;
             }
-            // Keep the text upright. If the placement turns it upside down, turn it 180 degrees.
-            let mut rot = t.rotation + pl.rotation;
-            let norm = rot.rem_euclid(360.0);
-            if norm > 90.0 && norm <= 270.0 {
-                rot += 180.0;
-            }
+            let rot = font::upright(t.rotation + pl.rotation);
             let at = pl.transform(t.at);
             let width = if l == SceneLayer::Silk(side) {
-                rules.silk_width.max(t.size * 0.15)
+                font::silk_stroke_width(t.size, rules.silk_width)
             } else {
                 (t.size * 0.12).max(0.05)
             };
-            // Draw in board space. For the bottom side, mirror the text about the anchor.
-            let mirror = side == Side::Bottom;
-            let tfb = |p: Point| {
-                if mirror {
-                    Point::new(2.0 * at.x - p.x, p.y)
-                } else {
-                    p
-                }
-            };
-            for gm in text_geoms(
-                &text,
-                at,
-                t.size,
-                if mirror { -rot } else { rot },
-                width,
-                &tfb,
-            ) {
+            for gm in text_geoms(&text, at, t.size, rot, width, side) {
                 push(&mut layers, l, gm);
             }
         }
@@ -401,22 +381,13 @@ pub fn build_2d(d: &ProjectData, a: &Analysis) -> Scene2D {
             Layer::Copper(c) => SceneLayer::Copper(c.index(layers_n)),
             _ => continue,
         };
-        let mirror = t.layer.side() == Some(Side::Bottom);
-        let at = t.at;
-        let tfb = |p: Point| {
-            if mirror {
-                Point::new(2.0 * at.x - p.x, p.y)
-            } else {
-                p
-            }
-        };
         for gm in text_geoms(
             &t.text,
             t.at,
             t.size,
-            if mirror { -t.rotation } else { t.rotation },
-            rules.silk_width.max(t.size * 0.15),
-            &tfb,
+            t.rotation,
+            font::silk_stroke_width(t.size, rules.silk_width),
+            t.layer.side().unwrap_or(Side::Top),
         ) {
             push(&mut layers, l, gm);
         }

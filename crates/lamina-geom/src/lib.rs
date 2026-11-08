@@ -3,6 +3,7 @@
 
 pub mod board;
 pub mod fill;
+pub mod font;
 pub mod prim;
 
 pub use board::{

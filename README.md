@@ -123,6 +123,9 @@ you hover a pad. `check` warns when a ground pin is on a power net, a power pin 
 ground net, or a no-connect pin is on a net (`pin_role`). `pins` lists every pad of a part
 with its name and its net.
 
+`check` also warns when silkscreen text or a silkscreen drawing is nearer to a pad than
+the `silk_to_pad` rule (`silk_to_pad`).
+
 ## Viewer
 
 ```

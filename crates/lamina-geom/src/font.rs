@@ -1,7 +1,7 @@
 //! A single-stroke font for silkscreen and fab text. Each glyph is on a 4 x 6
 //! grid (cap height 6, advance 5). The text size is the cap height in mm.
 
-use lamina_model::Point;
+use lamina_model::{Point, Side};
 
 type Stroke = &'static [(f32, f32)];
 
@@ -287,6 +287,44 @@ pub fn text_strokes(text: &str, at: Point, size: f64, rotation: f64) -> Vec<Vec<
         }
     }
     out
+}
+
+/// The strokes of `text` as the board shows it. On the bottom side, the text is
+/// mirrored about its anchor.
+pub fn side_text_strokes(
+    text: &str,
+    at: Point,
+    size: f64,
+    rotation: f64,
+    side: Side,
+) -> Vec<Vec<Point>> {
+    if side == Side::Top {
+        return text_strokes(text, at, size, rotation);
+    }
+    text_strokes(text, at, size, -rotation)
+        .into_iter()
+        .map(|s| {
+            s.into_iter()
+                .map(|p| Point::new(2.0 * at.x - p.x, p.y))
+                .collect()
+        })
+        .collect()
+}
+
+/// The rotation of a part text on the board. If the placement turns the text
+/// upside down, turn it 180 degrees.
+pub fn upright(rotation: f64) -> f64 {
+    let norm = rotation.rem_euclid(360.0);
+    if norm > 90.0 && norm <= 270.0 {
+        rotation + 180.0
+    } else {
+        rotation
+    }
+}
+
+/// The stroke width of silkscreen text.
+pub fn silk_stroke_width(size: f64, silk_width: f64) -> f64 {
+    silk_width.max(size * 0.15)
 }
 
 /// Width of `text` at `size` in mm.

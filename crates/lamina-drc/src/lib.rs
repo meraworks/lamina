@@ -1,6 +1,7 @@
 //! Design rule checks, connectivity and fab presets.
 
 pub mod presets;
+mod silk;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
@@ -652,6 +653,8 @@ pub fn analyze(d: &ProjectData) -> Analysis {
             );
         }
     }
+
+    v.extend(silk::check(d));
 
     for r in d.parts.parts.keys() {
         if !d.placement.placements.contains_key(r) {

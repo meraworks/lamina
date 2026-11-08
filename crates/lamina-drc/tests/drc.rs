@@ -217,3 +217,123 @@ fn two_pours_of_a_net_join_where_they_overlap() {
     let a = analyze(&d);
     assert_eq!(a.ratsnest.len(), 1, "{:?}", a.ratsnest);
 }
+
+/// The centre and the size of pad 2 of R1, on the board.
+fn r1_pad_2(d: &ProjectData) -> (Point, (f64, f64)) {
+    let pad = d.footprints["R_0603"].pad("2").unwrap();
+    (
+        Point::new(10.0 + pad.at.x, 10.0 + pad.at.y),
+        pad.shape.size(),
+    )
+}
+
+fn board_text(d: &mut ProjectData, layer: Layer, at: Point) {
+    d.routing.texts.push(BoardText {
+        id: "txt1".into(),
+        layer,
+        text: "AB".into(),
+        at,
+        size: 0.8,
+        rotation: 0.0,
+    });
+}
+
+fn silk_warnings(d: &ProjectData) -> Vec<Violation> {
+    analyze(d)
+        .violations
+        .into_iter()
+        .filter(|v| v.rule == "silk_to_pad")
+        .collect()
+}
+
+#[test]
+fn silk_text_on_a_pad_warns() {
+    let mut d = board();
+    let (at, _) = r1_pad_2(&d);
+    board_text(&mut d, Layer::Silk(Side::Top), at);
+    let w = silk_warnings(&d);
+    assert_eq!(w.len(), 1, "{w:?}");
+    assert_eq!(w[0].severity, Severity::Warning);
+    assert!(w[0].message.contains("R1.2"), "{}", w[0].message);
+    assert!(w[0].message.contains("AB"), "{}", w[0].message);
+}
+
+#[test]
+fn silk_text_clear_of_the_pads_is_quiet() {
+    let mut d = board();
+    board_text(&mut d, Layer::Silk(Side::Top), Point::new(15.0, 16.0));
+    assert!(silk_warnings(&d).is_empty());
+}
+
+#[test]
+fn silk_on_the_other_side_of_a_smd_pad_is_quiet() {
+    let mut d = board();
+    let (at, _) = r1_pad_2(&d);
+    board_text(&mut d, Layer::Silk(Side::Bottom), at);
+    assert!(silk_warnings(&d).is_empty());
+}
+
+#[test]
+fn a_footprint_label_on_its_pad_warns() {
+    let mut d = board();
+    let at = d.footprints["R_0603"].pad("2").unwrap().at;
+    d.footprints.get_mut("R_0603").unwrap().texts.push(FpText {
+        layer: FpLayer::Silk,
+        text: "${ref}".into(),
+        at,
+        size: 0.8,
+        rotation: 0.0,
+    });
+    let w = silk_warnings(&d);
+    assert!(w.iter().any(|v| v.message.contains("R1.2")), "{w:?}");
+    assert!(w.iter().any(|v| v.message.contains("R2.2")), "{w:?}");
+}
+
+#[test]
+fn a_footprint_outline_only_needs_to_clear_its_own_mask_opening() {
+    let mut d = board();
+    let (pad_x, w) = {
+        let pad = d.footprints["R_0603"].pad("2").unwrap();
+        (pad.at.x, pad.shape.size().0)
+    };
+    let margin = d.board.rules.mask_margin;
+    let line_at = |x: f64| FpGraphic {
+        layer: FpLayer::Silk,
+        shape: Shape::Line {
+            a: Point::new(x, -1.0),
+            b: Point::new(x, 1.0),
+        },
+        width: 0.15,
+        filled: false,
+    };
+    let edge = pad_x + w / 2.0;
+    let fp = d.footprints.get_mut("R_0603").unwrap();
+    fp.graphics.retain(|g| g.layer != FpLayer::Silk);
+    fp.graphics.push(line_at(edge + 0.075 + margin + 0.02));
+    assert!(silk_warnings(&d).is_empty());
+    let fp = d.footprints.get_mut("R_0603").unwrap();
+    *fp.graphics.last_mut().unwrap() = line_at(edge + 0.075 + margin - 0.02);
+    assert_eq!(silk_warnings(&d).len(), 2);
+}
+
+#[test]
+fn silk_line_uses_the_silk_to_pad_limit() {
+    let line = |x: f64| BoardGraphic {
+        id: "g1".into(),
+        layer: Layer::Silk(Side::Top),
+        shape: Shape::Line {
+            a: Point::new(x, 8.0),
+            b: Point::new(x, 12.0),
+        },
+        width: 0.15,
+        filled: false,
+    };
+    let mut d = board();
+    let (c, (w, _)) = r1_pad_2(&d);
+    let edge = c.x + w / 2.0;
+    let limit = d.board.rules.silk_to_pad;
+    d.routing.graphics.push(line(edge + 0.075 + limit - 0.01));
+    assert_eq!(silk_warnings(&d).len(), 1);
+    d.routing.graphics[0] = line(edge + 0.075 + limit + 0.01);
+    assert!(silk_warnings(&d).is_empty());
+}
