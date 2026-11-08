@@ -143,6 +143,14 @@ impl Stackup {
     }
 }
 
+fn default_silk_to_edge() -> f64 {
+    0.15
+}
+
+fn default_silk_text_height() -> f64 {
+    0.8
+}
+
 /// Design rules. All sizes are in mm.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Rules {
@@ -163,6 +171,16 @@ pub struct Rules {
     pub paste_margin: f64,
     pub silk_width: f64,
     pub silk_to_pad: f64,
+    /// The minimum distance from silkscreen to the board edge.
+    #[serde(default = "default_silk_to_edge")]
+    pub silk_to_edge: f64,
+    /// The minimum height of silkscreen text.
+    #[serde(default = "default_silk_text_height")]
+    pub min_silk_text_height: f64,
+    /// The minimum solder mask between openings of two nets. Zero permits
+    /// openings that touch only at their edges.
+    #[serde(default)]
+    pub min_mask_web: f64,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub net_classes: BTreeMap<String, NetClass>,
 }
@@ -185,6 +203,9 @@ impl Default for Rules {
             paste_margin: 0.0,
             silk_width: 0.15,
             silk_to_pad: 0.15,
+            silk_to_edge: default_silk_to_edge(),
+            min_silk_text_height: default_silk_text_height(),
+            min_mask_web: 0.0,
             net_classes: BTreeMap::new(),
         }
     }
