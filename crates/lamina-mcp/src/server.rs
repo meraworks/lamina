@@ -207,6 +207,16 @@ impl Lamina {
         })))
     }
 
+    /// Replace named differential pairs: positive/negative net names, edge gap
+    /// and track width in mm. Pair checks report gap and uncoupled-track warnings.
+    #[tool(annotations(title = "Set differential pairs"))]
+    async fn set_diff_pairs(
+        &self,
+        Parameters(p): Parameters<SetDiffPairs>,
+    ) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.set_diff_pairs(p))
+    }
+
     /// The board formats that Lamina reads or writes: id, extensions and
     /// what each one holds.
     #[tool(annotations(title = "Formats", read_only_hint = true))]

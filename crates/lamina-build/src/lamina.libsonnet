@@ -32,7 +32,8 @@
     };
     a + b
     + (if hasParts then { parts: ap + bp } else {})
-    + (if hasNets then { nets: nets } else {}),
+    + (if hasNets then { nets: nets } else {})
+    + (if std.objectHas(a, 'diff_pairs') || std.objectHas(b, 'diff_pairs') then { diff_pairs: std.get(a, 'diff_pairs', {}) + std.get(b, 'diff_pairs', {}) } else {}),
 
   // Put each part of a fragment in a group. A group is one instance of a
   // block. Groups of the same block can copy their layout to each other

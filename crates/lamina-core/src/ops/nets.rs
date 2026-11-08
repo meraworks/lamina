@@ -120,6 +120,7 @@ impl Project {
             net.pads.dedup();
         }
         let verb = if p.replace { "set" } else { "merged" };
+        super::pairs::check_pairs(&d.nets)?;
         self.commit(d, Touched::file(FileKind::Nets), p.strict, "")
             .map(|mut r| {
                 r.summary = format!(
@@ -186,6 +187,7 @@ impl Project {
                 format!("net {} now has {} pad(s)", p.net, net.pads.len())
             }
         };
+        super::pairs::check_pairs(&d.nets)?;
         self.commit(d, Touched::file(FileKind::Nets), p.strict, summary)
     }
 }

@@ -158,11 +158,16 @@ pub fn build(root: &Path) -> Result<Report> {
         )));
     };
     for k in top.keys() {
-        if !matches!(k.as_str(), "board" | "parts" | "nets") {
+        if !matches!(k.as_str(), "board" | "parts" | "nets" | "diff_pairs") {
             return Err(Error::invalid(format!(
-                "{SOURCE_FILE}: unknown top-level key `{k}`. Use board, parts or nets."
+                "{SOURCE_FILE}: unknown top-level key `{k}`. Use board, parts, nets or diff_pairs."
             )));
         }
+    }
+    if top.contains_key("diff_pairs") && !top.contains_key("nets") {
+        return Err(Error::invalid(
+            "diff_pairs requires nets in the same design source.",
+        ));
     }
     if top.is_empty() {
         return Err(Error::invalid(format!(
@@ -215,7 +220,8 @@ pub fn build(root: &Path) -> Result<Report> {
         parts = Some(file);
     }
     if let Some(n) = top.get("nets") {
-        let file = nets_from(n)?;
+        let mut file = nets_from(n)?;
+        source_pairs(&mut file, top.get("diff_pairs"))?;
         if let Some(pf) = &parts {
             for (name, net) in &file.nets {
                 for pad in &net.pads {
@@ -454,6 +460,33 @@ fn parts_from(v: &Value) -> Result<PartsFile> {
     })
 }
 
+fn source_pairs(nets: &mut NetsFile, pairs: Option<&Value>) -> Result<()> {
+    let Some(pairs) = pairs else { return Ok(()) };
+    nets.diff_pairs = serde_json::from_value(pairs.clone())
+        .map_err(|e| Error::invalid(format!("diff_pairs: {e}")))?;
+    let mut used = BTreeSet::new();
+    for (name, pair) in &nets.diff_pairs {
+        if name.trim().is_empty()
+            || !pair.gap.is_finite()
+            || pair.gap <= 0.0
+            || !pair.width.is_finite()
+            || pair.width <= 0.0
+        {
+            return Err(Error::invalid(
+                "diff_pairs needs non-empty names and positive finite gap/width.",
+            ));
+        }
+        for net in [&pair.positive, &pair.negative] {
+            if !nets.nets.contains_key(net) || !used.insert(net) {
+                return Err(Error::invalid(format!(
+                    "diff_pairs.{name}: net {net} is missing or already in a pair."
+                )));
+            }
+        }
+    }
+    Ok(())
+}
+
 fn nets_from(v: &Value) -> Result<NetsFile> {
     let Value::Object(m) = v else {
         return Err(Error::invalid(
@@ -562,12 +595,31 @@ pub fn preview(root: &Path) -> Result<ProjectData> {
     }
     if let Some(n) = value.get("nets") {
         d.nets = nets_from(n)?;
+        source_pairs(&mut d.nets, value.get("diff_pairs"))?;
     }
     Ok(d)
 }
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn source_pairs_are_generated_with_the_netlist() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(
+            dir.path().join(super::SOURCE_FILE),
+            r#"{
+            nets: { P: {pads: []}, N: {pads: []} },
+            diff_pairs: { data: {positive: 'P', negative: 'N', gap: 0.2, width: 0.25} }
+        }"#,
+        )
+        .unwrap();
+        super::build(dir.path()).unwrap();
+        let nets: lamina_model::NetsFile =
+            serde_json::from_str(&std::fs::read_to_string(dir.path().join("nets.json")).unwrap())
+                .unwrap();
+        assert_eq!(nets.diff_pairs["data"].positive, "P");
+        assert_eq!(super::preview(dir.path()).unwrap().nets, nets);
+    }
     use super::*;
 
     fn write(p: &Path, s: &str) {

@@ -210,3 +210,21 @@ Tasks 0–2 are implemented and verified. Task 3 is in progress; Tasks 4–12 ar
 - Workspace checks and debug MCP build are running in session 11672. Runtime
   test script: `target/parity-lengths-mcp.py`, using its own temporary board.
 - Task 8: fmt, workspace clippy/tests and debug MCP build passed. Headless MCP runtime verified read-only discovery, 5 mm measurement, length warnings and custom-width rules.
+
+## Task 9: differential pairs
+
+- Model round-trip failed before implementation, then passed. Model committed
+  as `54f1ceb` after formatting, workspace clippy and workspace tests passed.
+- Pair DRC tests failed on missing gap/uncoupled warnings, then both passed.
+  Checks cover matching straight runs, wrong gap, partial, missing and wrong-layer
+  partners. Core pair validation/persistence test also failed then passed.
+- Named pairs use a BTreeMap. set_diff_pairs replaces it; deleting a referenced
+  net is refused until the pair is removed.
+- Modular-source test failed on unsupported diff_pairs, then passed with pair
+  definitions generated alongside nets. Source merge combines pair maps.
+- Ruling: pair checks use parallel segment coverage, 0.01 mm gap tolerance and
+  one centre-spacing end allowance for corners. They do not calculate impedance.
+  Short uncoupled ends within that allowance can be omitted from warnings.
+- Pair routing test is prepared at target/parity-pair-route-test.rs; restore it
+  under core/tests after the checks commit and run it before implementation.
+- Task 9 data/checks: formatting, workspace clippy and workspace tests passed (session 90280).

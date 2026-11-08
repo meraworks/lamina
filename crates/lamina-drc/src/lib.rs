@@ -1,6 +1,7 @@
 //! Design rule checks, connectivity and fab presets.
 
 mod lengths;
+mod pairs;
 pub mod presets;
 mod silk;
 
@@ -21,6 +22,8 @@ pub const RULE_NAMES: &[&str] = &[
     "courtyard_outside_board",
     "courtyard_overlap",
     "drill_size",
+    "diff_pair_gap",
+    "diff_pair_uncoupled",
     "hole_to_hole",
     "isolated_copper",
     "keepout",
@@ -124,6 +127,7 @@ pub fn analyze(d: &ProjectData) -> Analysis {
             .and_then(|n| n.class.clone())
     };
     let mut v: Vec<Violation> = lengths::check(d);
+    v.extend(pairs::check(d));
     for fill in &fills {
         for (pad, count) in &fill.thermal_spokes {
             if *count < rules.min_thermal_spokes {

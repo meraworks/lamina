@@ -10,6 +10,8 @@ pub mod format;
 pub mod import;
 pub mod layout;
 pub mod nets;
+pub mod pairs;
+pub use pairs::SetDiffPairs;
 pub mod output;
 pub mod parts;
 pub mod place;

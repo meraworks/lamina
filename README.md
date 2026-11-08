@@ -153,6 +153,14 @@ Use `set_nets` to set optional `length_min`, `length_max`, `skew_group` and
 `skew_out_of_range`. A group's smallest supplied `max_skew` limits the spread
 between its longest and shortest total track lengths.
 
+`set_diff_pairs` replaces the named pairs in `nets.json`, for example
+`{"pairs":{"usb":{"positive":"D+","negative":"D-","gap":0.2,"width":0.25}}}`.
+Each net may belong to one pair. `diff_pair_gap` checks parallel copper with a
+0.01 mm tolerance; `diff_pair_uncoupled` checks same-layer parallel coverage,
+allowing one centre spacing at segment ends for corners. These are layout
+checks, not an impedance calculation. Modular sources can supply `diff_pairs`
+beside `nets`; both are generated into `nets.json`.
+
 Use `exclude_violation` with a `rule`, the `items` from `check`, and a nonempty
 `reason` to accept a specific violation. The match uses item IDs, so it stays
 after an item moves. `exclusions` lists the saved reasons and hidden violations.
