@@ -83,3 +83,42 @@ Tasks 0–2 are implemented and verified. Task 3 is in progress; Tasks 4–12 ar
   38 violations, 0 unconnected items (unchanged baseline).
 - Evidence: `target/parity-collar-check.json` and the temporary copy's `d.json`.
 - Final workspace checks and commit are in progress.
+- Task 3 checks passed and commit is `6dbc1ee`.
+
+## Task 4
+
+- Added NPTH/courtyard overlap checking on either side, excluding a part's own
+  holes. The board-hole test failed before implementation and now passes.
+- Added `min_thermal_spokes` with a default of 2. Backward compatibility test
+  failed before the field existed, then passed. Model commit checks are running.
+- KiCad reference cases on the copy: H3 inside BT1 courtyard; U1.44 has one
+  spoke in z1. The fill code currently merges two crossing bars per thermal pad
+  and does not retain counts; it needs per-pad surviving spoke evidence.
+- Remaining: thermal count generation and DRC tests, part-hole tests, real-board
+  comparison, all workspace checks and Task 4 commit.
+- Model checks passed; commit `30695ce`.
+- Both courtyard tests pass, including another part's hole and own-hole exclusion.
+- Thermal test failed with no warning, then passed after adding per-pad counts
+  to ZoneFill. Each clipped half-arm must have one connected piece touching the
+  pad and the base pour. DRC compares the count with min_thermal_spokes.
+- MCP debug build is running in exec session 95123. Next: check the copied collar board for both rules,
+  review thermal counting cost and edge cases, then workspace verification.
+- That build finished. Collar check took 1.8 seconds and found the expected
+  h3/BT1 courtyard overlap and U1.44 one-spoke warning, but also 11 other thermal
+  warnings. Evidence: `target/parity-collar-task4.json`.
+- KiCad's `pcbnew/drc/drc_test_provider_zone_connections.cpp` (10.0 branch) counts
+  manual tracks from the pad into the filled zone. Added a regression test that
+  failed, then passed after counting those tracks. Primary source:
+  https://github.com/KiCad/kicad-source-mirror/blob/10.0/pcbnew/drc/drc_test_provider_zone_connections.cpp
+- The updated MCP debug build is running in session 88205. Re-run the collar
+  check after it finishes; any remaining count differences need investigation.
+- Updated comparison: 9 thermal warnings, including U1.44; manual tracks removed
+  three extras. KiCad's refill produces different copper and its DRC skips pads
+  with zero thermal connections. Lamina reports zero under this plan's minimum
+  spoke rule. Remaining differences are recorded, not suppressed. Task 5's filled
+  export will allow a check of Lamina's copper without KiCad refilling it.
+- Debug check times before the local polygon optimization: collar 1.8 s, T.I.T
+  7.24 s (includes load and all checks). Spoke tests pass after limiting polygon
+  intersections to each pad's neighborhood.
+- All DRC tests pass. Full workspace verification is running in session 39343.
+  Task 4 commit remains; do not claim exact thermal-count parity with KiCad refill.

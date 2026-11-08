@@ -24,6 +24,7 @@ pub const RULE_NAMES: &[&str] = &[
     "isolated_copper",
     "keepout",
     "mask_bridge",
+    "npth_inside_courtyard",
     "short",
     "short_nets",
     "silk_overlap",
@@ -31,6 +32,7 @@ pub const RULE_NAMES: &[&str] = &[
     "silk_to_edge",
     "silk_to_pad",
     "stale_exclusion",
+    "starved_thermal",
     "track_dangling",
     "track_points",
     "track_width",
@@ -119,6 +121,25 @@ pub fn analyze(d: &ProjectData) -> Analysis {
             .and_then(|n| n.class.clone())
     };
     let mut v: Vec<Violation> = Vec::new();
+    for fill in &fills {
+        for (pad, count) in &fill.thermal_spokes {
+            if *count < rules.min_thermal_spokes {
+                let mut violation = Violation::warning(
+                    "starved_thermal",
+                    format!(
+                        "Pad {pad} has {count} spoke(s) to zone {}, but the minimum is {}",
+                        fill.zone, rules.min_thermal_spokes
+                    ),
+                )
+                .on(fill.layer)
+                .items([pad.clone(), fill.zone.clone()]);
+                if let Some(item) = g.copper.iter().find(|item| item.owner.label() == *pad) {
+                    violation = violation.at(item.prim.anchor());
+                }
+                v.push(violation);
+            }
+        }
+    }
 
     // Pour fills are part of the connectivity check. They are not part of the
     // clearance check, because each fill already keeps the clearance.
@@ -608,6 +629,31 @@ pub fn analyze(d: &ProjectData) -> Analysis {
             .filter_map(|l| l.copper().map(|c| c.index(layers)))
             .collect();
         kos.push((k.id.clone(), ls, k.outline.flatten(0.02), k.forbid));
+    }
+    for hole in g.drills.iter().filter(|hole| !hole.plated) {
+        for (part, side, courtyard) in &cys {
+            if matches!(&hole.owner, Owner::Pad { part: own, .. } if own == part) {
+                continue;
+            }
+            let polygon = Prim::Poly {
+                outer: courtyard.clone(),
+                holes: vec![],
+            };
+            if polygon.distance(&hole.prim) <= 1e-6 {
+                v.push(
+                    Violation::warning(
+                        "npth_inside_courtyard",
+                        format!(
+                            "The non-plated hole {} is inside the courtyard of {part}",
+                            hole.owner.label()
+                        ),
+                    )
+                    .at(hole.prim.anchor())
+                    .on(Layer::Courtyard(*side))
+                    .items([hole.owner.label(), part.clone()]),
+                );
+            }
+        }
     }
     for i in 0..cys.len() {
         for j in (i + 1)..cys.len() {

@@ -97,6 +97,8 @@ pub struct ZoneFill {
     pub net: Option<String>,
     pub layer: Layer,
     pub polygons: Vec<FillPolygon>,
+    #[serde(default)]
+    pub thermal_spokes: std::collections::BTreeMap<String, u8>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -173,7 +175,11 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                             PadConnection::Solid => {}
                             PadConnection::Thermal => {
                                 obstacles.push(inflate(&it.prim, z.thermal_gap));
-                                thermal.push(it.prim.clone());
+                                if region.intersection(&inflate(&it.prim, 0.0)).unsigned_area()
+                                    > 1e-6
+                                {
+                                    thermal.push((it.owner.label(), it.prim.clone()));
+                                }
                             }
                             PadConnection::None => obstacles.push(inflate(&it.prim, zc)),
                         }
@@ -221,6 +227,7 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
             // Remove necks that are thinner than the minimum width.
             fill = fill.buffer(-min_w / 2.0).buffer(min_w / 2.0);
 
+            let mut thermal_spokes = std::collections::BTreeMap::new();
             if !thermal.is_empty() {
                 let allowed = region.difference(&union_all(
                     g.copper
@@ -236,12 +243,44 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                 ));
                 let spoke = z.thermal_spoke.max(min_w);
                 let mut spokes = Vec::new();
-                for p in &thermal {
+                for (label, p) in &thermal {
                     let b = p.bbox();
                     let c = Point::new((b.min.x + b.max.x) / 2.0, (b.min.y + b.max.y) / 2.0);
                     let hx = b.width() / 2.0 + z.thermal_gap + min_w;
                     let hy = b.height() / 2.0 + z.thermal_gap + min_w;
                     let s = spoke / 2.0;
+                    let pad = inflate(p, 0.0);
+                    let bounds = mp(gpoly(&[
+                        Point::new(c.x - hx, c.y - hy),
+                        Point::new(c.x + hx, c.y - hy),
+                        Point::new(c.x + hx, c.y + hy),
+                        Point::new(c.x - hx, c.y + hy),
+                    ]));
+                    let local_allowed = bounds.intersection(&allowed);
+                    let local_fill = bounds.intersection(&fill);
+                    let mut count: u8 = 0;
+                    for (x0, y0, x1, y1) in [
+                        (c.x, c.y - s, c.x + hx, c.y + s),
+                        (c.x - hx, c.y - s, c.x, c.y + s),
+                        (c.x - s, c.y, c.x + s, c.y + hy),
+                        (c.x - s, c.y - hy, c.x + s, c.y),
+                    ] {
+                        let arm = mp(gpoly(&[
+                            Point::new(x0, y0),
+                            Point::new(x1, y0),
+                            Point::new(x1, y1),
+                            Point::new(x0, y1),
+                        ]))
+                        .intersection(&local_allowed);
+                        if arm.0.iter().any(|piece| {
+                            let piece = mp(piece.clone());
+                            piece.intersection(&pad).unsigned_area() > 1e-6
+                                && piece.intersection(&local_fill).unsigned_area() > 1e-6
+                        }) {
+                            count += 1;
+                        }
+                    }
+                    thermal_spokes.insert(label.clone(), count);
                     spokes.push(mp(gpoly(&[
                         Point::new(c.x - hx, c.y - s),
                         Point::new(c.x + hx, c.y - s),
@@ -269,6 +308,27 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
             } else {
                 prims
             };
+            for (label, pad) in &thermal {
+                for track in d
+                    .routing
+                    .tracks
+                    .iter()
+                    .filter(|t| t.layer == *layer && Some(&t.net) == z.net.as_ref())
+                {
+                    for ends in track.points.windows(2) {
+                        let joins = (pad.contains(ends[0])
+                            && !pad.contains(ends[1])
+                            && kept.iter().any(|p| p.contains(ends[1])))
+                            || (pad.contains(ends[1])
+                                && !pad.contains(ends[0])
+                                && kept.iter().any(|p| p.contains(ends[0])));
+                        if joins {
+                            let count = thermal_spokes.entry(label.clone()).or_default();
+                            *count = count.saturating_add(1);
+                        }
+                    }
+                }
+            }
             let kept_mp = MultiPolygon::new(
                 kept.iter()
                     .filter_map(|p| match p {
@@ -282,6 +342,7 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
             );
             done.push((l, z.net.clone(), kept_mp));
             out.push(ZoneFill {
+                thermal_spokes,
                 zone: z.id.clone(),
                 net: z.net.clone(),
                 layer: *layer,

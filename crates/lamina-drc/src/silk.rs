@@ -474,6 +474,7 @@ mod tests {
             },
         }];
         let mut fills = vec![ZoneFill {
+            thermal_spokes: Default::default(),
             zone: "gnd".into(),
             net: Some("GND".into()),
             layer: Layer::TOP,
