@@ -1,8 +1,34 @@
-## Changes in 0.2.2
+## Changes in 0.3.0
 
-Design rule check:
-- New warning `silk_to_pad`: silkscreen text or a silkscreen drawing is nearer to a pad with a mask opening than the `silk_to_pad` rule. It checks board items and footprint items on both sides. A footprint outline needs to clear only the mask openings of its own pads.
-- The Checks list in the viewer shows the warning. Click a row to zoom to the pad.
+PCB layout and validation tools for AI agents:
+
+- Structured custom rules select nets, net classes and copper layers. DRC,
+  pours and routing apply the resolved limits.
+- Configure DRC severities and exclude individual violations with recorded
+  reasons. New checks cover mask openings near zones, holes inside courtyards,
+  thermal spokes, silkscreen size/overlap/edge clearance, net lengths and pairs.
+- Measure total net track lengths and via counts with `net_lengths`; configure
+  length and skew limits. `board_stats` reports dimensions, area, components,
+  pads, vias, drill sizes and track measurements. Both tools are read-only.
+- Define differential pairs in projects or modular sources, check their gap and
+  coupling, and route both nets from a centre path with `route_diff_pair`.
+- `tune_length` adds meanders to a selected segment and refuses disconnected
+  contacts or DRC errors. `add_teardrops` and `remove_teardrops` expose the
+  existing copper operations through MCP.
+- KiCad exports include filled zones and a project footprint library. Existing
+  library table entries are preserved; conflicting library names refuse export.
+- Fabrication archives include an IPC-D-356 electrical test netlist.
+
+Validation: 259 workspace tests passed, with one real-board overview test ignored.
+Headless MCP tests cover routing, tuning, teardrops, statistics and fabrication.
+On the reference board, all 192 IPC test-point records match KiCad's type, layer
+access and coordinates. KiCad DRC on exported fills reports no unconnected items
+or footprint-library warnings; other board warnings remain.
+
+Measurement limits: lengths sum all track branches and exclude via depth;
+length/skew and pair checks do not calculate delay or impedance. Pair checks
+allow short corner/end tolerances. KiCad may produce different thermal warnings
+when it refills zones. IPC validation is not certification by every fabricator.
 
 Each archive has two programs, the README and the licence files:
 
