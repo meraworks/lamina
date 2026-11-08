@@ -152,26 +152,41 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
     let mut out = Vec::new();
 
     for z in zones {
-        let zc = z.clearance.unwrap_or(rules.clearance);
         let zone_class = class_of(&z.net);
-        let min_w = z.min_width.unwrap_or(rules.min_track_width).max(0.05);
         for layer in &z.layers {
             let Some(c) = layer.copper() else { continue };
             let l = c.index(layers);
+            let limits = rules.resolve(z.net.as_deref(), zone_class.as_deref(), Some(*layer));
+            let zc = z
+                .clearance
+                .unwrap_or(limits.clearance)
+                .max(limits.clearance);
+            let min_w = z.min_width.unwrap_or(limits.min_track_width).max(0.05);
+            let clearance = |net: &Option<String>| {
+                rules
+                    .resolve(net.as_deref(), class_of(net).as_deref(), Some(*layer))
+                    .clearance
+            };
             let region = mp(gpoly(&z.outline.flatten(TOL))).intersection(&board);
             if region.unsigned_area() < 1e-6 {
                 continue;
             }
             let rb = bbox_of(&region);
+            let reach = rules
+                .custom
+                .iter()
+                .filter_map(|r| r.clearance)
+                .chain(rules.net_classes.values().filter_map(|c| c.clearance))
+                .fold(zc.max(z.thermal_gap).max(2.0), f64::max);
             let mut obstacles = Vec::new();
             let mut thermal = Vec::new();
             let mut anchors = Vec::new();
             for it in g.copper.iter().filter(|i| i.layer == l) {
                 let b = it.prim.bbox();
-                if b.max.x < rb.min.x - 2.0
-                    || b.min.x > rb.max.x + 2.0
-                    || b.max.y < rb.min.y - 2.0
-                    || b.min.y > rb.max.y + 2.0
+                if b.max.x < rb.min.x - reach
+                    || b.min.x > rb.max.x + reach
+                    || b.max.y < rb.min.y - reach
+                    || b.min.y > rb.max.y + reach
                 {
                     continue;
                 }
@@ -193,9 +208,7 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                         }
                     }
                 } else {
-                    let cl = zc
-                        .max(rules.clearance_for(class_of(&it.net).as_deref()))
-                        .max(rules.clearance_for(zone_class.as_deref()));
+                    let cl = zc.max(clearance(&it.net));
                     obstacles.push(inflate(&it.prim, cl));
                 }
             }
@@ -231,7 +244,7 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
             }
             for (dl, dnet, fill) in &done {
                 if *dl == l && (dnet != &z.net || z.net.is_none()) {
-                    obstacles.push(fill.buffer(zc));
+                    obstacles.push(fill.buffer(zc.max(clearance(dnet))));
                 }
             }
 
@@ -246,12 +259,7 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                     g.copper
                         .iter()
                         .filter(|i| i.layer == l && !(z.net.is_some() && i.net == z.net))
-                        .map(|i| {
-                            inflate(
-                                &i.prim,
-                                zc.max(rules.clearance_for(class_of(&i.net).as_deref())),
-                            )
-                        })
+                        .map(|i| inflate(&i.prim, zc.max(clearance(&i.net))))
                         .collect(),
                 ));
                 let spoke = z.thermal_spoke.max(min_w);
@@ -468,6 +476,47 @@ pub fn keyhole(p: &Polygon<f64>) -> Vec<Point> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn custom_clearance_applies_to_pours_on_the_selected_layer() {
+        let mut d = ProjectData::new("custom");
+        d.board.outline = Some(Contour::rect(0.0, 0.0, 20.0, 20.0));
+        d.routing.tracks.push(Track {
+            id: "t".into(),
+            net: "BUS1".into(),
+            layer: Layer::TOP,
+            width: 0.3,
+            points: vec![Point::new(5.0, 10.0), Point::new(15.0, 10.0)],
+        });
+        d.routing.zones.push(Zone {
+            id: "z".into(),
+            net: None,
+            layers: vec![Layer::TOP],
+            outline: Contour::rect(1.0, 1.0, 18.0, 18.0),
+            priority: 0,
+            clearance: None,
+            min_width: None,
+            pad_connection: PadConnection::Solid,
+            thermal_gap: 0.3,
+            thermal_spoke: 0.3,
+        });
+        d.board.rules.custom.push(CustomRule {
+            name: "bus".into(),
+            when: RuleMatch {
+                net: Some("BUS*".into()),
+                layer: Some(Layer::TOP),
+                ..Default::default()
+            },
+            clearance: Some(3.0),
+            ..Default::default()
+        });
+        let g = crate::build(&d);
+        let fills = fill_zones(&d, &g);
+        assert!(!fills[0].polygons.is_empty());
+        for polygon in &fills[0].polygons {
+            assert!(polygon.prim().distance(&g.copper[0].prim) >= 3.0 - 1e-6);
+        }
+    }
 
     #[test]
     fn keyhole_cut_does_not_cross_the_hole() {

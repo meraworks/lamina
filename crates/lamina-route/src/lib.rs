@@ -345,15 +345,37 @@ impl<'a> Ctx<'a> {
         let r = &self.d.board.rules;
         let class = self.class_of(Some(net));
         let nc = r.class(class);
+        // A profile spans layers; use the strongest matching limit on any layer.
+        let limits: Vec<_> = (0..self.geo.layers)
+            .map(|i| {
+                r.resolve(
+                    Some(net),
+                    class,
+                    Some(Layer::Copper(Copper::from_index(i, self.geo.layers))),
+                )
+            })
+            .collect();
+        let min_width = limits.iter().map(|v| v.min_track_width).fold(0.0, f64::max);
+        let min_drill = limits.iter().map(|v| v.min_via_drill).fold(0.0, f64::max);
+        let min_ring = limits
+            .iter()
+            .map(|v| v.min_annular_ring)
+            .fold(0.0, f64::max);
         let mut w = self.width.unwrap_or_else(|| r.track_width_for(class));
         if narrow {
-            w = w.min(r.min_track_width);
+            w = w.min(min_width);
         }
+        w = w.max(min_width);
+        let drill = nc.via_drill.unwrap_or(r.via_drill).max(min_drill);
         Profile {
             hw: w / 2.0,
-            cl: r.clearance_for(class),
-            via_r: nc.via_diameter.unwrap_or(r.via_diameter) / 2.0,
-            drill_r: nc.via_drill.unwrap_or(r.via_drill) / 2.0,
+            cl: limits.iter().map(|v| v.clearance).fold(0.0, f64::max),
+            via_r: nc
+                .via_diameter
+                .unwrap_or(r.via_diameter)
+                .max(drill + 2.0 * min_ring)
+                / 2.0,
+            drill_r: drill / 2.0,
         }
     }
 
@@ -386,8 +408,15 @@ impl<'a> Ctx<'a> {
                 .and_then(|n| self.net_ids.get(n))
                 .copied()
                 .unwrap_or(HARD);
-            let cl =
-                p.cl.max(rules.clearance_for(self.class_of(it.net.as_deref())));
+            let cl = p.cl.max(
+                rules
+                    .resolve(
+                        it.net.as_deref(),
+                        self.class_of(it.net.as_deref()),
+                        Some(Layer::Copper(Copper::from_index(it.layer, self.geo.layers))),
+                    )
+                    .clearance,
+            );
             cells.clear();
             g.cover(&it.prim, it.layer as usize, cl + p.hw + margin, &mut cells);
             for &c in &cells {
@@ -1109,7 +1138,7 @@ pub fn walkaround(d: &ProjectData, w: &Walk) -> Option<Vec<Point>> {
         let class = n
             .and_then(|n| ctx.d.nets.nets.get(n))
             .and_then(|x| x.class.clone());
-        rules.clearance_for(class.as_deref())
+        rules.resolve(n, class.as_deref(), Some(w.layer)).clearance
     };
     let own_cl = cl_of(Some(&w.net));
     // The copper of other nets on the layer, near the two points, with the

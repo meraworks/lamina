@@ -8,22 +8,6 @@ fn r6(v: f64) -> f64 {
     (v * 1e6).round() / 1e6
 }
 
-/// The KiCad net class pattern: `*` and `?` wildcards, or an exact name.
-fn wildcard(pattern: &str, name: &str) -> bool {
-    fn go(p: &[char], n: &[char]) -> bool {
-        match (p.first(), n.first()) {
-            (None, None) => true,
-            (Some('*'), _) => go(&p[1..], n) || (!n.is_empty() && go(p, &n[1..])),
-            (Some('?'), Some(_)) => go(&p[1..], &n[1..]),
-            (Some(a), Some(b)) if a == b => go(&p[1..], &n[1..]),
-            _ => false,
-        }
-    }
-    let p: Vec<char> = pattern.chars().collect();
-    let n: Vec<char> = name.chars().collect();
-    go(&p, &n)
-}
-
 /// Apply the rules, net classes and class assignments of a `.kicad_pro`
 /// to an imported board. Returns notes about the data that it used.
 pub fn apply_project(d: &mut ProjectData, pro: &str) -> Result<Vec<String>, String> {

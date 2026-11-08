@@ -29,6 +29,25 @@ fn board() -> ProjectData {
 }
 
 #[test]
+fn routes_honor_custom_width_limits() {
+    let mut d = board();
+    d.board.rules.custom.push(CustomRule {
+        name: "wide".into(),
+        when: RuleMatch {
+            net: Some("A".into()),
+            layer: Some(Layer::TOP),
+            ..Default::default()
+        },
+        min_track_width: Some(0.4),
+        ..Default::default()
+    });
+    let out = autoroute(&d, &RouteOptions::default()).unwrap();
+    let tracks: Vec<_> = out.tracks.iter().filter(|t| t.net == "A").collect();
+    assert!(!tracks.is_empty());
+    assert!(tracks.iter().all(|t| t.width >= 0.4));
+}
+
+#[test]
 fn routes_without_errors() {
     let mut d = board();
     let out = autoroute(&d, &RouteOptions::default()).unwrap();

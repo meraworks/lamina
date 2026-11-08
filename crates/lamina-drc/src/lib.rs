@@ -181,6 +181,7 @@ pub fn analyze(d: &ProjectData) -> Analysis {
         .net_classes
         .values()
         .filter_map(|c| c.clearance)
+        .chain(rules.custom.iter().filter_map(|r| r.clearance))
         .fold(rules.clearance, f64::max);
 
     // Clearance and shorts between copper of different nets.
@@ -270,9 +271,15 @@ pub fn analyze(d: &ProjectData) -> Analysis {
             if a_fill || b_fill {
                 continue;
             }
+            let layer = Layer::Copper(Copper::from_index(a.layer, layers));
             let need = rules
-                .clearance_for(class_of(&a.net).as_deref())
-                .max(rules.clearance_for(class_of(&b.net).as_deref()));
+                .resolve(a.net.as_deref(), class_of(&a.net).as_deref(), Some(layer))
+                .clearance
+                .max(
+                    rules
+                        .resolve(b.net.as_deref(), class_of(&b.net).as_deref(), Some(layer))
+                        .clearance,
+                );
             if dist + 1e-6 < need {
                 let mut pair = [a.owner.label(), b.owner.label()];
                 pair.sort();
@@ -396,7 +403,12 @@ pub fn analyze(d: &ProjectData) -> Analysis {
 
     // Track widths.
     for t in &d.routing.tracks {
-        if t.width + 1e-9 < rules.min_track_width {
+        let limits = rules.resolve(
+            Some(&t.net),
+            d.nets.nets.get(&t.net).and_then(|n| n.class.as_deref()),
+            Some(t.layer),
+        );
+        if t.width + 1e-9 < limits.min_track_width {
             v.push(
                 Violation::error(
                     "track_width",
@@ -404,7 +416,7 @@ pub fn analyze(d: &ProjectData) -> Analysis {
                         "{} is {} mm wide, but the minimum width is {} mm",
                         t.id,
                         r3(t.width),
-                        r3(rules.min_track_width)
+                        r3(limits.min_track_width)
                     ),
                 )
                 .items([t.id.clone()])
@@ -421,7 +433,29 @@ pub fn analyze(d: &ProjectData) -> Analysis {
 
     // Vias.
     for via in &d.routing.vias {
-        if via.drill + 1e-9 < rules.min_via_drill {
+        let class = d.nets.nets.get(&via.net).and_then(|n| n.class.as_deref());
+        let from = via
+            .from
+            .and_then(|l| l.copper())
+            .map(|c| c.index(layers))
+            .unwrap_or(0);
+        let to = via
+            .to
+            .and_then(|l| l.copper())
+            .map(|c| c.index(layers))
+            .unwrap_or(layers.saturating_sub(1));
+        let mut min_drill: f64 = 0.0;
+        let mut min_ring: f64 = 0.0;
+        for index in from.min(to)..=from.max(to) {
+            let limits = rules.resolve(
+                Some(&via.net),
+                class,
+                Some(Layer::Copper(Copper::from_index(index, layers))),
+            );
+            min_drill = min_drill.max(limits.min_via_drill);
+            min_ring = min_ring.max(limits.min_annular_ring);
+        }
+        if via.drill + 1e-9 < min_drill {
             v.push(
                 Violation::error(
                     "via_drill",
@@ -429,7 +463,7 @@ pub fn analyze(d: &ProjectData) -> Analysis {
                         "The drill of {} is {} mm, but the minimum is {} mm",
                         via.id,
                         r3(via.drill),
-                        r3(rules.min_via_drill)
+                        r3(min_drill)
                     ),
                 )
                 .at(via.at)
@@ -437,7 +471,7 @@ pub fn analyze(d: &ProjectData) -> Analysis {
             );
         }
         let ring = (via.diameter - via.drill) / 2.0;
-        if ring + 1e-9 < rules.min_annular_ring {
+        if ring + 1e-9 < min_ring {
             v.push(
                 Violation::error(
                     "annular_ring",
@@ -445,7 +479,7 @@ pub fn analyze(d: &ProjectData) -> Analysis {
                         "The annular ring of {} is {} mm, but the minimum is {} mm",
                         via.id,
                         r3(ring),
-                        r3(rules.min_annular_ring)
+                        r3(min_ring)
                     ),
                 )
                 .at(via.at)
@@ -483,20 +517,38 @@ pub fn analyze(d: &ProjectData) -> Analysis {
                     );
                 }
                 if *plated {
+                    let net = d.nets.net_of(&PadRef {
+                        part: refdes.clone(),
+                        pad: pad.number.clone(),
+                    });
+                    let class = net
+                        .and_then(|n| d.nets.nets.get(n))
+                        .and_then(|n| n.class.as_deref());
+                    let min_ring = (0..layers)
+                        .map(|index| {
+                            rules
+                                .resolve(
+                                    net,
+                                    class,
+                                    Some(Layer::Copper(Copper::from_index(index, layers))),
+                                )
+                                .min_annular_ring
+                        })
+                        .fold(0.0, f64::max);
                     let (w, h) = pad.shape.size();
                     let dmax = match drill {
                         Drill::Round { diameter } => (*diameter, *diameter),
                         Drill::Slot { width, height } => (*width, *height),
                     };
                     let ring = ((w - dmax.0) / 2.0).min((h - dmax.1) / 2.0);
-                    if ring + 1e-9 < rules.min_annular_ring {
+                    if ring + 1e-9 < min_ring {
                         v.push(
                             Violation::error(
                                 "annular_ring",
                                 format!(
                                     "The annular ring of {label} is {} mm, but the minimum is {} mm",
                                     r3(ring),
-                                    r3(rules.min_annular_ring)
+                                    r3(min_ring)
                                 ),
                             )
                             .at(pl.transform(pad.at))

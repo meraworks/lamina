@@ -176,3 +176,20 @@ Tasks 0–2 are implemented and verified. Task 3 is in progress; Tasks 4–12 ar
 - Real-board no-refill DRC: 6 violations, 0 unconnected, 0 library warnings (was
   31). Remaining: NPTH courtyard 1, silk 2, mask 3. Evidence:
   `%TEMP%/lamina-parity-collar/library-drc.json`.
+
+## Task 7: custom rules
+
+- Task 6 workspace checks passed; committed as `b644aca`.
+- Model matcher test RED to GREEN; model committed as `6c51e2e` after fmt,
+  workspace clippy and workspace tests passed.
+- DRC, set_rules, pour and router regression tests each failed before the
+  implementation, then passed. Rules use ordered JSON selectors and fieldwise
+  overrides. Clearance uses both nets; vias use all spanned layers.
+- set_rules rejects blank names, unknown fields, nonpositive dimensions and
+  selectors for nonexistent/non-copper layers without changing the board.
+- Ruling: router profiles use the strongest resolved limit across board layers
+  because a profile spans layers. This can route wider than necessary on some
+  layers, but prevents layer changes from generating invalid copper.
+- Full workspace verification pending. No KiCad comparison is specified for
+  custom JSON rules; these rules are enforced in Lamina.
+- Task 7: fmt, workspace clippy and workspace tests passed (session 30575).

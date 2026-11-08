@@ -57,6 +57,10 @@ pub struct SetRules {
     /// that you give here replaces the net class that has the same name.
     /// `severities` replaces the rule-name map. Values are `error`, `warning`,
     /// or `ignore`. An empty map restores the default severities.
+    /// `custom` replaces the ordered list of named rules. Match with `when.net`
+    /// (`*` and `?` wildcards), `when.class`, and `when.layer` (copper layer).
+    /// Later matching rules override supplied clearance/minimum dimensions.
+    /// An empty list removes custom rules. All dimensions are positive mm.
     #[serde(default)]
     pub rules: serde_json::Map<String, serde_json::Value>,
     #[serde(default)]
@@ -181,7 +185,9 @@ impl Project {
                 for (name, c) in src {
                     dst.insert(name.clone(), c.clone());
                 }
-            } else if obj.contains_key(&k) || k == "preset" || k == "severities" {
+            } else if obj.contains_key(&k)
+                || matches!(k.as_str(), "preset" | "severities" | "custom")
+            {
                 obj.insert(k, v);
             } else {
                 return Err(Error::invalid(format!("The rule `{k}` is unknown.")));
@@ -189,6 +195,32 @@ impl Project {
         }
         let rules: Rules =
             serde_json::from_value(current).map_err(|e| Error::invalid(format!("rules: {e}")))?;
+        for rule in &rules.custom {
+            if rule.name.trim().is_empty() {
+                return Err(Error::invalid("A custom rule needs a non-empty name."));
+            }
+            if rule.when.layer.is_some_and(|l| {
+                l.copper().is_none() || !l.exists_in(d.board.stackup.copper_layers)
+            }) {
+                return Err(Error::invalid(format!(
+                    "Custom rule `{}` must select an existing copper layer.",
+                    rule.name
+                )));
+            }
+            for (field, value) in [
+                ("clearance", rule.clearance),
+                ("min_track_width", rule.min_track_width),
+                ("min_via_drill", rule.min_via_drill),
+                ("min_annular_ring", rule.min_annular_ring),
+            ] {
+                if value.is_some_and(|v| !v.is_finite() || v <= 0.0) {
+                    return Err(Error::invalid(format!(
+                        "Custom rule `{}`: {field} must be more than 0.",
+                        rule.name
+                    )));
+                }
+            }
+        }
         for name in rules.severities.keys() {
             if !lamina_drc::RULE_NAMES.contains(&name.as_str()) {
                 return Err(Error::invalid(format!(
