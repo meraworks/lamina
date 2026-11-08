@@ -552,6 +552,9 @@ pub fn export_board_with(d: &ProjectData, model_dir: Option<&std::path::Path>) -
         let id = *net_ids.get(name)?;
         Some(n("net").num(id as f64).str(name))
     };
+    // Tracks, vias and zones name a net by number only.
+    let copper_net =
+        |name: &str| -> Option<Node> { Some(n("net").num(*net_ids.get(name)? as f64)) };
 
     let mut root =
         n("kicad_pcb")
@@ -684,7 +687,7 @@ pub fn export_board_with(d: &ProjectData, model_dir: Option<&std::path::Path>) -
             continue;
         }
         for (i, w) in t.points.windows(2).enumerate() {
-            let net = net_node(&t.net).unwrap_or_else(|| n("net").num(0.0));
+            let net = copper_net(&t.net).unwrap_or_else(|| n("net").num(0.0));
             root = root.child(
                 n("segment")
                     .child(n("start").num(w[0].x).num(-w[0].y))
@@ -697,7 +700,7 @@ pub fn export_board_with(d: &ProjectData, model_dir: Option<&std::path::Path>) -
         }
     }
     for v in &d.routing.vias {
-        let Some(net) = net_node(&v.net) else {
+        let Some(net) = copper_net(&v.net) else {
             continue;
         };
         let (from, to) = (v.from.unwrap_or(Layer::TOP), v.to.unwrap_or(Layer::BOTTOM));
@@ -722,7 +725,7 @@ pub fn export_board_with(d: &ProjectData, model_dir: Option<&std::path::Path>) -
         let net = z
             .net
             .as_deref()
-            .and_then(net_node)
+            .and_then(copper_net)
             .unwrap_or_else(|| n("net").num(0.0));
         let connect = match z.pad_connection {
             PadConnection::Thermal => n("connect_pads"),
@@ -969,6 +972,8 @@ fn footprint_node(
     let ref_default = Point::new(0.0, cy.map(|r| r.max.y + 0.8).unwrap_or(1.5));
     let ref_at = text_at(FpLayer::Silk, "${ref}", ref_default);
     let val_at = text_at(FpLayer::Fab, "${value}", Point::new(0.0, 0.0));
+    // A footprint with no such text shows no such field in Lamina.
+    let absent = |key: &str| !fp.texts.iter().any(|t| t.text == key);
     let smd = fp.pads.iter().any(Pad::is_smd);
     let mut attr = n("attr").sym(if smd { "smd" } else { "through_hole" });
     if part.dnp {
@@ -994,14 +999,14 @@ fn footprint_node(
             refdes,
             &lname(FpLayer::Silk),
             ref_at,
-            false,
+            absent("${ref}"),
         ))
         .child(prop(
             "Value",
             part.value.as_deref().unwrap_or(&fp.id),
             &lname(FpLayer::Fab),
             val_at,
-            false,
+            absent("${value}"),
         ))
         .child(prop(
             "Footprint",
@@ -1517,6 +1522,89 @@ mod tests {
         assert_eq!(e.board.cutouts.len(), 1);
         // The free hole came back as a one-pad footprint.
         assert!(e.parts.parts.contains_key("H1"));
+    }
+
+    #[test]
+    fn copper_items_name_the_net_by_number_only() {
+        let text = export_board(&sample_board());
+        let body = text.split("(segment").nth(1).unwrap();
+        assert!(!regex_free_net_name(body), "{body}");
+    }
+
+    /// True if a `(net N "name")` node is in the text.
+    fn regex_free_net_name(text: &str) -> bool {
+        text.split("(net ").skip(1).any(|r| {
+            let r = r.trim_start_matches(|c: char| c.is_ascii_digit());
+            r.trim_start().starts_with('"')
+        })
+    }
+
+    fn property<'a>(text: &'a str, name: &str, refdes: &str) -> &'a str {
+        let from = text
+            .find(&format!("(property \"{name}\" \"{refdes}\""))
+            .or_else(|| {
+                let fp = text.find(&format!("(property \"Reference\" \"{refdes}\""))?;
+                Some(fp + text[fp..].find(&format!("(property \"{name}\""))?)
+            })
+            .unwrap();
+        let end = text[from + 9..].find("(property").unwrap();
+        &text[from..from + 9 + end]
+    }
+
+    #[test]
+    fn reference_is_hidden_if_the_footprint_has_no_reference_text() {
+        let mut d = sample_board();
+        for fp in d.footprints.values_mut() {
+            fp.texts
+                .retain(|t| t.text != "${ref}" && t.text != "${value}");
+        }
+        let text = export_board(&d);
+        assert!(property(&text, "Reference", "R1").contains("(hide yes)"));
+        assert!(property(&text, "Value", "R1").contains("(hide yes)"));
+    }
+
+    #[test]
+    fn reference_is_visible_if_the_footprint_has_reference_text() {
+        let mut d = sample_board();
+        let id = d.parts.parts["R1"].footprint.clone();
+        let fp = d.footprints.get_mut(&id).unwrap();
+        if !fp.texts.iter().any(|t| t.text == "${ref}") {
+            fp.texts.push(FpText {
+                text: "${ref}".into(),
+                layer: FpLayer::Silk,
+                at: Point::new(0.0, 2.0),
+                size: 1.0,
+                rotation: 0.0,
+            });
+        }
+        let text = export_board(&d);
+        assert!(!property(&text, "Reference", "R1").contains("(hide yes)"));
+    }
+
+    #[test]
+    fn project_file_keeps_the_rules_and_classes() {
+        let mut d = sample_board();
+        d.board.rules.clearance = 0.127;
+        d.board.rules.min_track_width = 0.09;
+        d.board.rules.net_classes.insert(
+            "Power".into(),
+            NetClass {
+                clearance: Some(0.3),
+                track_width: Some(0.5),
+                via_diameter: None,
+                via_drill: None,
+            },
+        );
+        d.nets.nets.get_mut("GND").unwrap().class = Some("Power".into());
+        let pro = crate::export_project(&d, "board");
+        let mut back = ProjectData::new("x");
+        back.nets.nets = d.nets.nets.clone();
+        back.nets.nets.get_mut("GND").unwrap().class = None;
+        crate::apply_project(&mut back, &pro).unwrap();
+        assert_eq!(back.board.rules.clearance, 0.127);
+        assert_eq!(back.board.rules.min_track_width, 0.09);
+        assert_eq!(back.board.rules.net_classes["Power"].clearance, Some(0.3));
+        assert_eq!(back.nets.nets["GND"].class.as_deref(), Some("Power"));
     }
 
     #[test]

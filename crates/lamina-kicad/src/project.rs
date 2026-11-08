@@ -2,7 +2,7 @@
 //! them there, not in the board file.
 
 use lamina_model::*;
-use serde_json::Value;
+use serde_json::{Value, json};
 
 fn r6(v: f64) -> f64 {
     (v * 1e6).round() / 1e6
@@ -133,6 +133,51 @@ pub fn apply_project(d: &mut ProjectData, pro: &str) -> Result<Vec<String>, Stri
     Ok(vec![format!(
         "rules from the KiCad project: {named} net classes, {assigned} nets assigned"
     )])
+}
+
+/// The `.kicad_pro` text for a board.
+pub fn export_project(d: &ProjectData, name: &str) -> String {
+    let r = &d.board.rules;
+    let class = |name: &str, c: &NetClass| {
+        json!({
+            "name": name,
+            "clearance": c.clearance.unwrap_or(r.clearance),
+            "track_width": c.track_width.unwrap_or(r.track_width),
+            "via_diameter": c.via_diameter.unwrap_or(r.via_diameter),
+            "via_drill": c.via_drill.unwrap_or(r.via_drill),
+        })
+    };
+    let mut classes = vec![class("Default", &NetClass::default())];
+    classes.extend(r.net_classes.iter().map(|(n, c)| class(n, c)));
+    let assigned: serde_json::Map<String, Value> = d
+        .nets
+        .nets
+        .iter()
+        .filter_map(|(n, net)| Some((n.clone(), json!(net.class.clone()?))))
+        .collect();
+    let min_clearance = r
+        .net_classes
+        .values()
+        .filter_map(|c| c.clearance)
+        .fold(r.clearance, f64::min);
+    let text = json!({
+        "board": {"design_settings": {"rules": {
+            "min_clearance": min_clearance,
+            "min_track_width": r.min_track_width,
+            "min_through_hole_diameter": r.min_drill.min(r.min_via_drill),
+            "min_via_annular_width": r.min_annular_ring,
+            "min_via_diameter": r.min_via_drill + 2.0 * r.min_annular_ring,
+            "min_hole_to_hole": r.hole_to_hole,
+            "min_copper_edge_clearance": r.copper_to_edge,
+        }}},
+        "meta": {"filename": format!("{name}.kicad_pro"), "version": 3},
+        "net_settings": {
+            "classes": classes,
+            "meta": {"version": 4},
+            "netclass_assignments": assigned,
+        },
+    });
+    serde_json::to_string_pretty(&text).unwrap_or_default()
 }
 
 #[cfg(test)]

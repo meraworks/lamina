@@ -1,7 +1,7 @@
 //! The `.kicad_pcb` board file as a [`BoardFormat`].
 
 use std::collections::BTreeMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use lamina_model::ProjectData;
 use lamina_ports::format::{BoardFormat, FormatInfo, ImportedBoard};
@@ -107,5 +107,13 @@ impl BoardFormat for KicadFormat {
 
     fn write(&self, data: &ProjectData, model_dir: &Path) -> Result<String, String> {
         Ok(crate::export_board_with(data, Some(model_dir)))
+    }
+
+    fn companions(&self, data: &ProjectData, path: &Path) -> Vec<(PathBuf, String)> {
+        let name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("board");
+        vec![(
+            path.with_extension("kicad_pro"),
+            crate::export_project(data, name),
+        )]
     }
 }

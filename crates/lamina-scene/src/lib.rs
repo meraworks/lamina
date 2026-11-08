@@ -77,6 +77,7 @@ pub enum SceneLayer {
     Drills,
     Ratsnest,
     Drc,
+    DrcWarning,
 }
 
 impl SceneLayer {
@@ -95,6 +96,7 @@ impl SceneLayer {
             SceneLayer::Drills => "drills".into(),
             SceneLayer::Ratsnest => "ratsnest".into(),
             SceneLayer::Drc => "drc".into(),
+            SceneLayer::DrcWarning => "drc.warning".into(),
         }
     }
 
@@ -441,18 +443,21 @@ pub fn build_2d(d: &ProjectData, a: &Analysis) -> Scene2D {
         push(&mut layers, SceneLayer::Ratsnest, ratsnest_geom(r));
     }
     for v in &a.violations {
-        if v.severity == Severity::Error {
-            if let Some(at) = v.at {
-                push(
-                    &mut layers,
-                    SceneLayer::Drc,
-                    Geom::Stroke {
-                        pts: lamina_geom::prim::circle_points(at, 0.6, 0.02),
-                        width: 0.12,
-                        closed: true,
-                    },
-                );
-            }
+        if let Some(at) = v.at {
+            let layer = if v.severity == Severity::Error {
+                SceneLayer::Drc
+            } else {
+                SceneLayer::DrcWarning
+            };
+            push(
+                &mut layers,
+                layer,
+                Geom::Stroke {
+                    pts: lamina_geom::prim::circle_points(at, 0.6, 0.02),
+                    width: 0.12,
+                    closed: true,
+                },
+            );
         }
     }
     layers.sort_by_key(|l| order_key(l.layer, layers_n));
@@ -508,7 +513,8 @@ pub fn order_key(l: SceneLayer, n: u8) -> (u8, u8) {
         SceneLayer::Keepout => (4, 0),
         SceneLayer::Outline => (4, 1),
         SceneLayer::Ratsnest => (4, 2),
-        SceneLayer::Drc => (4, 3),
+        SceneLayer::DrcWarning => (4, 3),
+        SceneLayer::Drc => (4, 4),
     }
 }
 

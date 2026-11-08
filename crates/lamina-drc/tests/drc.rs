@@ -337,3 +337,157 @@ fn silk_line_uses_the_silk_to_pad_limit() {
     d.routing.graphics[0] = line(edge + 0.075 + limit + 0.01);
     assert!(silk_warnings(&d).is_empty());
 }
+
+fn only<'a>(a: &'a Analysis, rule: &str) -> Vec<&'a Violation> {
+    a.violations.iter().filter(|v| v.rule == rule).collect()
+}
+
+fn text(d: &mut ProjectData, id: &str, at: Point, size: f64) {
+    d.routing.texts.push(BoardText {
+        id: id.into(),
+        layer: Layer::Silk(Side::Top),
+        text: "ABC".into(),
+        at,
+        size,
+        rotation: 0.0,
+    });
+}
+
+fn track(d: &mut ProjectData, net: &str, points: Vec<Point>) {
+    let id = format!("t{}", d.routing.tracks.len());
+    d.routing.tracks.push(Track {
+        id,
+        net: net.into(),
+        layer: Layer::TOP,
+        width: 0.25,
+        points,
+    });
+}
+
+#[test]
+fn silk_texts_on_each_other_warn() {
+    let mut d = board();
+    text(&mut d, "a", Point::new(15.0, 16.0), 1.0);
+    text(&mut d, "b", Point::new(15.2, 16.0), 1.0);
+    let a = analyze(&d);
+    let hits = only(&a, "silk_overlap");
+    assert_eq!(hits.len(), 1, "{:?}", a.violations);
+    assert_eq!(hits[0].severity, Severity::Warning);
+}
+
+#[test]
+fn silk_texts_apart_are_quiet() {
+    let mut d = board();
+    text(&mut d, "a", Point::new(8.0, 16.0), 1.0);
+    text(&mut d, "b", Point::new(22.0, 16.0), 1.0);
+    assert!(only(&analyze(&d), "silk_overlap").is_empty());
+}
+
+#[test]
+fn silk_near_the_board_edge_warns() {
+    let mut d = board();
+    text(&mut d, "a", Point::new(15.0, 19.6), 1.0);
+    assert_eq!(only(&analyze(&d), "silk_to_edge").len(), 1);
+}
+
+#[test]
+fn small_silk_text_warns() {
+    let mut d = board();
+    text(&mut d, "a", Point::new(15.0, 16.0), 0.5);
+    assert_eq!(only(&analyze(&d), "silk_text_size").len(), 1);
+    d.routing.texts[0].size = 1.0;
+    assert!(only(&analyze(&d), "silk_text_size").is_empty());
+}
+
+#[test]
+fn near_mask_openings_of_two_nets_warn() {
+    let mut d = board();
+    d.board.rules.min_mask_web = 5.0;
+    let a = analyze(&d);
+    assert!(!only(&a, "mask_bridge").is_empty(), "{:?}", a.violations);
+    d.board.rules.min_mask_web = 0.0;
+    assert!(only(&analyze(&d), "mask_bridge").is_empty());
+}
+
+#[test]
+fn track_with_a_free_end_warns() {
+    let mut d = board();
+    let (at, _) = r1_pad_2(&d);
+    track(&mut d, "A", vec![at, Point::new(at.x, at.y + 4.0)]);
+    assert_eq!(only(&analyze(&d), "track_dangling").len(), 1);
+}
+
+#[test]
+fn track_between_pads_is_not_dangling() {
+    let mut d = board();
+    let (at, _) = r1_pad_2(&d);
+    let other = d.footprints["R_0603"]
+        .pad("1")
+        .unwrap()
+        .at
+        .add(Point::new(20.0, 10.0));
+    track(&mut d, "A", vec![at, other]);
+    assert!(only(&analyze(&d), "track_dangling").is_empty());
+}
+
+#[test]
+fn via_with_no_connection_warns() {
+    let mut d = board();
+    d.routing.vias.push(Via {
+        id: "v1".into(),
+        net: "A".into(),
+        at: Point::new(15.0, 5.0),
+        diameter: 0.6,
+        drill: 0.3,
+        from: None,
+        to: None,
+    });
+    assert_eq!(only(&analyze(&d), "via_dangling").len(), 1);
+}
+
+#[test]
+fn via_connected_to_a_pad_is_not_dangling() {
+    let mut d = board();
+    let (pad, _) = r1_pad_2(&d);
+    let at = Point::new(15.0, 5.0);
+    d.routing.vias.push(Via {
+        id: "v1".into(),
+        net: "A".into(),
+        at,
+        diameter: 0.6,
+        drill: 0.3,
+        from: None,
+        to: None,
+    });
+    assert_eq!(only(&analyze(&d), "via_dangling").len(), 1);
+    track(&mut d, "A", vec![pad, at]);
+    assert!(only(&analyze(&d), "via_dangling").is_empty());
+}
+
+#[test]
+fn zone_without_a_pad_connection_warns() {
+    let mut d = board();
+    track(
+        &mut d,
+        "A",
+        vec![Point::new(3.0, 3.0), Point::new(4.0, 4.0)],
+    );
+    d.routing.zones.push(Zone {
+        id: "z1".into(),
+        net: Some("A".into()),
+        layers: vec![Layer::TOP],
+        outline: Contour::rect(2.0, 2.0, 4.0, 4.0),
+        priority: 0,
+        clearance: None,
+        min_width: None,
+        pad_connection: PadConnection::Solid,
+        thermal_gap: 0.3,
+        thermal_spoke: 0.3,
+    });
+    let a = analyze(&d);
+    assert!(!a.fills[0].polygons.is_empty());
+    assert_eq!(only(&a, "isolated_copper").len(), 1);
+    let (pad, _) = r1_pad_2(&d);
+    track(&mut d, "A", vec![pad, Point::new(4.0, 4.0)]);
+    assert!(only(&analyze(&d), "isolated_copper").is_empty());
+}

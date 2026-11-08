@@ -96,6 +96,7 @@ pub fn parse_scene_layer(s: &str, copper_layers: u8) -> Option<SceneLayer> {
         "drills" => return Some(SceneLayer::Drills),
         "ratsnest" => return Some(SceneLayer::Ratsnest),
         "drc" => return Some(SceneLayer::Drc),
+        "drc.warning" => return Some(SceneLayer::DrcWarning),
         "keepout" => return Some(SceneLayer::Keepout),
         _ => {}
     }

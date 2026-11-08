@@ -16,4 +16,4 @@ pub use footprint::{Instance, KicadModel, convert, footprint_id, parse_footprint
 pub use format::KicadFormat;
 pub use library::{DirSource, Hit, HttpSource, KicadSource};
 pub use pcb::{ImportedBoard, export_board, export_board_with, import_board};
-pub use project::apply_project;
+pub use project::{apply_project, export_project};

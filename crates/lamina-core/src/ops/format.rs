@@ -286,6 +286,9 @@ impl Project {
             .write(&self.data, &self.root().join(MODEL_DIR))
             .map_err(Error::Invalid)?;
         write_atomic(&path, text.as_bytes())?;
+        for (extra, text) in format.companions(&self.data, &path) {
+            write_atomic(&extra, text.as_bytes())?;
+        }
         Ok(BoardExported {
             path: path.display().to_string(),
             format: info.id,

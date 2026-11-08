@@ -54,4 +54,9 @@ pub trait BoardFormat: Send + Sync {
         let _ = (data, model_dir);
         Err(format!("The format `{}` cannot write.", self.info().id))
     }
+    /// Other files to write next to the board at `path`, with their text.
+    fn companions(&self, data: &ProjectData, path: &Path) -> Vec<(std::path::PathBuf, String)> {
+        let _ = (data, path);
+        Vec::new()
+    }
 }

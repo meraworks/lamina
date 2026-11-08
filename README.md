@@ -125,6 +125,12 @@ with its name and its net.
 
 `check` also warns when silkscreen text or a silkscreen drawing is nearer to a pad than
 the `silk_to_pad` rule (`silk_to_pad`).
+It also checks overlapping silk (`silk_overlap`), silk near the board edge
+(`silk_to_edge`), and small silk text (`silk_text_size`). Set the limits with
+`silk_to_edge` and `min_silk_text_height`. `min_mask_web` sets the minimum gap
+between pad mask openings (`mask_bridge`). Copper checks report free track ends
+(`track_dangling`), vias with no pad connection (`via_dangling`), and zone pieces
+with no pad connection (`isolated_copper`).
 
 ## Viewer
 

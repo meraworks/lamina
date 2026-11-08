@@ -179,6 +179,9 @@ pub(crate) struct App {
     bg: Vec<std::sync::mpsc::Receiver<actions::BgDone>>,
     find: Option<actions::Find>,
     help: bool,
+    /// The severities that the Checks list shows.
+    show_errors: bool,
+    show_warnings: bool,
     measure: actions::Measure,
     /// The view and the canvas size of the last automatic fit. If the view did
     /// not change, a resized canvas gets a new fit.
@@ -270,6 +273,8 @@ impl App {
             bg: Vec::new(),
             find: None,
             help: false,
+            show_errors: true,
+            show_warnings: true,
             measure: actions::Measure::default(),
             fit_2d_at: None,
             fit_3d_at: None,
@@ -903,6 +908,7 @@ impl App {
                     SceneLayer::Keepout,
                     SceneLayer::Ratsnest,
                     SceneLayer::Drc,
+                    SceneLayer::DrcWarning,
                 ],
             ),
         ];
@@ -1005,9 +1011,15 @@ impl App {
                 ui.add_space(18.0);
                 widgets::hairline(ui);
                 ui.add_space(12.0);
+                let (mut errors_on, mut warnings_on) = (self.show_errors, self.show_warnings);
                 let Some(l) = &self.loaded else { return };
                 let mut violations: Vec<&lamina_model::Violation> =
                     l.analysis.violations.iter().collect();
+                let total = violations.len();
+                let errors = violations
+                    .iter()
+                    .filter(|v| v.severity == Severity::Error)
+                    .count();
                 violations.sort_by(|a, b| a.severity.cmp(&b.severity).then(a.rule.cmp(&b.rule)));
                 ui.horizontal(|ui| {
                     widgets::section_title(ui, "Checks");
@@ -1017,8 +1029,19 @@ impl App {
                             .color(TEXT_3),
                     );
                 });
+                ui.horizontal(|ui| {
+                    ui.checkbox(&mut errors_on, format!("Errors {errors}"));
+                    ui.checkbox(&mut warnings_on, format!("Warnings {}", total - errors));
+                });
+                violations.retain(|v| {
+                    if v.severity == Severity::Error {
+                        errors_on
+                    } else {
+                        warnings_on
+                    }
+                });
                 ui.add_space(6.0);
-                if violations.is_empty() {
+                if total == 0 {
                     ui.label(
                         egui::RichText::new("There are no rule violations. All checks pass.")
                             .font(body(12.5))
@@ -1036,6 +1059,8 @@ impl App {
                         goto = v.at;
                     }
                 }
+                self.show_errors = errors_on;
+                self.show_warnings = warnings_on;
                 if let Some(at) = goto {
                     self.zoom_to(at, 8.0, size_hint);
                 }

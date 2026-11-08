@@ -37,6 +37,7 @@ pub fn layer_color(l: SceneLayer, copper_layers: u8) -> Rgba {
         SceneLayer::Drills => [10, 12, 16, 255],
         SceneLayer::Ratsnest => [150, 170, 255, 230],
         SceneLayer::Drc => [255, 64, 100, 255],
+        SceneLayer::DrcWarning => [255, 184, 64, 255],
     }
 }
 

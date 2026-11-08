@@ -412,6 +412,13 @@ fn kicad_footprint_import_and_board_round_trip() {
         })
         .unwrap();
     assert!(out.path.ends_with("demo.kicad_pcb"), "{}", out.path);
+    let companion = std::path::Path::new(&out.path).with_extension("kicad_pro");
+    let settings: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(companion).unwrap()).unwrap();
+    assert_eq!(
+        settings["board"]["design_settings"]["rules"]["min_track_width"],
+        p.data.board.rules.min_track_width
+    );
     assert_eq!(out.parts, 2);
     let e = p
         .export_board(ExportBoard {

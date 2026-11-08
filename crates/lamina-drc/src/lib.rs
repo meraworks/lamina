@@ -654,7 +654,9 @@ pub fn analyze(d: &ProjectData) -> Analysis {
         }
     }
 
-    v.extend(silk::check(d));
+    v.extend(silk::check(d, &g));
+    let roots: Vec<usize> = (0..items.len()).map(|i| dsu.find(i)).collect();
+    v.extend(dangling(d, items, n_items, &index, &fill_index, &roots));
 
     for r in d.parts.parts.keys() {
         if !d.placement.placements.contains_key(r) {
@@ -684,6 +686,89 @@ pub fn analyze(d: &ProjectData) -> Analysis {
         island,
         fill_island,
     }
+}
+
+/// Warn about copper that connects to nothing useful.
+fn dangling(
+    d: &ProjectData,
+    items: &[CopperItem],
+    n_items: usize,
+    index: &Index,
+    fill_index: &[lamina_geom::prim::IndexedPoly],
+    roots: &[usize],
+) -> Vec<Violation> {
+    let layers = d.board.stackup.copper_layers;
+    let with_pad: BTreeSet<usize> = items
+        .iter()
+        .zip(roots)
+        .filter(|(it, _)| matches!(it.owner, Owner::Pad { .. }))
+        .map(|(_, r)| *r)
+        .collect();
+    let mut out = Vec::new();
+    let mut vias: BTreeSet<&str> = BTreeSet::new();
+    for (i, it) in items.iter().enumerate() {
+        let free = !with_pad.contains(&roots[i]);
+        match &it.owner {
+            Owner::Via { id } if free && vias.insert(id) => out.push(
+                Violation::warning(
+                    "via_dangling",
+                    format!("The via {id} does not connect to a pad"),
+                )
+                .at(it.prim.anchor())
+                .items([id.clone()]),
+            ),
+            Owner::Zone { id, piece } if free && it.net.is_some() => out.push(
+                Violation::warning(
+                    "isolated_copper",
+                    format!("Piece {piece} of the zone {id} does not connect to a pad"),
+                )
+                .at(it.prim.anchor())
+                .items([id.clone()]),
+            ),
+            _ => {}
+        }
+    }
+    for t in &d.routing.tracks {
+        let Some(layer) = t.layer.copper().map(|c| c.index(layers)) else {
+            continue;
+        };
+        let (Some(first), Some(last)) = (t.points.first(), t.points.last()) else {
+            continue;
+        };
+        if t.points.len() < 2 {
+            continue;
+        }
+        for end in [*first, *last] {
+            let tip = Prim::Circle {
+                c: end,
+                r: t.width / 2.0,
+            };
+            let joined = index.near(&tip.bbox(), 0.0).into_iter().any(|j| {
+                let o = &items[j];
+                let own = matches!(&o.owner, Owner::Track { id, .. } if *id == t.id);
+                if own || o.layer != layer || o.net.as_deref() != Some(t.net.as_str()) {
+                    return false;
+                }
+                if j >= n_items {
+                    fill_index[j - n_items].touches(&tip, 1e-6)
+                } else {
+                    tip.distance(&o.prim) <= 1e-6
+                }
+            });
+            if !joined {
+                out.push(
+                    Violation::warning(
+                        "track_dangling",
+                        format!("An end of {} ({}) connects to nothing", t.id, t.net),
+                    )
+                    .at(end)
+                    .on(t.layer)
+                    .items([t.id.clone()]),
+                );
+            }
+        }
+    }
+    out
 }
 
 /// The checker for `Project::add_checker`.

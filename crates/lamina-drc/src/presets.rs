@@ -29,6 +29,7 @@ fn jlc_2() -> Rules {
         silk_width: 0.15,
         silk_to_pad: 0.15,
         net_classes: Default::default(),
+        ..Rules::default()
     }
 }
 
