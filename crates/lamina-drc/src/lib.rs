@@ -11,6 +11,34 @@ use lamina_geom::{BoardGeometry, CopperItem, Index, Owner};
 use lamina_model::*;
 use serde::Serialize;
 
+/// Geometric and connectivity checks that accept severity overrides.
+pub const RULE_NAMES: &[&str] = &[
+    "annular_ring",
+    "clearance",
+    "copper_outside_board",
+    "copper_to_edge",
+    "courtyard_outside_board",
+    "courtyard_overlap",
+    "drill_size",
+    "hole_to_hole",
+    "isolated_copper",
+    "keepout",
+    "mask_bridge",
+    "short",
+    "short_nets",
+    "silk_overlap",
+    "silk_text_size",
+    "silk_to_edge",
+    "silk_to_pad",
+    "track_dangling",
+    "track_points",
+    "track_width",
+    "unplaced",
+    "unrouted",
+    "via_dangling",
+    "via_drill",
+];
+
 /// A missing connection, drawn as a ratsnest line.
 #[derive(Debug, Clone, PartialEq, Serialize, schemars::JsonSchema)]
 pub struct Ratsnest {
@@ -678,6 +706,15 @@ pub fn analyze(d: &ProjectData) -> Analysis {
         })
         .collect();
     g.copper.truncate(n_items);
+    v.retain_mut(|violation| {
+        match rules.severities.get(&violation.rule) {
+            Some(RuleSeverity::Ignore) => return false,
+            Some(RuleSeverity::Error) => violation.severity = Severity::Error,
+            Some(RuleSeverity::Warning) => violation.severity = Severity::Warning,
+            None => {}
+        }
+        true
+    });
     Analysis {
         violations: v,
         ratsnest,

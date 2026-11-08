@@ -39,6 +39,48 @@ fn rules(a: &Analysis) -> Vec<&str> {
 }
 
 #[test]
+fn severity_overrides_preserve_connectivity() {
+    let mut d = board();
+    let original = analyze(&d);
+    assert_eq!(only(&original, "unrouted")[0].severity, Severity::Warning);
+    d.board
+        .rules
+        .severities
+        .insert("unrouted".into(), RuleSeverity::Error);
+    assert_eq!(only(&analyze(&d), "unrouted")[0].severity, Severity::Error);
+    d.board
+        .rules
+        .severities
+        .insert("unrouted".into(), RuleSeverity::Ignore);
+    let ignored = analyze(&d);
+    assert!(only(&ignored, "unrouted").is_empty());
+    assert_eq!(ignored.ratsnest, original.ratsnest);
+    let (pad, _) = r1_pad_2(&d);
+    track(&mut d, "A", vec![pad, Point::new(15.0, 5.0)]);
+    d.board
+        .rules
+        .severities
+        .insert("track_dangling".into(), RuleSeverity::Error);
+    assert_eq!(
+        only(&analyze(&d), "track_dangling")[0].severity,
+        Severity::Error
+    );
+    d.routing.tracks[0].width = 0.01;
+    assert_eq!(
+        only(&analyze(&d), "track_width")[0].severity,
+        Severity::Error
+    );
+    d.board
+        .rules
+        .severities
+        .insert("track_width".into(), RuleSeverity::Warning);
+    assert_eq!(
+        only(&analyze(&d), "track_width")[0].severity,
+        Severity::Warning
+    );
+}
+
+#[test]
 fn unrouted_then_routed() {
     let mut d = board();
     let a = analyze(&d);

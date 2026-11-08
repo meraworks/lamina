@@ -30,6 +30,34 @@ fn new_project() -> (tempfile::TempDir, Project) {
     (dir, p)
 }
 
+#[test]
+fn set_rule_severities_validates_names_and_persists() {
+    let (_t, mut p) = new_project();
+    p.set_rules(SetRules {
+        rules: serde_json::from_value(serde_json::json!({"severities": {"unrouted": "ignore"}}))
+            .unwrap(),
+        strict: false,
+    })
+    .unwrap();
+    assert_eq!(
+        p.data.board.rules.severities["unrouted"],
+        RuleSeverity::Ignore
+    );
+    let before = p.data.board.rules.clone();
+    let error = p
+        .set_rules(SetRules {
+            rules: serde_json::from_value(serde_json::json!({"severities": {"typo": "error"}}))
+                .unwrap(),
+            strict: false,
+        })
+        .unwrap_err();
+    assert!(error.to_string().contains("typo"));
+    assert!(error.to_string().contains("unrouted"));
+    assert_eq!(p.data.board.rules, before);
+    let reloaded = open_shared(p.root()).unwrap();
+    assert_eq!(reloaded.data.board.rules.severities, before.severities);
+}
+
 fn add_resistor(p: &mut Project, refdes: &str) {
     let mut fp = Footprint::new("R_0603", Provenance::Manual { note: "t".into() });
     for (n, x) in [("1", -0.8), ("2", 0.8)] {

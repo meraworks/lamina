@@ -55,6 +55,8 @@ pub struct SetStackup {
 pub struct SetRules {
     /// Partial rules. Only the fields that you give are changed. A net class
     /// that you give here replaces the net class that has the same name.
+    /// `severities` replaces the rule-name map. Values are `error`, `warning`,
+    /// or `ignore`. An empty map restores the default severities.
     #[serde(default)]
     pub rules: serde_json::Map<String, serde_json::Value>,
     #[serde(default)]
@@ -179,7 +181,7 @@ impl Project {
                 for (name, c) in src {
                     dst.insert(name.clone(), c.clone());
                 }
-            } else if obj.contains_key(&k) || k == "preset" {
+            } else if obj.contains_key(&k) || k == "preset" || k == "severities" {
                 obj.insert(k, v);
             } else {
                 return Err(Error::invalid(format!("The rule `{k}` is unknown.")));
@@ -187,6 +189,14 @@ impl Project {
         }
         let rules: Rules =
             serde_json::from_value(current).map_err(|e| Error::invalid(format!("rules: {e}")))?;
+        for name in rules.severities.keys() {
+            if !lamina_drc::RULE_NAMES.contains(&name.as_str()) {
+                return Err(Error::invalid(format!(
+                    "The check `{name}` is unknown. Valid checks: {}.",
+                    lamina_drc::RULE_NAMES.join(", ")
+                )));
+            }
+        }
         for (name, v) in [
             ("clearance", rules.clearance),
             ("track_width", rules.track_width),

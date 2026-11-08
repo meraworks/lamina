@@ -28,4 +28,15 @@ Follow `kicad-parity-plan.md` in task order.
 
 ## Remaining
 
-Tasks 1–12 are pending. No full-parity completion claim is made.
+Tasks 0 and 1 are complete. Tasks 2–12 are pending.
+
+## Task 1
+
+- Added the severity map and backward-compatible model serialization test.
+- Added tests for severity changes, ignored unrouted warnings with an unchanged
+  ratsnest, unknown rule names, and persisted settings.
+- Observed failures for missing override behavior and rejected `severities` input.
+- Added the DRC rule-name list, final severity mapping, and input validation.
+- Targeted tests passed: core 23 passed, 1 ignored; DRC 24 passed.
+- Formatting, workspace Clippy with warnings denied, and workspace tests passed.
+- Model commit: `81bb337`. Severity behavior is committed separately.

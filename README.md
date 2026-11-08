@@ -132,6 +132,12 @@ between pad mask openings (`mask_bridge`). Copper checks report free track ends
 (`track_dangling`), vias with no pad connection (`via_dangling`), and zone pieces
 with no pad connection (`isolated_copper`).
 
+Agents can set the severity of a DRC check with `set_rules`, for example
+`{"rules":{"severities":{"unrouted":"ignore","silk_overlap":"error"}}}`.
+Values are `error`, `warning`, and `ignore`. The map replaces the previous map;
+an empty map restores the defaults. Unknown check names are refused with a list
+of valid names. Ignoring `unrouted` hides its warnings but keeps the ratsnest.
+
 ## Viewer
 
 ```
