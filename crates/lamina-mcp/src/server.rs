@@ -217,6 +217,16 @@ impl Lamina {
         self.with(|proj| proj.set_diff_pairs(p))
     }
 
+    /// Route both nets of a named pair from a centre path. Positive goes left,
+    /// negative right, at half the gap plus half the width. Refuses new DRC errors.
+    #[tool(annotations(title = "Route differential pair"))]
+    async fn route_diff_pair(
+        &self,
+        Parameters(p): Parameters<RouteDiffPair>,
+    ) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.route_diff_pair(p))
+    }
+
     /// The board formats that Lamina reads or writes: id, extensions and
     /// what each one holds.
     #[tool(annotations(title = "Formats", read_only_hint = true))]

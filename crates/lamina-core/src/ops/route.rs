@@ -148,7 +148,7 @@ fn check_copper(l: Layer, layers: u8) -> Result<()> {
 }
 
 impl Project {
-    fn all_ids(&self) -> Vec<String> {
+    pub(crate) fn all_ids(&self) -> Vec<String> {
         let r = &self.data.routing;
         r.tracks
             .iter()

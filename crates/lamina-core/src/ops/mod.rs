@@ -11,7 +11,7 @@ pub mod import;
 pub mod layout;
 pub mod nets;
 pub mod pairs;
-pub use pairs::SetDiffPairs;
+pub use pairs::{RouteDiffPair, SetDiffPairs};
 pub mod output;
 pub mod parts;
 pub mod place;

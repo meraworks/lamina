@@ -161,6 +161,11 @@ allowing one centre spacing at segment ends for corners. These are layout
 checks, not an impedance calculation. Modular sources can supply `diff_pairs`
 beside `nets`; both are generated into `nets.json`.
 
+`route_diff_pair` takes `pair`, `layer`, and a `points` centre path. Positive
+goes left and negative right, each offset by half the gap plus half the width.
+Both tracks are committed together; new DRC errors refuse the operation.
+Sharp reversals and bends too short for the inner track are refused.
+
 Use `exclude_violation` with a `rule`, the `items` from `check`, and a nonempty
 `reason` to accept a specific violation. The match uses item IDs, so it stays
 after an item moves. `exclusions` lists the saved reasons and hidden violations.

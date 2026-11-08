@@ -228,3 +228,10 @@ Tasks 0–2 are implemented and verified. Task 3 is in progress; Tasks 4–12 ar
 - Pair routing test is prepared at target/parity-pair-route-test.rs; restore it
   under core/tests after the checks commit and run it before implementation.
 - Task 9 data/checks: formatting, workspace clippy and workspace tests passed (session 90280).
+- Pair data/checks committed as `85002b4`.
+- Routing test failed on missing RouteDiffPair, then passed. It checks offsets
+  on a right-angle path, two tracks with the specified nets, no DRC errors,
+  atomic refusal at the board edge and refusal of a reversing path.
+- route_diff_pair is available to MCP, always uses strict commit, and rejects
+  bends that reverse or collapse the inner offset segment.
+- Pair routing: added a failing cross-item ID collision regression and fixed allocation to reserve all item IDs. Targeted test, formatting, workspace clippy and workspace tests passed (session 38556).
