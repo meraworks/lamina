@@ -484,6 +484,7 @@ fn nets_from(v: &Value) -> Result<NetsFile> {
     Ok(NetsFile {
         schema: SCHEMA,
         nets,
+        ..Default::default()
     })
 }
 

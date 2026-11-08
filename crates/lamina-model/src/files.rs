@@ -432,6 +432,19 @@ pub struct NetsFile {
     pub schema: u32,
     #[serde(default)]
     pub nets: BTreeMap<String, Net>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub diff_pairs: BTreeMap<String, DiffPair>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct DiffPair {
+    pub positive: String,
+    pub negative: String,
+    /// Edge-to-edge copper gap in mm.
+    pub gap: f64,
+    /// Width of each track in mm.
+    pub width: f64,
 }
 
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize, JsonSchema)]
