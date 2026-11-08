@@ -154,6 +154,8 @@ fn default_silk_text_height() -> f64 {
 /// Design rules. All sizes are in mm.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Rules {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub exclusions: Vec<Exclusion>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub severities: BTreeMap<String, RuleSeverity>,
     /// The fab preset that these rules came from, if there is one.
@@ -190,6 +192,7 @@ pub struct Rules {
 impl Default for Rules {
     fn default() -> Self {
         Rules {
+            exclusions: Vec::new(),
             severities: BTreeMap::new(),
             preset: None,
             clearance: 0.15,
@@ -220,6 +223,27 @@ pub enum RuleSeverity {
     Error,
     Warning,
     Ignore,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct Exclusion {
+    pub rule: String,
+    pub items: Vec<String>,
+    pub reason: String,
+}
+
+impl Exclusion {
+    pub fn new(rule: String, mut items: Vec<String>, reason: String) -> Result<Self, String> {
+        if reason.trim().is_empty() {
+            return Err("An exclusion needs a reason.".into());
+        }
+        items.sort();
+        Ok(Self {
+            rule,
+            items,
+            reason,
+        })
+    }
 }
 
 impl Rules {
@@ -728,6 +752,24 @@ impl Violation {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn exclusions_require_a_reason_and_sort_items() {
+        assert!(Exclusion::new("clearance".into(), vec!["b".into()], "  ".into()).is_err());
+        let entry = Exclusion::new(
+            "clearance".into(),
+            vec!["b".into(), "a".into()],
+            "Accepted gap".into(),
+        )
+        .unwrap();
+        assert_eq!(entry.items, vec!["a", "b"]);
+        let mut rules: Rules =
+            serde_json::from_value(serde_json::to_value(Rules::default()).unwrap()).unwrap();
+        assert!(rules.exclusions.is_empty());
+        rules.exclusions.push(entry);
+        let round: Rules = serde_json::from_value(serde_json::to_value(&rules).unwrap()).unwrap();
+        assert_eq!(round, rules);
+    }
 
     #[test]
     fn rule_severity_round_trip_and_old_rules() {
