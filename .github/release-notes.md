@@ -1,23 +1,8 @@
-## Changes in 0.2.1
+## Changes in 0.2.2
 
-Viewer, 2D:
-- Pin names and nets on the pads, fitted to each pad. Net names on tracks.
-- Net highlight (`` ` ``), single-layer mode (Shift+S), zoom keys (+ / -).
-- Rotate while you drag (R); a group turns about the part that you hold.
-- Box selection by track segment; a crossing box takes what it touches.
-- Copy and paste of tracks and vias (Ctrl+C / Ctrl+V).
-- Routing modes (Shift+R): direct, walkaround and push, with a live preview. A track or part drag pushes other tracks aside in push mode.
-- Differential pairs (Shift+D) with vias and matched lengths; length tuning with meanders ("tune to" in the inspector); teardrops (Board menu).
-- The active copper layer is the bright one. Track width keys while routing (W / Shift+W).
-
-Viewer, 3D:
-- Zoom at the pointer; top, bottom and reset views; part bodies on or off (T / B / I / P).
-- Hover and click parts; 2D and 3D share one selection.
-
-Tools:
-- `pins`: the pads of a part with their pin names and nets. A rule check warns when a ground pin is on a power net, or the reverse.
-- `render`: `overview: true` adds a board overview with the close-up marked. In the 2D layers view, `focus` zooms to a pad or part.
-- `lamina-viewer shot` (build with `--features headless`): the viewer without a window, for agents and tests.
+Design rule check:
+- New warning `silk_to_pad`: silkscreen text or a silkscreen drawing is nearer to a pad with a mask opening than the `silk_to_pad` rule. It checks board items and footprint items on both sides. A footprint outline needs to clear only the mask openings of its own pads.
+- The Checks list in the viewer shows the warning. Click a row to zoom to the pad.
 
 Each archive has two programs, the README and the licence files:
 
