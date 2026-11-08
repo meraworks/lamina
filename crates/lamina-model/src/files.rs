@@ -154,6 +154,8 @@ fn default_silk_text_height() -> f64 {
 /// Design rules. All sizes are in mm.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Rules {
+    #[serde(default = "default_thermal_spokes")]
+    pub min_thermal_spokes: u8,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub exclusions: Vec<Exclusion>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
@@ -192,6 +194,7 @@ pub struct Rules {
 impl Default for Rules {
     fn default() -> Self {
         Rules {
+            min_thermal_spokes: default_thermal_spokes(),
             exclusions: Vec::new(),
             severities: BTreeMap::new(),
             preset: None,
@@ -244,6 +247,10 @@ impl Exclusion {
             reason,
         })
     }
+}
+
+fn default_thermal_spokes() -> u8 {
+    2
 }
 
 impl Rules {
@@ -752,6 +759,14 @@ impl Violation {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn old_rules_default_to_two_thermal_spokes() {
+        let mut value = serde_json::to_value(Rules::default()).unwrap();
+        value.as_object_mut().unwrap().remove("min_thermal_spokes");
+        let rules: Rules = serde_json::from_value(value).unwrap();
+        assert_eq!(rules.min_thermal_spokes, 2);
+    }
 
     #[test]
     fn exclusions_require_a_reason_and_sort_items() {
