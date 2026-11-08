@@ -171,6 +171,10 @@ maximum `amplitude`, and leg `spacing`, all lengths in mm. It inserts meanders
 to the left of the selected segment and preserves its endpoints. Spacing must
 allow the track width and clearance; new DRC errors refuse the change.
 
+`add_teardrops` and `remove_teardrops` expose the same copper-track teardrops as
+the viewer. Generated tracks have `tdrop` IDs and retain their net; Gerber
+exports include them. The agent operations refuse new DRC errors.
+
 Use `exclude_violation` with a `rule`, the `items` from `check`, and a nonempty
 `reason` to accept a specific violation. The match uses item IDs, so it stays
 after an item moves. `exclusions` lists the saved reasons and hidden violations.

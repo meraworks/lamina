@@ -237,6 +237,19 @@ impl Lamina {
         self.with(|proj| proj.tune_length(p))
     }
 
+    /// Add same-net copper teardrops at track-to-pad and track-to-via joints.
+    /// Replaces previous teardrops and refuses new DRC errors. Included in fab output.
+    #[tool(annotations(title = "Add teardrops"))]
+    async fn add_teardrops(&self) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.add_teardrops())
+    }
+
+    /// Remove generated teardrop tracks, preserving ordinary tracks.
+    #[tool(annotations(title = "Remove teardrops"))]
+    async fn remove_teardrops(&self) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.remove_teardrops())
+    }
+
     /// The board formats that Lamina reads or writes: id, extensions and
     /// what each one holds.
     #[tool(annotations(title = "Formats", read_only_hint = true))]

@@ -248,3 +248,16 @@ Tasks 0–2 are implemented and verified. Task 3 is in progress; Tasks 4–12 ar
   the target exactly. Meanders go left of the selected segment. The target is
   the track-length sum documented by net_lengths, not an electrical path length.
 - Task 10: formatting, workspace clippy and workspace tests passed (session 58534).
+
+## Task 11: teardrops
+
+- Read edits.rs, actions.rs and pcb.rs: the viewer already creates two short
+  same-net copper tracks per pad/via joint, with tdrop IDs; actions adds/removes
+  them. The KiCad legacy_teardrops token is only an export setting.
+- Moved the existing implementation into core and kept the viewer as a caller.
+  MCP add_teardrops/remove_teardrops use strict commits. Clearance now resolves
+  custom rules on the actual layer.
+- Agent/fabrication test failed on missing methods, then passed: same-net tracks
+  are added, exported Gerber contains copper at a teardrop-only point, and removal
+  restores the original copper. No replacement shape algorithm was needed.
+- Task 11: formatting, workspace clippy and workspace tests (including existing viewer teardrop checks) passed in session 20655.
