@@ -130,6 +130,8 @@ pub(crate) struct App {
     models: bool,
     /// The part under the pointer in 3D.
     hover3d: Option<String>,
+    /// The copied tracks and vias.
+    clip: Option<edits::Clip>,
     /// How the route tool treats the copper of other nets.
     route_mode: tools::RouteMode,
     /// Push mode: what the push does to the other tracks for the route to the
@@ -236,6 +238,7 @@ impl App {
             single: false,
             models: true,
             hover3d: None,
+            clip: None,
             route_mode: tools::RouteMode::Walkaround,
             push_preview: None,
             seg_preview: None,

@@ -450,6 +450,49 @@ pub fn drag_parts_and_push(
     })
 }
 
+/// Copied tracks and vias, to paste at another place.
+#[derive(Clone, Debug, Default)]
+pub struct Clip {
+    pub tracks: Vec<Track>,
+    pub vias: Vec<Via>,
+    /// The point that goes under the pointer at a paste.
+    pub anchor: Point,
+}
+
+/// Paste copied tracks and vias, moved by `delta`, with new ids. They keep
+/// their nets, as in other editors; the rule check shows a short at once.
+pub fn paste(d: &mut ProjectData, clip: &Clip, delta: Point) -> EditResult {
+    if clip.tracks.is_empty() && clip.vias.is_empty() {
+        return Err("There is nothing to paste. Select tracks or vias and press Ctrl+C.".into());
+    }
+    for t in &clip.tracks {
+        if !d.nets.nets.contains_key(&t.net) {
+            return Err(format!("The net {} is not on this board.", t.net));
+        }
+        let id = new_id(d, "t");
+        d.routing.tracks.push(Track {
+            id,
+            points: t.points.iter().map(|p| p6(p.add(delta))).collect(),
+            ..t.clone()
+        });
+    }
+    for v in &clip.vias {
+        let id = new_id(d, "v");
+        d.routing.vias.push(Via {
+            id,
+            at: p6(v.at.add(delta)),
+            ..v.clone()
+        });
+    }
+    Ok(format!(
+        "Pasted {} track{} and {} via{}",
+        clip.tracks.len(),
+        if clip.tracks.len() == 1 { "" } else { "s" },
+        clip.vias.len(),
+        if clip.vias.len() == 1 { "" } else { "s" }
+    ))
+}
+
 /// The id prefix of teardrop tracks, so that they can be found and removed.
 pub const TEARDROP: &str = "tdrop";
 
@@ -2237,5 +2280,25 @@ mod tests {
             .filter(|v| v.severity == Severity::Error)
             .collect();
         assert!(errors.is_empty(), "{errors:#?}");
+    }
+
+    #[test]
+    fn paste_moves_copies_with_new_ids() {
+        let mut d = board();
+        let clip = Clip {
+            tracks: vec![d.routing.tracks[0].clone()],
+            vias: Vec::new(),
+            anchor: Point::new(0.0, 0.0),
+        };
+        paste(&mut d, &clip, Point::new(10.0, 5.0)).unwrap();
+        assert_eq!(d.routing.tracks.len(), 2);
+        let (a, b) = (&d.routing.tracks[0], &d.routing.tracks[1]);
+        assert_ne!(a.id, b.id);
+        assert_eq!(a.net, b.net);
+        assert_eq!(
+            b.points[0],
+            Point::new(a.points[0].x + 10.0, a.points[0].y + 5.0)
+        );
+        assert!(paste(&mut d, &Clip::default(), Point::new(0.0, 0.0)).is_err());
     }
 }

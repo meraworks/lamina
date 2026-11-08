@@ -540,6 +540,10 @@ impl App {
             ("Del", "Delete selection"),
             ("Ctrl+Z / Ctrl+Y", "Undo / redo"),
             ("Ctrl+A", "Select all parts"),
+            (
+                "Ctrl+C / Ctrl+V",
+                "Copy tracks and vias, paste at the pointer",
+            ),
             ("Ctrl+F", "Find a part or net"),
             ("`", "Highlight the net under the pointer"),
             ("Ctrl+O", "Open a board or file"),

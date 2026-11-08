@@ -1163,6 +1163,96 @@ impl App {
 
     /// The points that a click to `target` adds to the route in progress: the
     /// straight segments, or the walkaround path in the modes that go around.
+    /// Copy the selected tracks (whole tracks) and vias.
+    fn copy_selection(&mut self) {
+        let Some(l) = &self.loaded else { return };
+        let d = &l.data;
+        let mut clip = edits::Clip::default();
+        for s in &self.sel {
+            match s {
+                Sel::Track { id, .. } => {
+                    if let Some(t) = d.routing.tracks.iter().find(|t| &t.id == id) {
+                        if !clip.tracks.iter().any(|c| c.id == t.id) {
+                            clip.tracks.push(t.clone());
+                        }
+                    }
+                }
+                Sel::Via(id) => {
+                    if let Some(v) = d.routing.vias.iter().find(|v| &v.id == id) {
+                        clip.vias.push(v.clone());
+                    }
+                }
+                _ => {}
+            }
+        }
+        if clip.tracks.is_empty() && clip.vias.is_empty() {
+            self.say(
+                "Select tracks or vias to copy. Parts come from the netlist.",
+                false,
+            );
+            return;
+        }
+        let pts: Vec<Point> = clip
+            .tracks
+            .iter()
+            .flat_map(|t| t.points.iter().copied())
+            .chain(clip.vias.iter().map(|v| v.at))
+            .collect();
+        let b = Rect::from_points(pts.iter().copied()).unwrap();
+        clip.anchor = snap_pt(
+            Point::new((b.min.x + b.max.x) / 2.0, (b.min.y + b.max.y) / 2.0),
+            self.grid(),
+        );
+        self.say(
+            format!(
+                "Copied {} track{} and {} via{}. Ctrl+V pastes at the pointer.",
+                clip.tracks.len(),
+                if clip.tracks.len() == 1 { "" } else { "s" },
+                clip.vias.len(),
+                if clip.vias.len() == 1 { "" } else { "s" }
+            ),
+            true,
+        );
+        self.clip = Some(clip);
+    }
+
+    /// Paste the copied tracks and vias with their centre at the pointer.
+    fn paste_clip(&mut self) {
+        let (Some(clip), Some(p)) = (self.clip.clone(), self.cursor_mm) else {
+            self.say(
+                "Copy tracks or vias first (Ctrl+C), then point where they go.",
+                false,
+            );
+            return;
+        };
+        let to = snap_pt(p, self.grid());
+        let delta = to.sub(clip.anchor);
+        // Select the pasted items, as other editors do, so that a drag or an
+        // arrow key moves them at once. The ids come from a dry run.
+        if let Some(l) = &self.loaded {
+            let mut dry = l.data.clone();
+            let (nt, nv) = (dry.routing.tracks.len(), dry.routing.vias.len());
+            if edits::paste(&mut dry, &clip, delta).is_ok() {
+                let mut sel: Vec<Sel> = Vec::new();
+                for t in &dry.routing.tracks[nt..] {
+                    for seg in 0..t.points.len().saturating_sub(1) {
+                        sel.push(Sel::Track {
+                            id: t.id.clone(),
+                            seg,
+                        });
+                    }
+                }
+                sel.extend(
+                    dry.routing.vias[nv..]
+                        .iter()
+                        .map(|v| Sel::Via(v.id.clone())),
+                );
+                self.sel = sel;
+            }
+        }
+        self.commit(move |d| edits::paste(d, &clip, delta));
+    }
+
     /// The first, fast part of the segment that a click to `target` adds:
     /// the straight segments, or a walk to make (with the board to walk on).
     fn segment_plan(&self, target: Point) -> SegPlan {
@@ -1446,6 +1536,27 @@ impl App {
         let k = |key: Key| ui.input(|i| i.key_pressed(key));
         let (shift, cmd) = ui.input(|i| (i.modifiers.shift, i.modifiers.command));
 
+        // Copy and paste of tracks and vias. In a window, Ctrl+C and Ctrl+V come
+        // as copy and paste events; without a window, as keys.
+        let (copy, paste) = ui.input(|i| {
+            let ev = |f: &dyn Fn(&egui::Event) -> bool| i.events.iter().any(f);
+            (
+                ev(&|e| {
+                    matches!(e, egui::Event::Copy)
+                        || matches!(e, egui::Event::Key { key: Key::C, pressed: true, modifiers, .. } if modifiers.command)
+                }),
+                ev(&|e| {
+                    matches!(e, egui::Event::Paste(_))
+                        || matches!(e, egui::Event::Key { key: Key::V, pressed: true, modifiers, .. } if modifiers.command)
+                }),
+            )
+        });
+        if copy {
+            self.copy_selection();
+        }
+        if paste {
+            self.paste_clip();
+        }
         if cmd {
             // Undo, redo and find work in both views: see `global_keys`.
             if k(Key::A) {
