@@ -342,6 +342,32 @@ impl Lamina {
         })
     }
 
+    /// Accept a DRC violation by rule and item IDs from check. A reason is required.
+    #[tool(annotations(title = "Exclude violation"))]
+    async fn exclude_violation(
+        &self,
+        Parameters(p): Parameters<ExcludeViolation>,
+    ) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.exclude_violation(p))
+    }
+
+    /// Remove an exclusion by rule and item IDs so the violation is reported again.
+    #[tool(annotations(title = "Include violation"))]
+    async fn include_violation(
+        &self,
+        Parameters(p): Parameters<IncludeViolation>,
+    ) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.include_violation(p))
+    }
+
+    /// List exclusion records, their reasons, and the violations they currently hide.
+    #[tool(annotations(title = "Exclusions", read_only_hint = true))]
+    async fn exclusions(&self) -> Result<CallToolResult, McpError> {
+        self.with(|proj| {
+            Ok(serde_json::json!({"exclusions": proj.data.board.rules.exclusions, "excluded": proj.excluded_violations()}))
+        })
+    }
+
     /// Set the board outline: a rectangle (with optional round corners) or a
     /// contour of lines and arcs. If you give cut-outs, they replace the
     /// existing cut-outs.

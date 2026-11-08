@@ -138,6 +138,12 @@ Values are `error`, `warning`, and `ignore`. The map replaces the previous map;
 an empty map restores the defaults. Unknown check names are refused with a list
 of valid names. Ignoring `unrouted` hides its warnings but keeps the ratsnest.
 
+Use `exclude_violation` with a `rule`, the `items` from `check`, and a nonempty
+`reason` to accept a specific violation. The match uses item IDs, so it stays
+after an item moves. `exclusions` lists the saved reasons and hidden violations.
+`include_violation` removes the entry. `stale_exclusion` reports entries that no
+longer match. The viewer has the same actions in Checks and an Exclusions filter.
+
 ## Viewer
 
 ```

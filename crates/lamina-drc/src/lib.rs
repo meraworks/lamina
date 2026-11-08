@@ -30,6 +30,7 @@ pub const RULE_NAMES: &[&str] = &[
     "silk_text_size",
     "silk_to_edge",
     "silk_to_pad",
+    "stale_exclusion",
     "track_dangling",
     "track_points",
     "track_width",
@@ -51,6 +52,7 @@ pub struct Ratsnest {
 
 pub struct Analysis {
     pub violations: Vec<Violation>,
+    pub excluded: Vec<Violation>,
     pub ratsnest: Vec<Ratsnest>,
     pub fills: Vec<ZoneFill>,
     pub geometry: BoardGeometry,
@@ -706,6 +708,39 @@ pub fn analyze(d: &ProjectData) -> Analysis {
         })
         .collect();
     g.copper.truncate(n_items);
+    let mut excluded = Vec::new();
+    let mut matched = vec![false; rules.exclusions.len()];
+    v.retain(|violation| {
+        let mut items = violation.items.clone();
+        items.sort();
+        let mut found = false;
+        for (i, entry) in rules.exclusions.iter().enumerate() {
+            let mut expected = entry.items.clone();
+            expected.sort();
+            if entry.rule == violation.rule && expected == items {
+                matched[i] = true;
+                found = true;
+            }
+        }
+        if found {
+            excluded.push(violation.clone());
+        }
+        !found
+    });
+    for (entry, matched) in rules.exclusions.iter().zip(matched) {
+        if !matched {
+            v.push(
+                Violation::warning(
+                    "stale_exclusion",
+                    format!(
+                        "The exclusion for {} matches no violation: {}",
+                        entry.rule, entry.reason
+                    ),
+                )
+                .items(entry.items.clone()),
+            );
+        }
+    }
     v.retain_mut(|violation| {
         match rules.severities.get(&violation.rule) {
             Some(RuleSeverity::Ignore) => return false,
@@ -717,6 +752,7 @@ pub fn analyze(d: &ProjectData) -> Analysis {
     });
     Analysis {
         violations: v,
+        excluded,
         ratsnest,
         fills,
         geometry: g,

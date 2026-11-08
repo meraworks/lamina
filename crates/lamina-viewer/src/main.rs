@@ -182,6 +182,8 @@ pub(crate) struct App {
     /// The severities that the Checks list shows.
     show_errors: bool,
     show_warnings: bool,
+    show_exclusions: bool,
+    exclusion_reason: String,
     measure: actions::Measure,
     /// The view and the canvas size of the last automatic fit. If the view did
     /// not change, a resized canvas gets a new fit.
@@ -275,6 +277,8 @@ impl App {
             help: false,
             show_errors: true,
             show_warnings: true,
+            show_exclusions: false,
+            exclusion_reason: String::new(),
             measure: actions::Measure::default(),
             fit_2d_at: None,
             fit_3d_at: None,
@@ -1033,6 +1037,11 @@ impl App {
                     ui.checkbox(&mut errors_on, format!("Errors {errors}"));
                     ui.checkbox(&mut warnings_on, format!("Warnings {}", total - errors));
                 });
+                ui.checkbox(&mut self.show_exclusions, "Exclusions");
+                if self.editor.is_some() {
+                    ui.add(egui::TextEdit::singleline(&mut self.exclusion_reason)
+                        .hint_text("Reason for exclusion"));
+                }
                 violations.retain(|v| {
                     if v.severity == Severity::Error {
                         errors_on
@@ -1049,6 +1058,8 @@ impl App {
                     );
                 }
                 let mut goto = None;
+                let mut exclude = None;
+                let mut include = None;
                 for v in violations.iter().take(200) {
                     let color = if v.severity == Severity::Error {
                         ERROR
@@ -1057,6 +1068,43 @@ impl App {
                     };
                     if widgets::violation_row(ui, color, &v.rule, &v.message, v.at.is_some()) {
                         goto = v.at;
+                    }
+                    if self.editor.is_some() && v.rule != "stale_exclusion"
+                        && lamina_drc::RULE_NAMES.contains(&v.rule.as_str()) {
+                        ui.push_id(v.key(), |ui| {
+                            if ui.add_enabled(!self.exclusion_reason.trim().is_empty(), egui::Button::new("Exclude")).clicked() {
+                                exclude = lamina_model::Exclusion::new(v.rule.clone(), v.items.clone(), self.exclusion_reason.clone()).ok();
+                            }
+                        });
+                    }
+                }
+                if self.show_exclusions {
+                    for (i, entry) in l.data.board.rules.exclusions.iter().enumerate() {
+                        ui.push_id(("exclusion", i), |ui| {
+                            ui.label(format!("{}: {}", entry.rule, entry.items.join(", ")));
+                            ui.label(&entry.reason);
+                            if self.editor.is_some() && ui.button("Include").clicked() {
+                                include = Some(entry.clone());
+                            }
+                        });
+                    }
+                }
+                if let Some(editor) = &mut self.editor {
+                    if let Some(entry) = exclude {
+                        editor.edit(move |d| {
+                            d.board.rules.exclusions.retain(|e| {
+                                let mut items = e.items.clone(); items.sort();
+                                e.rule != entry.rule || items != entry.items
+                            });
+                            d.board.rules.exclusions.push(entry);
+                            Ok("violation excluded".into())
+                        });
+                    }
+                    if let Some(entry) = include {
+                        editor.edit(move |d| {
+                            d.board.rules.exclusions.retain(|e| e != &entry);
+                            Ok("violation included".into())
+                        });
                     }
                 }
                 self.show_errors = errors_on;

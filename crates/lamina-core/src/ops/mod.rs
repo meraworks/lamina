@@ -4,6 +4,8 @@ pub(crate) fn yes() -> bool {
 }
 
 pub mod board;
+pub mod exclusions;
+pub use exclusions::{ExcludeViolation, IncludeViolation};
 pub mod format;
 pub mod import;
 pub mod layout;
