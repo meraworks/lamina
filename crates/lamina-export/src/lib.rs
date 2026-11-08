@@ -5,6 +5,7 @@ pub mod fabricator;
 pub mod gerber;
 pub mod gerber_format;
 pub mod gerber_in;
+pub mod ipc356;
 pub mod reader;
 pub mod step_out;
 

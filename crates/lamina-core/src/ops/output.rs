@@ -94,7 +94,8 @@ impl Project {
                 }
             })
             .collect();
-        let artwork = fab.artwork(&s2, &a.geometry, &name);
+        let mut artwork = fab.artwork(&s2, &a.geometry, &name);
+        artwork.extend(fab.netlist(&self.data, &name).map_err(Error::Invalid)?);
         let (asm, mut warnings) = fab.assembly(&self.data, &name);
         let archive = fab.archive(&artwork, &name).map_err(Error::Invalid)?;
         let rel = p.dir.unwrap_or_else(|| "output".into());

@@ -18,7 +18,7 @@ impl Fabricator for GerberFabricator {
         FabInfo {
             id: "gerber".into(),
             name: "Gerber X2".into(),
-            description: "Gerber X2 artwork, Excellon drill files (PTH and NPTH),                           a JLCPCB BOM and CPL, and a zip of the artwork."
+            description: "Gerber X2 artwork, Excellon drills, IPC-D-356A electrical netlist, a JLCPCB BOM and CPL, and a board-house zip."
                 .into(),
         }
     }
@@ -31,6 +31,10 @@ impl Fabricator for GerberFabricator {
 
     fn assembly(&self, data: &ProjectData, name: &str) -> (Vec<Output>, Vec<String>) {
         crate::assembly(data, name)
+    }
+
+    fn netlist(&self, data: &ProjectData, name: &str) -> Result<Vec<Output>, String> {
+        Ok(vec![crate::ipc356::write(data, name)?])
     }
 
     fn archive(&self, artwork: &[Output], name: &str) -> Result<Option<Output>, String> {

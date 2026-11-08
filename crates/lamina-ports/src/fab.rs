@@ -26,6 +26,11 @@ pub trait Fabricator: Send + Sync {
     /// The artwork files of the board: copper, mask, silk, outline, drills.
     /// These go into the zip for the board house.
     fn artwork(&self, scene: &Scene2D, geometry: &BoardGeometry, name: &str) -> Vec<Output>;
+    /// Electrical test files, included in the board-house archive.
+    fn netlist(&self, data: &ProjectData, name: &str) -> Result<Vec<Output>, String> {
+        let _ = (data, name);
+        Ok(Vec::new())
+    }
     /// The assembly files: BOM and placement. The strings are warnings.
     fn assembly(&self, data: &ProjectData, name: &str) -> (Vec<Output>, Vec<String>);
     /// One archive of the artwork files, for the board house. A fabricator

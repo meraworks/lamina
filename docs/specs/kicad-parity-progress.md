@@ -261,3 +261,26 @@ Tasks 0–2 are implemented and verified. Task 3 is in progress; Tasks 4–12 ar
   are added, exported Gerber contains copper at a teardrop-only point, and removal
   restores the original copper. No replacement shape algorithm was needed.
 - Task 11: formatting, workspace clippy and workspace tests (including existing viewer teardrop checks) passed in session 20655.
+
+## Task 12: netlist and statistics
+
+- IPC-D-356 writer and board_stats tests failed on missing APIs, then passed.
+- Netlist tests cover 80-column records, decimil coordinates, pad dimensions,
+  rotation, side access, through vias, distinct aliases for case-colliding names,
+  out-of-range refusal, blind-via span/continuation and archive contents.
+- Fabrication integration test failed on missing netlist, then passed. Added a
+  generic netlist port method; the adapter supplies IPC-D-356 and core includes
+  test files in the board-house archive.
+- board_stats is read-only MCP; area excludes cutouts but not drill bores, pad
+  counts include placed parts, and drill sizes are grouped to 1 micrometre.
+- Format reference: KiCad 10.0 exporter field definitions, independently
+  implemented: https://github.com/KiCad/kicad-source-mirror/blob/10.0/pcbnew/exporters/export_d356.cpp
+- Ruling: net aliases remain unique even if display names need ASCII conversion
+  or truncation to the NNAME field. Numeric overflow and overlong component/pin
+  fields refuse export rather than silently changing electrical identities.
+- Task 12: formatting, workspace clippy/tests and debug MCP build passed
+  (session 37877). Headless MCP verified pair tools, tuning, teardrops, statistics
+  and the fabrication archive on a temporary board.
+- Real-board IPC-D-356 comparison against KiCad CLI: both contain 192 test-point
+  records, all 192 match type, physical-layer access and X/Y coordinates.
+  Evidence: `%TEMP%/lamina-parity-collar/{kicad.d356,ipc-parity/meratag-collar.d356}`.

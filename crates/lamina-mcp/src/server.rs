@@ -250,6 +250,14 @@ impl Lamina {
         self.with(|proj| proj.remove_teardrops())
     }
 
+    /// Board dimensions/area, part counts by side, placed SMD/through-hole pads,
+    /// vias, drill sizes/counts, smallest track width and summed track length.
+    /// Lengths are mm; area is square mm excluding cutouts but including drill bores.
+    #[tool(annotations(title = "Board statistics", read_only_hint = true))]
+    async fn board_stats(&self) -> Result<CallToolResult, McpError> {
+        self.with(|proj| Ok(proj.board_stats()))
+    }
+
     /// The board formats that Lamina reads or writes: id, extensions and
     /// what each one holds.
     #[tool(annotations(title = "Formats", read_only_hint = true))]

@@ -175,6 +175,13 @@ allow the track width and clearance; new DRC errors refuse the change.
 the viewer. Generated tracks have `tdrop` IDs and retain their net; Gerber
 exports include them. The agent operations refuse new DRC errors.
 
+`board_stats` reports dimensions, outline area minus cutouts, part counts by
+side, placed pad counts, vias, drill sizes, smallest track and total track
+length. Lengths are mm and area is square mm; drill bores are not subtracted.
+Fabrication exports include an IPC-D-356A `.d356` electrical netlist in the
+board-house zip. It uses decimils and unique aliases for net names. Values that
+cannot fit its fixed-width fields are refused instead of silently truncated.
+
 Use `exclude_violation` with a `rule`, the `items` from `check`, and a nonempty
 `reason` to accept a specific violation. The match uses item IDs, so it stays
 after an item moves. `exclusions` lists the saved reasons and hidden violations.
