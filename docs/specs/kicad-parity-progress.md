@@ -28,7 +28,7 @@ Follow `kicad-parity-plan.md` in task order.
 
 ## Remaining
 
-Tasks 0–2 are implemented and verified. Tasks 3–12 are pending.
+Tasks 0–2 are implemented and verified. Task 3 is in progress; Tasks 4–12 are pending.
 
 ## Task 1
 
@@ -68,3 +68,18 @@ Tasks 0–2 are implemented and verified. Tasks 3–12 are pending.
   `target/parity-exclusions-reopened.png`, `target/parity-included.png`.
 - The shot that saves an edit can show the old analysis until the watcher reloads;
   persistence and the resulting analysis were checked by reopening the copy.
+
+## Task 3
+
+- Added mask-opening checks against zone fills, with a bounding-box index and
+  indexed polygon edges. One warning is reported per pad and zone.
+- The new test failed on the missing function, then passed. It covers a no-net
+  pad near a zone and quiet same-net, opposite-side, and far-away cases.
+- Remaining: full DRC/integration tests, the three real-board fiducials compared
+  with KiCad on a copy, workspace checks, and commit.
+- All 28 DRC tests pass, including a full-analysis zone/pad integration test.
+- On `%TEMP%/lamina-parity-collar`, Lamina reports FID1, FID2 and FID3 against
+  zone z1. KiCad 10 reports the same three solder-mask bridges. KiCad totals:
+  38 violations, 0 unconnected items (unchanged baseline).
+- Evidence: `target/parity-collar-check.json` and the temporary copy's `d.json`.
+- Final workspace checks and commit are in progress.

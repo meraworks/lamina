@@ -7,6 +7,46 @@ use lamina_geom::{BoardGeometry, Index, Prim, font};
 use lamina_model::*;
 
 use crate::r3;
+use lamina_geom::fill::ZoneFill;
+use lamina_geom::prim::IndexedPoly;
+
+fn mask_zone_bridges(pads: &[MaskPad], fills: &[ZoneFill], min_web: f64) -> Vec<Violation> {
+    let pieces: Vec<_> = fills
+        .iter()
+        .flat_map(|f| f.polygons.iter().map(move |p| (f, p)))
+        .collect();
+    let index = Index::new(pieces.iter().map(|(_, p)| p.prim().bbox()));
+    let polygons: Vec<_> = pieces
+        .iter()
+        .map(|(_, p)| IndexedPoly::new(&p.outer, &p.holes))
+        .collect();
+    let mut out = Vec::new();
+    for pad in pads {
+        let need = pad.margin + min_web;
+        if need <= 0.0 {
+            continue;
+        }
+        let mut seen = std::collections::BTreeSet::new();
+        for j in index.near(&pad.prim.bbox(), need) {
+            let fill = pieces[j].0;
+            let layer = if pad.side == Side::Top {
+                Layer::TOP
+            } else {
+                Layer::BOTTOM
+            };
+            if fill.layer != layer || (pad.net.is_some() && pad.net == fill.net) {
+                continue;
+            }
+            if polygons[j].touches(&pad.prim, (need - 1e-6).max(0.0)) && seen.insert(&fill.zone) {
+                out.push(Violation::warning("mask_bridge", format!(
+                    "The mask opening of pad {} is too close to zone {}. The minimum copper distance is {} mm",
+                    pad.label, fill.zone, r3(need)
+                )).at(pad.prim.anchor()).on(Layer::Mask(pad.side)).items([pad.label.clone(), fill.zone.clone()]));
+            }
+        }
+    }
+    out
+}
 
 /// One drawing on the silkscreen. It is one text or one graphic.
 struct SilkItem {
@@ -356,12 +396,13 @@ fn collect(d: &ProjectData) -> (Vec<SilkItem>, Vec<MaskPad>) {
 
 /// Warn when silkscreen is nearer to a pad than `silk_to_pad`. The fab removes
 /// or clips silkscreen that reaches a mask opening.
-pub(crate) fn check(d: &ProjectData, g: &BoardGeometry) -> Vec<Violation> {
+pub(crate) fn check(d: &ProjectData, g: &BoardGeometry, fills: &[ZoneFill]) -> Vec<Violation> {
     let (silk, pads) = collect(d);
     let mut more = overlaps(&silk);
     more.extend(edge_clearance(&silk, g, d.board.rules.silk_to_edge));
     more.extend(text_size(d));
     more.extend(mask_bridges(&pads, d.board.rules.min_mask_web));
+    more.extend(mask_zone_bridges(&pads, fills, d.board.rules.min_mask_web));
     let index = Index::new(pads.iter().map(|p| p.prim.bbox()));
     let reach = pads.iter().map(|p| p.need).fold(0.0, f64::max);
     let mut out = Vec::new();
@@ -410,4 +451,55 @@ pub(crate) fn check(d: &ProjectData, g: &BoardGeometry) -> Vec<Violation> {
     }
     out.extend(more);
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use lamina_geom::fill::{FillPolygon, ZoneFill};
+
+    #[test]
+    fn mask_opening_checks_zone_net_distance_and_side() {
+        let mut pads = vec![MaskPad {
+            side: Side::Top,
+            label: "FID1.1".into(),
+            part: "FID1".into(),
+            number: "1".into(),
+            net: None,
+            margin: 0.2,
+            need: 0.2,
+            prim: Prim::Circle {
+                c: Point::new(0.0, 0.0),
+                r: 0.5,
+            },
+        }];
+        let mut fills = vec![ZoneFill {
+            zone: "gnd".into(),
+            net: Some("GND".into()),
+            layer: Layer::TOP,
+            polygons: vec![FillPolygon {
+                outer: vec![
+                    Point::new(0.65, -1.0),
+                    Point::new(2.0, -1.0),
+                    Point::new(2.0, 1.0),
+                    Point::new(0.65, 1.0),
+                ],
+                holes: vec![],
+            }],
+        }];
+        let violations = mask_zone_bridges(&pads, &fills, 0.0);
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].items, vec!["FID1.1", "gnd"]);
+        pads[0].net = Some("GND".into());
+        assert!(mask_zone_bridges(&pads, &fills, 0.0).is_empty());
+        pads[0].net = None;
+        fills[0].layer = Layer::BOTTOM;
+        assert!(mask_zone_bridges(&pads, &fills, 0.0).is_empty());
+        fills[0].layer = Layer::TOP;
+        pads[0].prim = Prim::Circle {
+            c: Point::new(-5.0, 0.0),
+            r: 0.5,
+        };
+        assert!(mask_zone_bridges(&pads, &fills, 0.0).is_empty());
+    }
 }

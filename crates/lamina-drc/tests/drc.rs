@@ -223,6 +223,43 @@ fn pour_connects_pads() {
 }
 
 #[test]
+fn mask_opening_near_a_filled_zone_warns() {
+    let mut d = board();
+    d.nets.nets.remove("B");
+    d.board.rules.mask_margin = 0.3;
+    d.routing.zones.push(Zone {
+        id: "z1".into(),
+        net: Some("A".into()),
+        layers: vec![Layer::TOP],
+        outline: Contour::rect(0.0, 0.0, 30.0, 20.0),
+        priority: 0,
+        clearance: None,
+        min_width: None,
+        pad_connection: PadConnection::Solid,
+        thermal_gap: 0.3,
+        thermal_spoke: 0.3,
+    });
+    let a = analyze(&d);
+    assert!(
+        a.violations
+            .iter()
+            .any(|v| v.rule == "mask_bridge" && v.items == ["R1.1", "z1"])
+    );
+    assert!(
+        !a.violations
+            .iter()
+            .any(|v| v.rule == "mask_bridge" && v.items == ["R1.2", "z1"])
+    );
+    d.board.rules.mask_margin = 0.0;
+    assert!(
+        !analyze(&d)
+            .violations
+            .iter()
+            .any(|v| v.rule == "mask_bridge" && v.items.contains(&"z1".into()))
+    );
+}
+
+#[test]
 fn presets_exist() {
     assert!(presets::get("jlcpcb-2layer").is_some());
     assert!(presets::get("nope").is_none());

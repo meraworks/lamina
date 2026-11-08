@@ -684,7 +684,7 @@ pub fn analyze(d: &ProjectData) -> Analysis {
         }
     }
 
-    v.extend(silk::check(d, &g));
+    v.extend(silk::check(d, &g, &fills));
     let roots: Vec<usize> = (0..items.len()).map(|i| dsu.find(i)).collect();
     v.extend(dangling(d, items, n_items, &index, &fill_index, &roots));
 
