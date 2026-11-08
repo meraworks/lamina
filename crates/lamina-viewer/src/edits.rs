@@ -465,10 +465,28 @@ pub fn paste(d: &mut ProjectData, clip: &Clip, delta: Point) -> EditResult {
     if clip.tracks.is_empty() && clip.vias.is_empty() {
         return Err("There is nothing to paste. Select tracks or vias and press Ctrl+C.".into());
     }
-    for t in &clip.tracks {
-        if !d.nets.nets.contains_key(&t.net) {
-            return Err(format!("The net {} is not on this board.", t.net));
+    let n = d.board.stackup.copper_layers;
+    let nets = clip
+        .tracks
+        .iter()
+        .map(|t| &t.net)
+        .chain(clip.vias.iter().map(|v| &v.net));
+    for net in nets {
+        if !d.nets.nets.contains_key(net) {
+            return Err(format!("The net {net} is not on this board."));
         }
+    }
+    let layers = clip.tracks.iter().map(|t| t.layer).chain(
+        clip.vias
+            .iter()
+            .flat_map(|v| v.from.into_iter().chain(v.to)),
+    );
+    for l in layers {
+        if !l.exists_in(n) {
+            return Err(format!("The layer {l} is not on this board."));
+        }
+    }
+    for t in &clip.tracks {
         let id = new_id(d, "t");
         d.routing.tracks.push(Track {
             id,

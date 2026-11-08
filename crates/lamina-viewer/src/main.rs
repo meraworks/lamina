@@ -296,6 +296,7 @@ impl App {
                 self.editor = Some(Editor::start(root.clone(), move || ctx3.request_repaint()));
                 self.loaded = None;
                 self.hl = None;
+                self.clip = None;
                 self.fitted = false;
                 self.cam_fitted = false;
                 self.sel.clear();
@@ -1448,7 +1449,7 @@ impl App {
                         1.0 - (pos.y - rect.top()) / rect.height() * 2.0,
                     ];
                     let (o, dir) = self.cam.ray(aspect, ndc);
-                    self.part_under_ray(o, dir)
+                    self.models.then(|| self.part_under_ray(o, dir)).flatten()
                 });
                 if self.hover3d != before {
                     self.dirty = true;
@@ -1831,7 +1832,44 @@ impl App {
                 best = Some((t0, refdes.clone()));
             }
         }
-        best.map(|(_, r)| r)
+        // The board hides the parts on its far side: a hit farther than the
+        // point where the ray meets the board face does not count.
+        let face = self.board_hit(o, d);
+        best.filter(|(t, _)| face.is_none_or(|f| *t <= f + 1e-3))
+            .map(|(_, r)| r)
+    }
+
+    /// The distance along a ray to the board face that it meets first (top
+    /// from above, bottom from below), inside the outline.
+    fn board_hit(&self, o: [f32; 3], d: [f32; 3]) -> Option<f32> {
+        let l = self.loaded.as_ref()?;
+        let ring = l.analysis.geometry.outline.as_ref()?;
+        let t = l.data.board.stackup.thickness as f32;
+        let z = if o[2] > t {
+            t
+        } else if o[2] < 0.0 {
+            0.0
+        } else {
+            return None;
+        };
+        if d[2].abs() < 1e-9 {
+            return None;
+        }
+        let k = (z - o[2]) / d[2];
+        if k <= 0.0 {
+            return None;
+        }
+        let p = Point::new((o[0] + d[0] * k) as f64, (o[1] + d[1] * k) as f64);
+        // Even-odd test of the point in the outline.
+        let mut inside = false;
+        let n = ring.len();
+        for i in 0..n {
+            let (a, b) = (ring[i], ring[(i + n - 1) % n]);
+            if (a.y > p.y) != (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x {
+                inside = !inside;
+            }
+        }
+        inside.then_some(k)
     }
 
     /// The outlines of the selected parts and of the part under the pointer

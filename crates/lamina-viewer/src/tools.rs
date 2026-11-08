@@ -1161,8 +1161,6 @@ impl App {
         });
     }
 
-    /// The points that a click to `target` adds to the route in progress: the
-    /// straight segments, or the walkaround path in the modes that go around.
     /// Copy the selected tracks (whole tracks) and vias.
     fn copy_selection(&mut self) {
         let Some(l) = &self.loaded else { return };
@@ -1218,9 +1216,13 @@ impl App {
 
     /// Paste the copied tracks and vias with their centre at the pointer.
     fn paste_clip(&mut self) {
-        let (Some(clip), Some(p)) = (self.clip.clone(), self.cursor_mm) else {
+        let Some(clip) = self.clip.clone() else {
+            self.say("Copy tracks or vias first (Ctrl+C).", false);
+            return;
+        };
+        let Some(p) = self.cursor_mm else {
             self.say(
-                "Copy tracks or vias first (Ctrl+C), then point where they go.",
+                "Point on the board where the paste goes, then press Ctrl+V.",
                 false,
             );
             return;
@@ -1229,7 +1231,10 @@ impl App {
         let delta = to.sub(clip.anchor);
         // Select the pasted items, as other editors do, so that a drag or an
         // arrow key moves them at once. The ids come from a dry run.
-        if let Some(l) = &self.loaded {
+        // The ids of the dry run are the ids of the edit only when no other
+        // edit is in progress.
+        let idle = self.editor.as_ref().is_some_and(|e| e.busy == 0);
+        if let (true, Some(l)) = (idle, &self.loaded) {
             let mut dry = l.data.clone();
             let (nt, nv) = (dry.routing.tracks.len(), dry.routing.vias.len());
             if edits::paste(&mut dry, &clip, delta).is_ok() {
@@ -1543,11 +1548,11 @@ impl App {
             (
                 ev(&|e| {
                     matches!(e, egui::Event::Copy)
-                        || matches!(e, egui::Event::Key { key: Key::C, pressed: true, modifiers, .. } if modifiers.command)
+                        || matches!(e, egui::Event::Key { key: Key::C, pressed: true, repeat: false, modifiers, .. } if modifiers.command)
                 }),
                 ev(&|e| {
                     matches!(e, egui::Event::Paste(_))
-                        || matches!(e, egui::Event::Key { key: Key::V, pressed: true, modifiers, .. } if modifiers.command)
+                        || matches!(e, egui::Event::Key { key: Key::V, pressed: true, repeat: false, modifiers, .. } if modifiers.command)
                 }),
             )
         });
