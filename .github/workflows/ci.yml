@@ -41,3 +41,15 @@ jobs:
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: Test
         run: cargo test --workspace --locked
+
+  scripts:
+    name: Scripts and issue forms
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Pillow and PyYAML
+        run: python3 -m pip install --user pillow pyyaml
+      - name: Check the issue forms
+        run: python3 scripts/check_issue_forms.py
+      - name: Test the scripts
+        run: python3 -m unittest discover -s scripts -p 'test_*.py' -v

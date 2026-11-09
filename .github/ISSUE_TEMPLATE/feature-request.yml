@@ -1,0 +1,40 @@
+name: Feature request
+description: An idea for a tool, a viewer feature or a file format.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for the idea. Tell us what you want to do. We can find the best way together.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to do?
+      description: What are you trying to do, and what stops you today?
+      placeholder: I want the agent to add test points to each net, but I must place them by hand.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: How could Lamina help? For example a new tool, a new argument or a change in the viewer.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - MCP tools (lamina)
+        - Viewer (lamina-viewer)
+        - Import (KiCad, EasyEDA, Gerber)
+        - Export and fab files
+        - Parts and libraries
+        - Documentation
+        - Other
+  - type: textarea
+    id: other
+    attributes:
+      label: Anything else?
+      description: Other ways you tried, links, or how another program does it.

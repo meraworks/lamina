@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: User guide
+    url: https://github.com/meraworks/lamina/blob/master/docs/guide.md
+    about: The full reference of the tools, the viewer and the board files.
+  - name: Quick start
+    url: https://github.com/meraworks/lamina#quick-start
+    about: Get Lamina, connect your agent and make a first board.

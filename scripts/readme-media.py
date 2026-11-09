@@ -5,6 +5,9 @@
    and keeps a copy of the board after each step.
 2. `lamina-viewer shot` (the viewer without a window) takes the screenshots.
 3. Pillow puts a caption on each GIF frame and ffmpeg makes the GIF.
+4. Pillow puts the 3D render of `render` next to the logo and the name for the
+   social preview (docs/images/social-preview.png). Upload it again on GitHub in
+   Settings → Social preview after it changes.
 
 Needs: a release build of both programs, the viewer with the `headless`
 feature, Python 3 with Pillow, ffmpeg and a network.
@@ -64,6 +67,17 @@ def main():
     os.makedirs(a.out, exist_ok=True)
     shutil.copy(os.path.abspath(r["path"]), f"{a.out}/render-layers.png")
 
+    print("Making the social preview ...")
+    # Bigger than needed, for a clean edge when the board is cut out and made smaller.
+    view = dict(view="3d", width=1600, height=1200, yaw=-58, pitch=40, zoom=1.08)
+    r = agent("render", name="social-board", **view)
+    board3d = os.path.join(work, "social-board.png")
+    shutil.copy(os.path.abspath(r["path"]), board3d)
+    # The same view of an empty place far from the board: only the background.
+    far = {"min": {"x": 5000, "y": 5000}, "max": {"x": 5001, "y": 5001}}
+    r = agent("render", name="social-bg", region=far, **view)
+    social_preview(board3d, os.path.abspath(r["path"]), f"{a.out}/social-preview.png")
+
     def shot(stage, out, *args):
         shutil.rmtree(board, ignore_errors=True)
         shutil.copytree(os.path.join(stages, stage), board)
@@ -112,16 +126,135 @@ def main():
     print(f"Done: {a.out}")
 
 
-def gif(frames, seq, out, width=960):
-    from PIL import Image, ImageDraw, ImageFont
+def font(names, size):
+    from PIL import ImageFont
 
-    def font(names, size):
-        for n in names:
-            try:
-                return ImageFont.truetype(n, size)
-            except OSError:
-                pass
-        return ImageFont.load_default(size)
+    for n in names:
+        try:
+            return ImageFont.truetype(n, size)
+        except OSError:
+            pass
+    return ImageFont.load_default(size)
+
+
+def inter(weight, size):
+    return font([f"Inter-{weight}.otf", f"/usr/share/fonts/opentype/inter/Inter-{weight}.otf",
+                 "DejaVuSans-Bold.ttf" if weight == "Bold" else "DejaVuSans.ttf",
+                 "Arial.ttf", "arial.ttf"], size)
+
+
+# The social preview of the repository (Settings → Social preview on GitHub).
+SOCIAL = (1280, 640)
+SOCIAL_BOARD = (650, 80, 1268, 580)  # The box that the board fits in.
+SOCIAL_TOP, SOCIAL_BOTTOM = (71, 75, 84), (34, 36, 42)
+LOGO = (224, 138, 60)  # #E08A3C, as in assets/logo.svg
+
+
+def logo(scale):
+    """Draw assets/logo.svg: the track from the via at the top to the pad at the
+    bottom right. The image covers the viewBox (12 4 44 56) at `scale` px per unit."""
+    from PIL import Image, ImageDraw
+
+    ss = 4  # Draw four times bigger and make it smaller, for smooth edges.
+    k = scale * ss
+    img = Image.new("L", (round(44 * k), round(56 * k)), 0)
+    d = ImageDraw.Draw(img)
+
+    def p(x, y):
+        return ((x - 12) * k, (y - 4) * k)
+
+    def disc(x, y, r, fill):
+        (cx, cy) = p(x, y)
+        d.ellipse([cx - r * k, cy - r * k, cx + r * k, cy + r * k], fill=fill)
+
+    track = [(22, 18), (22, 40), (32, 50), (42, 50)]
+    d.line([p(*q) for q in track], fill=255, width=round(7 * k), joint="curve")
+    for q in track:  # Round caps and joins.
+        disc(*q, 3.5, 255)
+    disc(22, 14, 7, 255)
+    disc(46, 50, 6, 255)
+    disc(22, 14, 2.6, 0)
+    disc(46, 50, 2.4, 0)
+    mask = img.resize((round(44 * scale), round(56 * scale)), Image.LANCZOS)
+    out = Image.new("RGBA", mask.size, LOGO + (0,))
+    out.putalpha(mask)
+    return out
+
+
+def board_cutout(render, background, tolerance=6):
+    """Cut the board out of a 3D render. `background` is a render of the same size
+    without the board. A pixel is board where it differs from the background, and
+    a hole inside the board (a dark part) stays board. Return an RGBA image."""
+    from PIL import Image, ImageChops, ImageDraw, ImageFilter
+
+    render = Image.open(render).convert("RGB")
+    background = Image.open(background).convert("RGB")
+    if render.size != background.size:
+        raise ValueError("the render and the background must have the same size")
+    diff = ImageChops.difference(render, background).convert("L")
+    # 255 where the background shows, 0 where the board is.
+    bg = diff.point(lambda v: 255 if v <= tolerance else 0)
+    # Fill the background from each edge pixel. What stays 255 is a hole in the board.
+    w, h = bg.size
+    edge = [(x, y) for x in range(0, w, 8) for y in (0, h - 1)]
+    edge += [(x, y) for y in range(0, h, 8) for x in (0, w - 1)]
+    for xy in edge:
+        if bg.getpixel(xy) == 255:
+            ImageDraw.floodfill(bg, xy, 128)
+    mask = bg.point(lambda v: 0 if v == 128 else 255)
+    # Drop the one pixel of edge that is mixed with the background.
+    mask = mask.filter(ImageFilter.MinFilter(3))
+    out = render.convert("RGBA")
+    out.putalpha(mask)
+    box = mask.getbbox()
+    if box is None:
+        raise ValueError("the render shows no board")
+    return out.crop(box)
+
+
+def social_preview(render, background, out):
+    """Make the 1280 x 640 social preview: the logo, the name and the tagline at
+    the left, the 3D board of the example at the right."""
+    from PIL import Image, ImageDraw, ImageFilter
+
+    w, h = SOCIAL
+    img = Image.new("RGB", SOCIAL)
+    d = ImageDraw.Draw(img)
+    for y in range(h):
+        t = y / (h - 1)
+        d.line([(0, y), (w, y)],
+               fill=tuple(round(a + (b - a) * t) for a, b in zip(SOCIAL_TOP, SOCIAL_BOTTOM)))
+    img = img.convert("RGBA")
+
+    board = board_cutout(render, background)
+    x0, y0, x1, y1 = SOCIAL_BOARD
+    s = min((x1 - x0) / board.width, (y1 - y0) / board.height)
+    board = board.resize((round(board.width * s), round(board.height * s)), Image.LANCZOS)
+    pos = (x0 + (x1 - x0 - board.width) // 2, y0 + (y1 - y0 - board.height) // 2)
+    # A soft shadow under the board.
+    shadow = Image.new("RGBA", board.size, (8, 9, 12, 0))
+    shadow.putalpha(board.getchannel("A").point(lambda v: v * 110 // 255))
+    pad = 40
+    soft = Image.new("RGBA", (board.width + 2 * pad, board.height + 2 * pad), (0, 0, 0, 0))
+    soft.paste(shadow, (pad, pad))
+    soft = soft.filter(ImageFilter.GaussianBlur(18))
+    img.alpha_composite(soft, (pos[0] - pad + 6, pos[1] - pad + 18))
+    img.alpha_composite(board, pos)
+
+    img.alpha_composite(logo(4), (84, 96))
+    d = ImageDraw.Draw(img)
+    d.text((298, 248), "Lamina", font=inter("Bold", 94), fill=(245, 245, 247), anchor="ls")
+    d.text((84, 407), "PCB layout for AI coding agents", font=inter("Regular", 32),
+           fill=(222, 224, 230), anchor="ls")
+    d.text((84, 453), "Open source  ·  Rust  ·  MCP", font=inter("Regular", 25),
+           fill=(160, 165, 178), anchor="ls")
+    d.text((84, 599), "github.com/meraworks/lamina", font=inter("Regular", 25),
+           fill=(160, 165, 178), anchor="ls")
+    img.convert("RGB").save(out, optimize=True)
+
+
+def gif(frames, seq, out, width=960):
+    from PIL import Image, ImageDraw
 
     sans = font(["Inter-SemiBold.otf", "/usr/share/fonts/opentype/inter/Inter-SemiBold.otf",
                  "DejaVuSans-Bold.ttf", "Arial Bold.ttf", "arialbd.ttf"], 26)
