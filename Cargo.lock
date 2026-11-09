@@ -2720,6 +2720,7 @@ dependencies = [
  "clap",
  "embed-resource",
  "lamina-core",
+ "lamina-drc",
  "lamina-wiring",
  "rmcp",
  "schemars",

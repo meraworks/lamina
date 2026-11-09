@@ -62,7 +62,9 @@ jobs:
           exe=""
           case "${{ matrix.target }}" in *windows*) exe=".exe" ;; esac
           cp "target/${{ matrix.target }}/release/lamina$exe" "target/${{ matrix.target }}/release/lamina-viewer$exe" "$name/"
-          cp README.md LICENSE-MIT LICENSE-APACHE "$name/"
+          cp README.md CONTRIBUTING.md LICENSE-MIT LICENSE-APACHE "$name/"
+          # The README links to these, so the archive needs them too.
+          cp -R assets docs examples scripts "$name/"
           case "${{ matrix.target }}" in
             *windows*) 7z a -tzip "$name.zip" "$name" > /dev/null; archive="$name.zip" ;;
             *) tar -czf "$name.tar.gz" "$name"; archive="$name.tar.gz" ;;

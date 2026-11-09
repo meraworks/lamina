@@ -5,7 +5,7 @@ for tools and pull requests are all welcome.
 
 ## Report a problem
 
-Open an issue with:
+Open an issue and pick the form that fits. It asks for:
 
 - what you did (the tool calls of the agent, or the steps in the viewer),
 - what you expected and what happened,
@@ -41,6 +41,10 @@ cargo build -p lamina-viewer --features headless
 python3 scripts/viewer-smoke.py --bin target/debug
 ```
 
+The tests also check the documents against the programs: the tool names, the number of
+tools, the `lamina` subcommands and the links. When you add or remove a tool, change the
+number of tools in the README.
+
 [docs/architecture.md](docs/architecture.md) explains the crates. In short: the domain
 crates know only the board, `lamina-core` talks to the outside through ports, and an
 adapter crate implements each port. A new part source, file format or fab output is one
@@ -56,6 +60,15 @@ python3 examples/c3-sensor/build.py --lamina target/release/lamina --out /tmp/c3
 target/release/lamina-viewer /tmp/c3
 ```
 
+The example has its own tests. They build the board and check it through the MCP tools:
+DRC, routing, the pins of each net, and the antenna keep-out. They need a network for
+the LCSC parts, so CI does not run them. Run them when you change the MCP tools, the
+router, DRC or the example:
+
+```sh
+LAMINA=target/release/lamina python3 examples/c3-sensor/test_build.py -v
+```
+
 ## Update the README images
 
 The README images come from the real programs. If you change how the viewer looks,
@@ -65,6 +78,17 @@ make them again:
 cargo build --release -p lamina-mcp
 cargo build --release -p lamina-viewer --features headless
 python3 scripts/readme-media.py
+```
+
+The script also makes `docs/images/social-preview.png`, the image that GitHub shows when
+someone shares a link to the repository. After it changes, a maintainer uploads it again
+in Settings → Social preview.
+
+The scripts and the issue forms in `.github/ISSUE_TEMPLATE` have their own tests:
+
+```sh
+python3 scripts/check_issue_forms.py
+python3 -m unittest discover -s scripts -p 'test_*.py' -v
 ```
 
 ## Licence

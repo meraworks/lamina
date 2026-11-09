@@ -1,0 +1,65 @@
+name: Board import problem
+description: Lamina reads a KiCad, EasyEDA or Gerber file badly.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you. Files that Lamina reads badly are very useful to us.
+        Please attach the file, or a smaller file that shows the same problem.
+  - type: dropdown
+    id: format
+    attributes:
+      label: File format
+      options:
+        - KiCad (.kicad_pcb)
+        - EasyEDA (.json)
+        - Gerber and Excellon (folder or zip)
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Program that made the file
+      description: The program and its version, for example KiCad 9.0 or EasyEDA Standard 6.5. For Gerber files, the CAD program and the fab preset you used.
+      placeholder: KiCad 9.0.2
+  - type: textarea
+    id: how
+    attributes:
+      label: How did you import it?
+      description: The `import_board` call of the agent, the `lamina import` command, or a drop on the viewer.
+      placeholder: lamina import board.kicad_pcb my-board
+    validations:
+      required: true
+  - type: textarea
+    id: wrong
+    attributes:
+      label: What is wrong?
+      description: What is missing or different from the original program? A screenshot of both helps.
+      placeholder: The copper area on the bottom layer is missing. The silkscreen text of U3 is mirrored.
+    validations:
+      required: true
+  - type: textarea
+    id: file
+    attributes:
+      label: File
+      description: Attach the file (zip it if GitHub does not take it). Remove anything you do not want to share.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Lamina version
+      description: The output of `lamina --version`.
+      placeholder: lamina 0.3.0
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Other

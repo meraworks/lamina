@@ -1,3 +1,5 @@
+#[cfg(test)]
+mod doc_check;
 mod server;
 
 use std::path::PathBuf;
@@ -161,6 +163,14 @@ enum Cmd {
     },
     /// Print the part library folders and contents as JSON.
     Library,
+    /// Put the missing 3D models of a board back into cache/models: from the
+    /// part library, else from the provider of each footprint.
+    RestoreModels {
+        dir: PathBuf,
+        /// Use only the part library. Do not download.
+        #[arg(long)]
+        no_download: bool,
+    },
     /// Print the project status as JSON.
     Status { dir: PathBuf },
     /// List the rule violations as JSON.
@@ -380,6 +390,18 @@ fn main() -> anyhow::Result<()> {
             let info = lamina_core::provider::library_info(&lamina_core::model::Library::user());
             println!("{}", serde_json::to_string_pretty(&info)?);
             Ok(())
+        }
+        Cmd::RestoreModels { dir, no_download } => {
+            let p = server::open_project(&dir.to_string_lossy(), false, None, false)?;
+            let r = p.restore_models(lamina_core::RestoreModels {
+                download: !no_download,
+            })?;
+            println!("{}", serde_json::to_string_pretty(&r)?);
+            if r.missing.is_empty() {
+                Ok(())
+            } else {
+                anyhow::bail!("{} model(s) are still missing", r.missing.len())
+            }
         }
         Cmd::Status { dir } => {
             let p = server::read_project(&dir.to_string_lossy())?;

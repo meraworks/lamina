@@ -104,6 +104,12 @@ impl Lamina {
         }
     }
 
+    /// The tools, as `tools/list` returns them.
+    #[cfg(test)]
+    pub fn tools(&self) -> Vec<rmcp::model::Tool> {
+        self.tool_router.list_all()
+    }
+
     /// Run `f` on the open project.
     pub fn with<T: Serialize>(
         &self,
@@ -608,6 +614,18 @@ impl Lamina {
         Parameters(p): Parameters<ImportParts>,
     ) -> Result<CallToolResult, McpError> {
         self.with(|proj| proj.import_parts(p))
+    }
+
+    /// Put the missing 3D models of the footprints back into `cache/models`:
+    /// a copy from the part library, else a new download from the provider
+    /// of the footprint. Footprints, parts and placement do not change. Use it
+    /// when `status` lists `missing_models`.
+    #[tool(annotations(title = "Restore 3D models", open_world_hint = true))]
+    async fn restore_models(
+        &self,
+        Parameters(p): Parameters<RestoreModels>,
+    ) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.restore_models(p))
     }
     /// Load design rules from a fab preset: `jlcpcb-2layer`, `jlcpcb-4layer`, `relaxed`.
     #[tool(annotations(title = "Use fab preset"))]

@@ -46,7 +46,8 @@ pub use place::{
     RotatePart, Target, Unplace,
 };
 pub use provider::{
-    FetchLibrary, Fetched, ImportPart, ImportParts, LibraryInfo, PartSearch, Providers, SearchParts,
+    FetchLibrary, Fetched, ImportPart, ImportParts, LibraryInfo, MissingModel, ModelsRestored,
+    PartSearch, Providers, RestoreModels, SearchParts,
 };
 pub use render::{Render, RenderView, Rendered, parse_scene_layer};
 pub use route::{

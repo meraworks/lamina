@@ -5,6 +5,7 @@
 //! provider. Each download is written to the project cache and to the
 //! library store.
 
+use std::collections::BTreeMap;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -153,6 +154,57 @@ pub struct LibraryInfo {
     pub roots: Vec<String>,
     /// The parts in the library, as `provider:id`.
     pub parts: Vec<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+pub struct RestoreModels {
+    /// Download from the provider a model that the part library does not
+    /// have (default true).
+    #[serde(default = "super::yes")]
+    pub download: bool,
+}
+
+impl Default for RestoreModels {
+    fn default() -> Self {
+        RestoreModels { download: true }
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, JsonSchema)]
+pub struct ModelsRestored {
+    /// The models that were in `cache/models` already.
+    pub present: usize,
+    /// The models copied from the part library, with their footprints.
+    pub from_library: Vec<String>,
+    /// The models downloaded again from a provider, with their footprints.
+    pub downloaded: Vec<String>,
+    /// The models that are still missing, with the reason.
+    pub missing: Vec<String>,
+}
+
+/// A footprint whose model file is not in `cache/models`.
+#[derive(Debug, Clone, PartialEq, Serialize, JsonSchema)]
+pub struct MissingModel {
+    pub footprint: String,
+    /// The model path relative to `cache/models`.
+    pub file: String,
+}
+
+/// Where a model file came from.
+enum Restored {
+    Present,
+    Library,
+    /// Downloaded from this part (`provider:id`).
+    Provider(String),
+}
+
+/// True if a model path stays in `cache/models`: relative, and with no `..`.
+pub fn model_path_ok(file: &str) -> bool {
+    !file.is_empty()
+        && file.split(['/', '\\']).all(|s| s != "..")
+        && Path::new(file)
+            .components()
+            .all(|c| matches!(c, std::path::Component::Normal(_)))
 }
 
 /// Search the records of the library by words in the id, the MPN, the
@@ -342,31 +394,152 @@ impl Project {
     }
 
     /// Copy the model file of a record from the library when the cache does
-    /// not have it. If no copy exists, the record loses its model.
-    fn ensure_model_in_cache(&self, rec: &mut Record, notes: &mut Vec<String>) -> Result<()> {
+    /// not have it. Else, with `download`, get it from the provider again.
+    /// If no copy exists, the record loses its model.
+    fn ensure_model_in_cache(&self, rec: &mut Record, download: bool, notes: &mut Vec<String>) {
         let Some(m) = rec.model().cloned() else {
-            return Ok(());
+            return;
         };
-        let dst = self.root().join(MODEL_DIR).join(&m.file);
-        if dst.is_file() {
-            return Ok(());
-        }
-        match self.library().find(&format!("models/{}", m.file)) {
-            Some(src) => {
-                if let Some(d) = dst.parent() {
-                    std::fs::create_dir_all(d).map_err(|e| Error::io(d, e))?;
-                }
-                std::fs::copy(&src, &dst).map_err(|e| Error::io(&src, e))?;
-            }
-            None => {
+        let source = download.then_some((rec.provider.as_str(), rec.id.as_str()));
+        match self.restore_model(&m.file, source) {
+            Ok(Restored::Present | Restored::Library) => {}
+            Ok(Restored::Provider(name)) => notes.push(format!(
+                "The model file {} was missing. It was downloaded again from {name}.",
+                m.file
+            )),
+            Err(e) => {
                 notes.push(format!(
-                    "The model file {} is not in the cache or in the library. The part has no model.",
+                    "The model file {} is not in the cache. {e} The part has no model.",
                     m.file
                 ));
                 rec.footprint.model = None;
             }
         }
-        Ok(())
+    }
+
+    /// Put a missing model file into `cache/models`: a copy from the library,
+    /// else a download of the part `source`. A file that is there is kept.
+    fn restore_model(
+        &self,
+        file: &str,
+        source: Option<(&str, &str)>,
+    ) -> std::result::Result<Restored, String> {
+        if !model_path_ok(file) {
+            return Err("The path leaves cache/models, so Lamina does not use it.".into());
+        }
+        let dst = self.root().join(MODEL_DIR).join(file);
+        if dst.is_file() {
+            return Ok(Restored::Present);
+        }
+        if let Some(src) = self.library().find(&format!("models/{file}")) {
+            let bytes = std::fs::read(&src).map_err(|e| format!("{}: {e}", src.display()))?;
+            write_atomic(&dst, &bytes).map_err(|e| e.to_string())?;
+            return Ok(Restored::Library);
+        }
+        let Some((pid, id)) = source else {
+            return Err("It is not in the part library.".into());
+        };
+        let prov = self.providers().need(pid).map_err(|e| e.to_string())?;
+        let b = prov.fetch(id, true).map_err(|e| {
+            format!(
+                "It is not in the part library, and {pid}:{id} failed: {}.",
+                e.trim_end_matches('.')
+            )
+        })?;
+        let m = b.model.ok_or_else(|| {
+            format!("It is not in the part library, and {pid}:{id} gave no model.")
+        })?;
+        let got = format!("{pid}/{}", m.name);
+        if got != file {
+            return Err(format!(
+                "{pid}:{id} now gives the model {got}. Import the part with refresh: true to use it."
+            ));
+        }
+        write_atomic(&dst, &m.bytes).map_err(|e| e.to_string())?;
+        let _ = self.library().put(&format!("models/{file}"), &m.bytes);
+        Ok(Restored::Provider(format!("{pid}:{id}")))
+    }
+
+    /// The footprints whose model file is not in `cache/models`.
+    pub fn missing_models(&self) -> Vec<MissingModel> {
+        self.data
+            .footprints
+            .values()
+            .filter_map(|f| {
+                let m = f.model.as_ref()?;
+                let there =
+                    model_path_ok(&m.file) && self.root().join(MODEL_DIR).join(&m.file).is_file();
+                (!there).then(|| MissingModel {
+                    footprint: f.id.clone(),
+                    file: m.file.clone(),
+                })
+            })
+            .collect()
+    }
+
+    /// The part that a model came from, as (provider, id): a record in the
+    /// project cache or in the library with this model, else the provenance
+    /// of the footprint.
+    fn model_source(records: &[Record], fp: &Footprint, file: &str) -> Option<(String, String)> {
+        if let Some(r) = records
+            .iter()
+            .find(|r| r.model().is_some_and(|m| m.file == file))
+        {
+            return Some((r.provider.clone(), r.id.clone()));
+        }
+        let (pid, id) = match &fp.provenance {
+            Provenance::Lcsc { part, .. } => ("lcsc".to_string(), part.clone()),
+            Provenance::Kicad {
+                library, footprint, ..
+            } if !library.is_empty() => ("kicad".to_string(), format!("{library}:{footprint}")),
+            _ => return None,
+        };
+        file.starts_with(&format!("{pid}/")).then_some((pid, id))
+    }
+
+    /// Put every missing model of the footprints back into `cache/models`:
+    /// from the part library, else from the provider of the footprint. The
+    /// footprints do not change, and files that are there are kept.
+    pub fn restore_models(&self, p: RestoreModels) -> Result<ModelsRestored> {
+        let mut files: BTreeMap<String, Vec<String>> = BTreeMap::new();
+        for f in self.data.footprints.values() {
+            if let Some(m) = &f.model {
+                files.entry(m.file.clone()).or_default().push(f.id.clone());
+            }
+        }
+        let mut r = ModelsRestored::default();
+        let mut records = None;
+        for (file, fps) in &files {
+            let label = format!("{file} ({})", fps.join(", "));
+            let there = model_path_ok(file) && self.root().join(MODEL_DIR).join(file).is_file();
+            if there {
+                r.present += 1;
+                continue;
+            }
+            let source = if p.download && model_path_ok(file) {
+                let records = records.get_or_insert_with(|| {
+                    let mut v = Library::at(&self.root().join(CACHE_DIR)).records(None);
+                    v.extend(self.library().records(None));
+                    v
+                });
+                fps.iter()
+                    .find_map(|id| Self::model_source(records, &self.data.footprints[id], file))
+            } else {
+                None
+            };
+            let res =
+                self.restore_model(file, source.as_ref().map(|(a, b)| (a.as_str(), b.as_str())));
+            match res {
+                Ok(Restored::Present) => r.present += 1,
+                Ok(Restored::Library) => r.from_library.push(label),
+                Ok(Restored::Provider(name)) => r.downloaded.push(format!("{label} from {name}")),
+                Err(e) if p.download && source.is_none() && model_path_ok(file) => r.missing.push(
+                    format!("{label}: {e} The footprint did not come from a provider."),
+                ),
+                Err(e) => r.missing.push(format!("{label}: {e}")),
+            }
+        }
+        Ok(r)
     }
 
     /// The record of a part: from the project cache, the library, or the
@@ -384,12 +557,12 @@ impl Project {
         let lib = self.library();
         if !refresh && cache.is_file() {
             let mut rec = read_record(&cache)?;
-            self.ensure_model_in_cache(&mut rec, notes)?;
+            self.ensure_model_in_cache(&mut rec, model, notes);
             return Ok(rec);
         }
         if let Some(p) = (!refresh).then(|| lib.find(&rel)).flatten() {
             let mut rec = read_record(&p)?;
-            self.ensure_model_in_cache(&mut rec, notes)?;
+            self.ensure_model_in_cache(&mut rec, model, notes);
             store_bundle(&self.root().join(CACHE_DIR), &rec, None)?;
             notes.push(format!(
                 "{pid}:{id} came from the library ({})",
