@@ -38,7 +38,7 @@
 
 PCB programs were made for a mouse and a keyboard. Lamina was made for an agent.
 
-- **The agent does the work.** `lamina` is an MCP server with 73 tools: search real
+- **The agent does the work.** `lamina` is an MCP server with 74 tools: search real
   parts, import them with footprints and 3D models, place, route, pour, check and export
   the fab files.
 - **You stay in control.** `lamina-viewer` shows the board in 2D and 3D and updates
@@ -155,7 +155,7 @@ again before it writes, so neither one writes over a change of the other.
 
 | | Tools |
 |---|---|
-| **Parts** | `search_parts`, `import_part(s)` from LCSC / JLCPCB (stock, price, footprint, 3D model) and KiCad libraries, `footprint_from_package`, `footprint_from_pads`, `set_model` |
+| **Parts** | `search_parts`, `import_part(s)` from LCSC / JLCPCB (stock, price, footprint, 3D model) and KiCad libraries, `footprint_from_package`, `footprint_from_pads`, `set_model`, `restore_models` |
 | **Board** | `set_outline`, `set_stackup`, `use_fab_preset`, `add_hole`, `add_text`, `add_keepout`, `add_zone` |
 | **Netlist** | `set_nets`, `connect`, `pins` (each pad with its pin name and net), `set_diff_pairs` |
 | **Placement** | `place_many`, `move_parts`, `rotate_part`, `flip_part`, `align`, `distribute`, `repeat_layout` |

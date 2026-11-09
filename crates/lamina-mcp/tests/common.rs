@@ -15,8 +15,14 @@ pub struct Client {
 
 impl Client {
     pub fn start() -> Client {
+        Client::start_with_env(&[])
+    }
+
+    /// Start the server with more environment variables, for example `LAMINA_LIB`.
+    pub fn start_with_env(env: &[(&str, &std::path::Path)]) -> Client {
         let mut child = Command::new(env!("CARGO_BIN_EXE_lamina"))
             .arg("mcp")
+            .envs(env.iter().map(|(k, v)| (*k, *v)))
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())

@@ -4,6 +4,7 @@ use lamina_model::*;
 use schemars::JsonSchema;
 use serde::Serialize;
 
+use crate::ops::provider::MissingModel;
 use crate::project::Project;
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
@@ -40,6 +41,10 @@ pub struct Status {
     pub workspace: Option<String>,
     /// The part library folder that gets new downloads.
     pub library: String,
+    /// The footprints whose 3D model file is not in `cache/models`.
+    /// `restore_models` gets them back.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub missing_models: Vec<MissingModel>,
     /// Part groups (block instances) and their parts.
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     pub groups: BTreeMap<String, Vec<String>>,
@@ -92,6 +97,7 @@ impl Project {
                 .collect(),
             workspace: Workspace::find(self.root()).map(|w| w.root.display().to_string()),
             library: self.library().store.display().to_string(),
+            missing_models: self.missing_models(),
             groups: d.parts.groups(),
         }
     }
