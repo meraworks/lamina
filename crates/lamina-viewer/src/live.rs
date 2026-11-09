@@ -8,6 +8,7 @@ use std::time::{Duration, Instant};
 use lamina_drc::Analysis;
 use lamina_model::{ProjectData, Rect};
 use lamina_scene::{Scene2D, Scene3D};
+use notify::event::{AccessKind, AccessMode, EventKind};
 use notify::{RecursiveMode, Watcher};
 
 pub struct Loaded {
@@ -41,6 +42,19 @@ fn ignored(root: &Path, p: &Path) -> bool {
         || s.starts_with("cache/parts")
 }
 
+/// An event that only reads a file. On Linux, the watcher also reports each
+/// open and each close of a file. The rebuild opens the board files and the
+/// models, so without this filter each rebuild starts the next one. A close
+/// after a write is a change, so it stays.
+fn read_only(kind: &EventKind) -> bool {
+    matches!(
+        kind,
+        EventKind::Access(
+            AccessKind::Open(_) | AccessKind::Read | AccessKind::Close(AccessMode::Read)
+        )
+    )
+}
+
 pub struct Live {
     pub rx: Receiver<Msg>,
     _watcher: notify::RecommendedWatcher,
@@ -52,6 +66,9 @@ impl Live {
         let r2 = root.clone();
         let mut watcher = notify::recommended_watcher(move |res: notify::Result<notify::Event>| {
             if let Ok(ev) = res {
+                if read_only(&ev.kind) {
+                    return;
+                }
                 let relevant: Vec<&PathBuf> =
                     ev.paths.iter().filter(|p| !ignored(&r2, p)).collect();
                 if relevant.is_empty() {
@@ -237,4 +254,28 @@ pub fn diff(a: &ProjectData, b: &ProjectData) -> Vec<Rect> {
         }
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use notify::event::{CreateKind, DataChange, ModifyKind};
+
+    #[test]
+    fn a_read_does_not_start_a_rebuild_but_a_write_does() {
+        assert!(read_only(&EventKind::Access(AccessKind::Open(
+            AccessMode::Any
+        ))));
+        assert!(read_only(&EventKind::Access(AccessKind::Close(
+            AccessMode::Read
+        ))));
+        assert!(read_only(&EventKind::Access(AccessKind::Read)));
+        assert!(!read_only(&EventKind::Access(AccessKind::Close(
+            AccessMode::Write
+        ))));
+        assert!(!read_only(&EventKind::Modify(ModifyKind::Data(
+            DataChange::Any
+        ))));
+        assert!(!read_only(&EventKind::Create(CreateKind::File)));
+    }
 }

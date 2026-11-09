@@ -96,11 +96,13 @@ fn definitions() -> FontDefinitions {
         "C:\\Windows\\Fonts\\segoeui.ttf",
         "/System/Library/Fonts/SFNS.ttf",
         "/usr/share/fonts/truetype/inter/Inter-Regular.ttf",
+        "/usr/share/fonts/opentype/inter/Inter-Regular.otf",
     ]);
     let ui_bold = load(&[
         "C:\\Windows\\Fonts\\seguisb.ttf",
         "/System/Library/Fonts/SFNS.ttf",
         "/usr/share/fonts/truetype/inter/Inter-SemiBold.ttf",
+        "/usr/share/fonts/opentype/inter/Inter-SemiBold.otf",
     ]);
     let mono_font = load(&[
         "C:\\Windows\\Fonts\\CascadiaMono.ttf",
