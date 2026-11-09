@@ -30,7 +30,7 @@
 
 <p align="center"><sub>
   A real session: the agent calls the Lamina tools (shown in each caption) and <code>lamina-viewer</code>
-  shows each change. The board is an ESP32-C3 sensor board with USB-C, 21 real LCSC parts and 2 layers.
+  shows each change. The board is an ESP32-C3 sensor board with USB-C, 23 real parts (22 from LCSC) and 2 layers.
   <a href="examples/c3-sensor">Build it yourself</a>.
 </sub></p>
 
