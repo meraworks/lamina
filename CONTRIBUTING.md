@@ -44,6 +44,15 @@ python3 examples/c3-sensor/build.py --lamina target/release/lamina --out /tmp/c3
 target/release/lamina-viewer /tmp/c3
 ```
 
+The example has its own tests. They build the board and check it through the MCP tools:
+DRC, routing, the pins of each net, and the antenna keep-out. They need a network for
+the LCSC parts, so CI does not run them. Run them when you change the MCP tools, the
+router, DRC or the example:
+
+```sh
+LAMINA=target/release/lamina python3 examples/c3-sensor/test_build.py -v
+```
+
 ## Update the README images
 
 The README images come from the real programs. If you change how the viewer looks,

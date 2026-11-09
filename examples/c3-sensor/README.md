@@ -76,6 +76,22 @@ strip from x 50.0 to the right edge, over the full board height. Better still is
 antenna past the board edge, or a cut-out of the board under it. This example keeps the
 board a plain rectangle.
 
+## Tests
+
+`test_build.py` checks the example. It needs only Python.
+
+```sh
+python3 examples/c3-sensor/test_build.py -v
+LAMINA=target/release/lamina python3 examples/c3-sensor/test_build.py -v
+```
+
+Some tests read the tables of `build.py`: each pad in one net, the button pads, the LED
+data path, the placement and the keep-out. The other tests build the board in a
+temporary folder and ask `lamina mcp` about it: no DRC errors or warnings, all
+connections routed, each pin on its net, no track, via, pad or ground pour in the
+keep-out, and each part inside the outline. They need `lamina` (`$LAMINA`, or the one on
+your `PATH`) and a network. Without them, they are skipped, with the reason.
+
 ## The screenshots
 
 [`scripts/readme-media.py`](../../scripts/readme-media.py) runs this script, takes the
