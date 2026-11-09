@@ -1,0 +1,78 @@
+name: Bug report
+description: Lamina, the viewer or a tool did something wrong.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for the report. A board that shows the problem helps the most.
+        If a KiCad, EasyEDA or Gerber file imports badly, use the board import form instead.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What did the agent or you do?
+      description: |
+        The tool calls of the agent (name and arguments), or the steps in the viewer.
+        Copy them from your MCP client if you can.
+      placeholder: |
+        1. open {"path": "my-board"}
+        2. autoroute {}
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead?
+      description: The error message, or what looks wrong. A screenshot helps.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Lamina version
+      description: The output of `lamina --version`.
+      placeholder: lamina 0.3.0
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Other (say which below)
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: System version
+      placeholder: Windows 11, macOS 15, Ubuntu 24.04 ...
+  - type: input
+    id: mcp-client
+    attributes:
+      label: MCP client
+      description: The agent or program that runs `lamina mcp`, with its version. Leave it empty if you used only the viewer.
+      placeholder: Claude Code 2.1, Codex ...
+  - type: textarea
+    id: board
+    attributes:
+      label: Board
+      description: |
+        Attach the board folder as a zip, or a small board that shows the problem.
+        Remove anything you do not want to share. Without a board, say how you made it.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: The output of `lamina` or `lamina-viewer` in the terminal, or the log of your MCP client.
+      render: text
