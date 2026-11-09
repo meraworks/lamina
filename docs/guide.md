@@ -294,6 +294,28 @@ lamina library
 
 The `fetch_library` and `library` tools do the same from an agent.
 
+The 3D views use the model files in `cache/models/`. When a file is not there, they use
+the copy in the library. `status` lists each footprint whose model file is missing from
+`cache/models/` in `missing_models`. This happens when the folder was not committed or
+was deleted. To get the files back:
+
+```
+lamina restore-models <board>
+lamina restore-models <board> --no-download
+```
+
+The `restore_models` tool does the same from an agent. It copies each missing model from
+the library. If the library has no copy, it downloads the model again from the provider
+that the footprint came from. Use `--no-download` or `download: false` to use only the
+library. Footprints, parts and placement do not change, and a model file that is in
+`cache/models/` is never replaced. A model path that leaves `cache/models/` (`..` or an
+absolute path) is refused. When a provider now gives a model with a different file name,
+the tool does not change the footprint: import the part with `refresh: true` to use the
+new model.
+
+`import_part` and `import_parts` also restore the model of a part whose footprint is in
+the project already. They keep the footprint as it is.
+
 ## KiCad files
 
 Lamina reads and writes KiCad files. You do not need KiCad.
