@@ -475,6 +475,14 @@ fn check_cli(doc: &Doc, f: &Facts) -> Vec<String> {
             if s > 0 && !line[..s].ends_with([' ', '\t', '`', '/', '(', '>', '"']) {
                 continue;
             }
+            // A path in an environment variable (`LAMINA=target/release/lamina`) is a
+            // value, not a command: the next word is the command.
+            let word_start = line[..s]
+                .rfind([' ', '\t', '`', '(', '>', '"'])
+                .map_or(0, |i| i + 1);
+            if line[word_start..s].contains('=') {
+                continue;
+            }
             let (prog, rest) = if let Some(r) = line[e..].strip_prefix("-viewer ") {
                 ("lamina-viewer", r)
             } else if let Some(r) = line[e..].strip_prefix(' ') {
@@ -801,6 +809,8 @@ An agent calls the tools in this order:
 ```
 lamina explode boards/x
 lamina-viewer warp
+target/release/lamina vanish
+X=1 target/release/lamina melt
 ```
 
 See [the guide](docs/no-such-file.md), ![a](docs/images/nope.png), [b](#no-such-heading),
@@ -826,6 +836,8 @@ lamina mcp
 lamina-viewer shot <board> --out x.png
 lamina-viewer my-board
 target/release/lamina --version
+LAMINA=target/release/lamina python3 examples/c3-sensor/test_build.py
+env LAMINA=/opt/lamina cargo test
 local lamina = import 'lamina.libsonnet';
 ```
 
@@ -900,7 +912,10 @@ fn bad_sample_fails() {
     has(&cli, "`lamina launch`");
     has(&cli, "`lamina explode`");
     has(&cli, "`lamina-viewer warp`");
-    assert_eq!(cli.len(), 3, "{cli:#?}");
+    // A path to the program is still checked, also after an assignment word.
+    has(&cli, "`lamina vanish`");
+    has(&cli, "`lamina melt`");
+    assert_eq!(cli.len(), 5, "{cli:#?}");
 
     let links = check_links(&d, &root);
     has(&links, "docs/no-such-file.md");
