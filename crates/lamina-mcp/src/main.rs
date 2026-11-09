@@ -1,3 +1,5 @@
+#[cfg(test)]
+mod doc_check;
 mod server;
 
 use std::path::PathBuf;
