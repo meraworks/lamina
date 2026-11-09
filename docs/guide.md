@@ -296,7 +296,7 @@ The `fetch_library` and `library` tools do the same from an agent.
 
 The 3D views use the model files in `cache/models/`. When a file is not there, they use
 the copy in the library. `status` lists each footprint whose model file is missing from
-`cache/models/` in `missing_models`. This happens when the folder was not committed or
+`cache/models/`, in its list of missing models. This happens when the folder was not committed or
 was deleted. To get the files back:
 
 ```
