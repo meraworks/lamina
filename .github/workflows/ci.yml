@@ -41,3 +41,33 @@ jobs:
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: Test
         run: cargo test --workspace --locked
+      # `lamina-viewer shot` (the viewer without a window) is behind a feature.
+      - name: Clippy (viewer, headless)
+        run: cargo clippy -p lamina-viewer --all-targets --features headless --locked -- -D warnings
+      - name: Test (viewer, headless)
+        run: cargo test -p lamina-viewer --features headless --locked
+
+  viewer-smoke:
+    name: Viewer smoke test (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      # Mesa lavapipe: Vulkan on the CPU, for a runner without a GPU.
+      - name: Install a software Vulkan driver
+        run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers
+      - name: Build
+        run: |
+          cargo build --locked -p lamina-mcp
+          cargo build --locked -p lamina-viewer --features headless
+      - name: Smoke test
+        run: python3 scripts/viewer-smoke.py --bin target/debug --keep viewer-smoke
+      - name: Keep the images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: viewer-smoke
+          path: viewer-smoke
+          if-no-files-found: ignore
