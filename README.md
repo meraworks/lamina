@@ -1,464 +1,200 @@
 <p align="center"><img src="assets/logo.svg" width="72" alt="Lamina logo"></p>
 
-# Lamina
+<h1 align="center">Lamina</h1>
 
-PCB tools were made for mouse and keyboard. Lamina was made for an agent.
+<p align="center">
+  <b>PCB layout for AI coding agents.</b><br>
+  Your agent places the parts, routes the board and runs the checks.<br>
+  You watch every change live, in 2D and 3D, and take the mouse when you want.
+</p>
 
-Lamina is a PCB layout program that an AI coding agent operates through MCP tools. The
-agent searches parts, places them, routes the tracks, runs the design rules and exports
-the fab files. You watch every change in a live 2D and 3D viewer, and you take the mouse
-whenever you want.
+<p align="center">
+  <a href="https://github.com/meraworks/lamina/releases/latest"><img src="https://img.shields.io/github/v/release/meraworks/lamina?color=e88d38&label=release" alt="Latest release"></a>
+  <a href="https://github.com/meraworks/lamina/actions/workflows/ci.yml"><img src="https://github.com/meraworks/lamina/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/MCP-server-6e56cf" alt="MCP server">
+  <img src="https://img.shields.io/badge/Windows%20·%20macOS%20·%20Linux-informational" alt="Windows, macOS and Linux">
+  <a href="#licence"><img src="https://img.shields.io/badge/licence-MIT%20%2F%20Apache--2.0-blue" alt="MIT or Apache-2.0"></a>
+</p>
 
-- `lamina` is an MCP server. An agent uses its tools to add parts and nets, place the
-  parts, route the tracks, do a DRC and export the fab files.
-- A board is a folder of JSON files. You can read and change these files in a text editor.
-- `lamina-viewer` shows the board in 2D and 3D. When a file changes, the viewer shows
-  the change. You can also edit the board in the viewer.
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#a-tour-of-the-viewer">Tour</a> ·
+  <a href="#what-the-agent-can-do">Tools</a> ·
+  <a href="docs/guide.md">User guide</a> ·
+  <a href="docs/architecture.md">Architecture</a>
+</p>
 
-Lamina is in early development. The design document is in `docs/specs/`.
+<p align="center">
+  <img src="docs/images/demo.gif" width="900" alt="An agent builds an ESP32-C3 board with the Lamina tools while the viewer updates live: outline, placement, routing, DRC, then a 3D orbit">
+</p>
 
-<p align="center"><img src="docs/images/board-3d.png" width="760" alt="3D view of an ESP32-S3 servo board"></p>
+<p align="center"><sub>
+  A real session: the agent calls the Lamina tools (shown in each caption) and <code>lamina-viewer</code>
+  shows each change. The board is an ESP32-C3 sensor board with USB-C, 21 real LCSC parts and 2 layers.
+  <a href="examples/c3-sensor">Build it yourself</a>.
+</sub></p>
 
-<table>
-<tr>
-<td><img src="docs/images/board-top.png" alt="Top side of the board"></td>
-<td><img src="docs/images/board-layers.png" alt="Copper layers, silkscreen and drills"></td>
-</tr>
-<tr>
-<td align="center">Top side</td>
-<td align="center">Copper, silkscreen and drills</td>
-</tr>
-</table>
+## Why Lamina
 
-An agent made this board with the Lamina tools. It is an ESP32-S3 servo controller with
-26 parts on 2 copper layers. The `render` tool made the images.
+PCB programs were made for a mouse and a keyboard. Lamina was made for an agent.
 
-## Crates
+- **The agent does the work.** `lamina` is an MCP server with 73 tools: search real
+  parts, import them with footprints and 3D models, place, route, pour, check and export
+  the fab files.
+- **You stay in control.** `lamina-viewer` shows the board in 2D and 3D and updates
+  each time a file changes. Edit the board in the viewer at any time, or leave a note
+  for the agent on the board.
+- **Files you can read.** A board is a folder of small JSON files. Diff them, review
+  them, commit them. You can also write a board in Jsonnet and reuse circuit blocks.
+- **Works with your tools.** Lamina reads and writes KiCad boards, reads EasyEDA and
+  Gerber files, and writes Gerber X2, Excellon, BOM, CPL, IPC-D-356 and STEP.
 
-Lamina is a hexagon. The domain in the middle knows only the board. The core runs the
-operations and talks to the outside through ports, which are traits. Adapters implement
-the ports. The programs plug the adapters in. The compiler keeps the rule: `lamina-core`
-does not depend on an adapter crate.
+> [!NOTE]
+> Lamina is young and changes fast. Check the boards it makes before you order them,
+> as you would with any tool. Issues and ideas are welcome.
 
-Domain:
+## Quick start
 
-| Crate | Contents |
-|---|---|
-| `lamina-model` | Data types, JSON schema, load and save of a project, the `Provider` port |
-| `lamina-geom` | Polygon operations, spatial index |
-| `lamina-footprint` | IPC-7351 footprints, footprints from a datasheet |
-| `lamina-drc` | Design rules, fab presets, DRC, connectivity |
-| `lamina-route` | Track routing, pour fill, autorouter |
-| `lamina-scene` | Shapes to draw, for the 2D and 3D renderers |
-| `lamina-ports` | The ports: `BoardFormat`, `Fabricator`, `MeshLoader`, `StepWriter`, `Renderer`, `DesignSource`, `RouterExchange`, and the `Ports` bundle |
-| `lamina-core` | Project operations, one function for each tool. Calls ports only |
+**1. Get Lamina.** Download the archive for your computer from the
+[latest release](https://github.com/meraworks/lamina/releases/latest). It has two
+programs: `lamina` and `lamina-viewer`. Or build them from source with
+[Rust](https://rustup.rs) 1.90 or later:
 
-Adapters:
-
-| Crate | Ports it implements |
-|---|---|
-| `lamina-parts` | `Provider` (LCSC / JLCPCB parts), `BoardFormat` (EasyEDA boards) |
-| `lamina-kicad` | `Provider` (KiCad libraries), `BoardFormat` (`.kicad_pcb` read and write) |
-| `lamina-export` | `BoardFormat` (Gerbers in), `Fabricator` (Gerber X2, Excellon, BOM, CPL), `StepWriter` |
-| `lamina-step` | `MeshLoader` (STEP and OBJ readers, mesh cache) |
-| `lamina-render` | `Renderer` (PNG images in 2D and 3D) |
-| `lamina-build` | `DesignSource` (Jsonnet board sources) |
-| `lamina-specctra` | `RouterExchange` (Specctra DSN and SES) |
-
-Programs:
-
-| Crate | Contents |
-|---|---|
-| `lamina-wiring` | The composition root: the standard adapters plugged into `Ports` |
-| `lamina-mcp` | The `lamina` program: MCP server and CLI |
-| `lamina-viewer` | The `lamina-viewer` program: 2D and 3D viewer and editor |
-
-To add a source of parts, a file format or a fabrication output, write one type that
-implements the port and add one line in `lamina-wiring`.
-
-`vendor/jrsonnet-stdlib` is a copy of the Jsonnet standard library without YAML and
-wasm-bindgen. The pinned versions of these two do not agree with egui and wgpu.
-
-## Build
-
-```
-cargo build --release
+```sh
+git clone https://github.com/meraworks/lamina && cd lamina
+cargo build --release      # the programs are in target/release
 ```
 
-## Connect an MCP client
+**2. Connect your agent.** Claude Code:
 
-Claude Code:
+```sh
+claude mcp add --scope user lamina -- /path/to/lamina mcp
+```
 
-```
-claude mcp add --scope user lamina -- <path>/target/release/lamina mcp
-```
+<details>
+<summary>Codex and other MCP clients</summary>
 
 Codex, in `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.lamina]
-command = "<path>/target/release/lamina"
+command = "/path/to/lamina"
 args = ["mcp"]
 ```
 
-An agent usually calls the tools in this order:
+Any MCP client that can start a program on stdio works the same way: the command is
+`lamina mcp`.
 
-1. `open` with `create: true`
-2. `use_fab_preset`
-3. `set_outline`
-4. `import_part` for each part
-5. `set_nets`, then `pins` to compare each pin name with its net
-6. `place_many`
-7. `autoroute`
-8. `add_zone` for the ground pour
-9. `check`
-10. `render`
-11. `export`
+</details>
 
-The `notes` tool gives the agent the notes that you type in the viewer.
+**3. Open the viewer** on the folder where the board will go. It shows the board as
+soon as the agent makes it:
 
-A part from a provider carries the pin names of its datasheet. The viewer draws the pad
-number and the pin name on each pad when you zoom in, and the inspector shows them when
-you hover a pad. `check` warns when a ground pin is on a power net, a power pin is on a
-ground net, or a no-connect pin is on a net (`pin_role`). `pins` lists every pad of a part
-with its name and its net.
-
-`check` also warns when silkscreen text or a silkscreen drawing is nearer to a pad than
-the `silk_to_pad` rule (`silk_to_pad`).
-It also checks overlapping silk (`silk_overlap`), silk near the board edge
-(`silk_to_edge`), and small silk text (`silk_text_size`). Set the limits with
-`silk_to_edge` and `min_silk_text_height`. `min_mask_web` sets the minimum gap
-between pad mask openings (`mask_bridge`). Copper checks report free track ends
-(`track_dangling`), vias with no pad connection (`via_dangling`), and zone pieces
-with no pad connection (`isolated_copper`).
-
-Agents can set the severity of a DRC check with `set_rules`, for example
-`{"rules":{"severities":{"unrouted":"ignore","silk_overlap":"error"}}}`.
-Values are `error`, `warning`, and `ignore`. The map replaces the previous map;
-an empty map restores the defaults. Unknown check names are refused with a list
-of valid names. Ignoring `unrouted` hides its warnings but keeps the ratsnest.
-
-`set_rules` also accepts `custom`, an ordered JSON list, for example
-`{"rules":{"custom":[{"name":"bus clearance","when":{"net":"BUS*","layer":"top"},"clearance":0.4}]}}`.
-Selectors are optional `net` (`*` and `?` wildcards), `class`, and `layer`.
-Rules can set `clearance`, `min_track_width`, `min_via_drill`, and
-`min_annular_ring` in mm. Later matches override the fields they supply; a
-clearance between two nets uses the larger result. The list replaces the old
-list; `[]` clears it. Checks, pours and routing use the resolved limits.
-
-`net_lengths` returns total track length in mm and via count for each net.
-Lengths include branches and exclude via depth; they are not pad-to-pad paths.
-Use `set_nets` to set optional `length_min`, `length_max`, `skew_group` and
-`max_skew` on a net. DRC warns with `length_out_of_range` or
-`skew_out_of_range`. A group's smallest supplied `max_skew` limits the spread
-between its longest and shortest total track lengths.
-
-`set_diff_pairs` replaces the named pairs in `nets.json`, for example
-`{"pairs":{"usb":{"positive":"D+","negative":"D-","gap":0.2,"width":0.25}}}`.
-Each net may belong to one pair. `diff_pair_gap` checks parallel copper with a
-0.01 mm tolerance; `diff_pair_uncoupled` checks same-layer parallel coverage,
-allowing one centre spacing at segment ends for corners. These are layout
-checks, not an impedance calculation. Modular sources can supply `diff_pairs`
-beside `nets`; both are generated into `nets.json`.
-
-`route_diff_pair` takes `pair`, `layer`, and a `points` centre path. Positive
-goes left and negative right, each offset by half the gap plus half the width.
-Both tracks are committed together; new DRC errors refuse the operation.
-Sharp reversals and bends too short for the inner track are refused.
-
-`tune_length` takes `net`, `track`, a zero-based `segment`, a total-net `target`,
-maximum `amplitude`, and leg `spacing`, all lengths in mm. It inserts meanders
-to the left of the selected segment and preserves its endpoints. Spacing must
-allow the track width and clearance; new DRC errors refuse the change.
-
-`add_teardrops` and `remove_teardrops` expose the same copper-track teardrops as
-the viewer. Generated tracks have `tdrop` IDs and retain their net; Gerber
-exports include them. The agent operations refuse new DRC errors.
-
-`board_stats` reports dimensions, outline area minus cutouts, part counts by
-side, placed pad counts, vias, drill sizes, smallest track and total track
-length. Lengths are mm and area is square mm; drill bores are not subtracted.
-Fabrication exports include an IPC-D-356A `.d356` electrical netlist in the
-board-house zip. It uses decimils and unique aliases for net names. Values that
-cannot fit its fixed-width fields are refused instead of silently truncated.
-
-Use `exclude_violation` with a `rule`, the `items` from `check`, and a nonempty
-`reason` to accept a specific violation. The match uses item IDs, so it stays
-after an item moves. `exclusions` lists the saved reasons and hidden violations.
-`include_violation` removes the entry. `stale_exclusion` reports entries that no
-longer match. The viewer has the same actions in Checks and an Exclusions filter.
-
-`npth_inside_courtyard` warns when a non-plated hole overlaps another part's
-courtyard on either side. `starved_thermal` reports a pad with fewer connections
-to a thermal zone than `min_thermal_spokes` (default 2). It counts surviving pour
-arms and same-net tracks from the pad into the fill. It checks Lamina's fill;
-another program that fills the zones again can report different counts.
-
-KiCad board export includes filled zones, a project rules file, a `.pretty`
-footprint library, and an `fp-lib-table` with project-relative paths. Keep these
-files together when you share the board. The library includes mounting holes.
-
-## Viewer
-
-```
-lamina-viewer [--3d] [project folder or board file]...
+```sh
+lamina-viewer my-board
 ```
 
-- You can open more than one board. The boards show side by side in one window.
-- `--3d` starts in the 3D view.
-- The layer panel, the inspector, the status bar and the shortcuts apply to the board
-  that you clicked last.
-- If you give no arguments, the viewer opens the boards from the last time.
+**4. Ask for a board.** For example:
 
-To open a board, click `+` in the top bar or push `Ctrl+O`. You can also drop a folder or a
-file on the window. The viewer opens Lamina project folders and KiCad, EasyEDA and Gerber
-files. It imports a file from a different program into a project in the local data folder.
-If that file changes, the viewer imports it again.
+> Make a 50 × 30 mm board in `my-board` for the JLCPCB 2-layer rules: a USB-C
+> connector, an AMS1117-3.3 regulator and an ESP32-C3-MINI-1 with a reset button,
+> a boot button and a status LED. Use LCSC parts. Route it, pour ground on both
+> layers, make DRC clean, then export the fab files.
 
-Keys:
+The agent searches the parts, checks each pin name against its net, places, routes,
+checks and exports. Talk to it as you work: "move the LED to the edge", "make the
+power tracks wider", "show me the bottom in 3D".
 
-- Click to select a part. Drag to move it. Drag a box to select more than one item.
-- `R` rotate, `F` flip, `L` lock, `M` move, `Del` delete. The arrow keys move the
-  selection a small distance.
-- `X` route a track. `V` adds a via and changes the layer. `/` changes the bend.
-- `V` via, `Z` pour, `K` keep-out, `O` outline.
-- `D` measure. The measurement snaps to the centres of pads and vias.
-- `N` grid. `Ctrl+Z` undo, `Ctrl+Y` redo.
-- `Ctrl+F` find a part, a value or a net.
-- Right-drag or `Space`+drag to pan. Scroll to zoom. `1` 2D view, `2` 3D view.
-- `F1` shows all the shortcuts.
+**No agent at hand?** The example script calls the same tools that an agent calls.
+It builds the board of the GIF in about ten seconds:
 
-The Board menu has these commands:
-
-- Autoroute the full board, or only the nets of the selection. You can undo it in one step.
-- Rip up the tracks.
-- Export the fab files (Gerber, drill, BOM, CPL), a STEP assembly or a KiCad board.
-
-The inspector shows the values of the selected item. You can change them there.
-
-The viewer and an agent can change the same board at the same time. Before each change,
-each of them reads the files again, so neither writes over a change of the other.
-
-## Autorouter
-
-The `autoroute` tool and the Board menu route all open connections, or only the nets that
-you name. You do not need a different program.
-
-- The router routes each net as a tree. A tree can start or stop on any copper of the net,
-  also on a pour.
-- At first, tracks of different nets can overlap. After each pass, the cost of a shared
-  cell increases. The router then routes the overlapped nets again, until no nets overlap.
-  This method is PathFinder.
-- If a connection fails at the width of its net class, the router tries the minimum width.
-  If it fails again, the router removes the tracks near it. Then it routes that area again
-  on a grid that is two times finer.
-- The router routes the nets that have a pour last. Then it fills the pours again and
-  routes the connections that are still open.
-- The router obeys keep-outs, hole-to-hole clearance, the width and clearance of each net
-  class, and the layers that it must not use.
-
-Test: two real KiCad boards, with all tracks removed and the pours kept. The router
-connected 58 of 58 and 94 of 94 connections, in about 12 seconds for each board. The DRC
-found 0 errors. One of the boards has a USB-C D+/D- crossover between 0.5 mm pads.
-
-To do the same test on a different board:
-
-```
-cargo run --release -p lamina-route --example bench -- <project>
+```sh
+python3 examples/c3-sensor/build.py && lamina-viewer c3-sensor
 ```
 
-## Modular boards
+## A tour of the viewer
 
-You can write a board in Jsonnet (`design.jsonnet`) instead of JSON. Jsonnet is JSON with
-variables, functions and `import`. You can write a circuit block one time and use it
-many times:
+<table>
+<tr>
+<td width="50%"><img src="docs/images/viewer-2d.png" alt="The viewer in 2D: the routed ESP32-C3 board with a ground pour, the layer panel and DRC clean"></td>
+<td width="50%"><img src="docs/images/viewer-3d.png" alt="The viewer in 3D: the board with the vendor 3D models of the parts"></td>
+</tr>
+<tr>
+<td><b>2D layout.</b> Layers, tracks, pours and silkscreen. The top bar shows the DRC
+and routing state at a glance.</td>
+<td><b>3D view.</b> Each part has the 3D model of its vendor. Drag to orbit, scroll
+to zoom. Push <code>1</code> and <code>2</code> to change views.</td>
+</tr>
+<tr>
+<td><img src="docs/images/viewer-pins.png" alt="Zoomed in on the ESP32-C3 pads: the pad numbers, pin names and net names show, and the inspector shows pin IO19 on net USB_DP"></td>
+<td><img src="docs/images/viewer-checks.png" alt="The board before routing: the ratsnest lines and the Checks panel with the open connections"></td>
+</tr>
+<tr>
+<td><b>Pin names from the datasheet.</b> Zoom in to see pad numbers, pin names and
+net names. Hover a pad for its data. Here pin <code>IO19</code> is on <code>USB_DP</code>.</td>
+<td><b>Checks as you work.</b> DRC and connectivity run after each change. Click a
+violation to go to it. The ratsnest shows the open connections.</td>
+</tr>
+<tr>
+<td><img src="docs/images/viewer-notes.png" alt="A note for the agent, attached to a location on the board, in the Notes panel"></td>
+<td><img src="docs/images/render-layers.png" alt="An image from the render tool: the copper layers, silkscreen, part values and courtyards of the ESP32-C3 board"></td>
+</tr>
+<tr>
+<td><b>Notes for the agent.</b> Click the board and write what you want. The agent
+reads the note, with its location, through the <code>notes</code> tool.</td>
+<td><b>The agent sees too.</b> The <code>render</code> tool gives the agent images of
+the board, in layers, as the finished board or in 3D.</td>
+</tr>
+</table>
 
-```jsonnet
-local lamina = import 'lamina.libsonnet';
-local servo = import 'servo.libsonnet';
-lamina.merge([
-  { board: { name: 'demo', outline: lamina.rect(64, 52, 3), rules: { preset: 'jlcpcb-2layer' } } },
-  servo.channel('J2', 'R8', { pwm: 'PWM0', out: 'SERVO1', vservo: 'VSERVO', gnd: 'GND' }),
-  servo.channel('J3', 'R9', { pwm: 'PWM1', out: 'SERVO2', vservo: 'VSERVO', gnd: 'GND' }),
-])
-```
+You can edit the board in the viewer while the agent works. Each side reads the files
+again before it writes, so neither one writes over a change of the other.
+[More about the viewer](docs/guide.md#viewer).
 
-`servo.channel` is not part of Lamina. It is a function in the `lib` folder of the board.
-You write functions like this for your own circuits.
+## What the agent can do
 
-`lamina build <board>` makes `board.json`, `parts.json` and `nets.json` from the source.
-When the source changes, the MCP server and the viewer build the board again. Do not edit
-these three files. Lamina refuses edits to them. You edit the placement and the routing
-with the tools or in the viewer, as usual.
+| | Tools |
+|---|---|
+| **Parts** | `search_parts`, `import_part(s)` from LCSC / JLCPCB (stock, price, footprint, 3D model) and KiCad libraries, `footprint_from_package`, `footprint_from_pads`, `set_model` |
+| **Board** | `set_outline`, `set_stackup`, `use_fab_preset`, `add_hole`, `add_text`, `add_keepout`, `add_zone` |
+| **Netlist** | `set_nets`, `connect`, `pins` (each pad with its pin name and net), `set_diff_pairs` |
+| **Placement** | `place_many`, `move_parts`, `rotate_part`, `flip_part`, `align`, `distribute`, `repeat_layout` |
+| **Routing** | `autoroute`, `route_trace`, `add_via`, `route_diff_pair`, `tune_length`, `add_teardrops`, `ripup` |
+| **Checks** | `check` (DRC, connectivity, pin roles, silkscreen, thermals), `set_rules`, `exclude_violation`, `net_lengths`, `board_stats` |
+| **Output** | `export` (Gerber X2, Excellon, BOM, CPL, IPC-D-356, zip), `export_step`, `export_board` (KiCad), `render` |
+| **Collaboration** | `notes`, `add_note`, `resolve_notes`: the notes that you write in the viewer |
 
-`lamina.libsonnet` is part of Lamina. It has these functions:
+The [user guide](docs/guide.md) explains each tool, the autorouter, modular boards,
+layout reuse, the part library, and the KiCad, EasyEDA and Gerber import.
 
-- `merge` joins blocks into one board. A refdes must be unique. Nets with the same name
-  join their pads.
-- `group` gives the parts of a block a group name.
-- `net`, `pads`, `rect`, `hole` and `corner_holes`.
+## How a board is stored
 
-More than one board can use the same blocks in a workspace. `lamina workspace <dir>` makes
-`lamina.json`, with the `boards` and `lib` folders. Each `lib` folder can also have shared
-`footprints/` and `models/`. `lamina new <dir> --modular` makes a board from a template.
-
-## Copy the layout of a block
-
-Put each instance of a block in a group. Make the layout of one instance. Then copy that
-layout to the other instances:
-
-```jsonnet
-lamina.group('servo1', servo.channel('J2', 'R8', { pwm: 'PWM0', out: 'SERVO1', vservo: 'VSERVO', gnd: 'GND' })),
-lamina.group('servo2', servo.channel('J3', 'R9', { pwm: 'PWM1', out: 'SERVO2', vservo: 'VSERVO', gnd: 'GND' })),
-```
-
-```
-lamina repeat-layout boards/servo --from servo1 --to servo2 --anchor J3
-```
-
-Lamina pairs the parts by footprint and nets, not by name. A footprint from a different
-library also pairs if its pads are at the same positions. Different pad numbers or a
-different origin are not a problem. The anchor part does not move. Lamina puts the other
-parts of the block around it.
-
-Lamina also copies these tracks and vias:
-
-- All tracks and vias of a net that is fully in the block.
-- Short tracks to a via near the parts, on nets that go out of the block.
-
-Lamina does not change the tracks to other parts of the board. After the copy, look at
-the ratsnest. You can also give a block as a list of refdes (`--from D1,R1`).
-
-To keep a layout for other boards:
-
-- `lamina save-layout <board> --from led1 --name led_indicator` writes the layout to
-  `layouts/led_indicator.json` in the workspace library.
-- `lamina place-layout <board> --name led_indicator --to led2` puts it on a block of
-  any board in the workspace.
-
-The MCP tools are `repeat_layout`, `save_layout_block` and `place_layout_block`. In the
-viewer, select a part of a group. Then use *Select group*, *layout like* or *Copy layout
-to all like it*.
-
-## Providers
-
-Parts, footprints and 3D models come from providers. A part is named `provider:id`. The
-`providers` tool lists them with the id format of each. Lamina ships two:
-
-- `lcsc`: real parts from LCSC / JLCPCB, with stock, price, the vendor footprint and the
-  vendor 3D model. Example: `lcsc:C6186`.
-- `kicad`: generic footprints and package models from the KiCad libraries on this
-  computer, or from the official online libraries. Example:
-  `kicad:LED_SMD:LED_0603_1608Metric`, or the path of a `.kicad_mod` file.
-
-`search_parts` searches all providers or one. `import_part` and `import_parts` import by
-name and can add the part. `set_model` with `provider:id` puts a provider model on any
-footprint. A new provider is one type that implements `Provider` in `lamina-model`, plus
-one line in `Providers::standard`.
-
-## Part library and offline work
-
-Each board keeps its own copy of every footprint and model in `cache/`. A clone of the
-board needs no network. Each download also goes into the part library on your computer:
-
-- `$LAMINA_LIB`, or `%LOCALAPPDATA%\lamina\lib` on Windows, or `~/.lamina/lib`.
-- The `lib` folders of a workspace are searched first. Put shared parts there and commit them.
-
-An import looks in the project cache, then in the library, then asks the provider.
-`search_parts` uses the library when a provider does not answer, and says so. To work
-without a network, fill the library first:
+A board is a folder that you can commit:
 
 ```
-lamina fetch lcsc:C6186 lcsc:C14663 kicad:LED_SMD:LED_0603_1608Metric
-lamina library
+my-board/
+├── board.json       outline, holes, stackup, design rules
+├── parts.json       the parts and their data (MPN, LCSC number, value)
+├── nets.json        the netlist
+├── placement.json   where each part is
+├── routing.json     tracks, vias, pours, keep-outs, texts
+├── notes.json       your notes for the agent
+└── cache/           footprints, 3D models and part data, so a clone needs no network
 ```
 
-The `fetch_library` and `library` tools do the same from an agent.
+Edit the files in a text editor if you like. The agent and the viewer see the change.
+`lamina schema <kind>` prints the JSON schema of each file.
 
-## KiCad files
+## More
 
-Lamina reads and writes KiCad files. You do not need KiCad.
-
-- The `kicad` provider imports footprints (see Providers). Lamina finds local libraries
-  through `kicad_footprints` and `kicad_models` in `lamina.json`, `KICAD*_FOOTPRINT_DIR`
-  and `KICAD*_3DMODEL_DIR`, or a KiCad install. If there is no local library, it downloads
-  the footprint and its STEP model from the official KiCad libraries.
-- `import_board` and `lamina import <file> <dir>` import a `.kicad_pcb` from KiCad 6
-  to 10 (format `kicad`). Lamina imports the outline, footprints, parts, nets, placement,
-  tracks, vias, zones, keep-outs and texts. The design rules and net classes come from
-  the `.kicad_pro` file next to the board. Lamina finds `${KIPRJMOD}` models next to the
-  board. The `kicad` provider gives the other models, from the local libraries or from
-  the official online libraries. `--no-models` skips them.
-- `export_board` with `format: kicad` and `lamina export-board <dir> --format kicad`
-  write a `.kicad_pcb` for KiCad 8 or later. KiCad fills the zones again when it opens
-  the file.
-
-## Board formats
-
-Lamina reads a board file through a board format. `formats` and `lamina formats` list
-them: `kicad`, `easyeda` and `gerber`. `import_board` and `lamina import <file> <dir>`
-detect the format from the file, or take it with `format`.
-
-## EasyEDA boards
-
-`import_board` and `lamina import <file.json> <dir>` import a board from the standard
-EasyEDA editor (format `easyeda`). In EasyEDA, use File → Export → EasyEDA to save the file.
-
-Lamina imports the outline, the parts with their LCSC numbers, nets, placement, tracks,
-vias, copper areas, holes and texts. Lamina downloads the 3D models from EasyEDA. Solid
-copper shapes, for example teardrops, stay as drawings. Lamina makes the design rules
-less strict to agree with the board. After the import, apply a fab preset.
-
-## Gerber files
-
-`import_board` and `lamina import <folder or zip> <dir>` import Gerber and Excellon
-files from any CAD program (format `gerber`). Lamina finds the layer of each file from its X2
-attributes or from its name (KiCad, Altium, EasyEDA and Eagle names).
-
-Gerber files have no parts and no nets, so the board has only the outline, the holes,
-and the copper and silkscreen as drawings. Use it to look at a board, to render it or to
-compare it with a different version.
-
-## STEP export
-
-`export_step` and `lamina export-step <dir>` write the board and its parts as one STEP file
-(AP214). You can open it in Fusion, FreeCAD, SolidWorks and other CAD programs, for example
-to design an enclosure.
-
-- The board is a solid with its outline, cut-outs and holes. `vias` also adds the via holes.
-- Each part is a component at its position. Lamina copies the STEP file of each part without
-  changes, so the shapes, colours and names stay the same.
-- A part that has only an OBJ model goes in as flat faces.
-
-## Other autorouters
-
-Lamina does not need a different router. To compare with a different router, export the
-board as a Specctra DSN file and import the result:
-
-- `routers` and `lamina routers` list the routers Lamina exchanges files with (`specctra`).
-- `export_for_router` and `lamina export-routing <dir> --router specctra` write the DSN file.
-- `import_router_session` and `lamina import-routing <dir> <file.ses> --router specctra`
-  read the session file.
-
-With [Freerouting](https://github.com/freerouting/freerouting):
-
-```
-lamina export-routing boards/servo --router specctra
-java -jar freerouting.jar -de boards/servo/output/esp32-servo.dsn -do boards/servo/output/esp32-servo.ses
-lamina import-routing boards/servo boards/servo/output/esp32-servo.ses --router specctra
-```
-
-The DSN file has the existing tracks as fixed tracks. If you set `reroute_all`, Lamina does
-not put them in the file.
-
-## Developer tools
-
-- `cargo run -p lamina-export --example outline -- <file.gbr> [tolerance]` shows the closed
-  loops in a Gerber outline file.
-- `cargo run --release -p lamina-step --example corpus -- <dir>` loads all STEP files in a
-  folder. It compares the size of each one with the OBJ file that has the same name.
-- `cargo run -p lamina-render --example meshview -- <model> <out.png>` renders one model.
+- [User guide](docs/guide.md): tools, viewer keys, autorouter, Jsonnet boards, KiCad,
+  EasyEDA, Gerber and STEP.
+- [Architecture](docs/architecture.md): the crates, the ports and adapters, and the
+  developer tools.
+- [Design document](docs/specs/2026-11-05-lamina-design.md).
+- [Example board](examples/c3-sensor): the board of the GIF, built through the MCP tools.
+- [Contributing](CONTRIBUTING.md): build, test, and how to report a problem.
 
 ## Licence
 
-MIT OR Apache-2.0.
+MIT OR Apache-2.0, at your choice.
