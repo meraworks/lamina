@@ -98,8 +98,14 @@ exports include them. The agent operations refuse new DRC errors.
 side, placed pad counts, vias, drill sizes, smallest track and total track
 length. Lengths are mm and area is square mm; drill bores are not subtracted.
 Fabrication exports include an IPC-D-356A `.d356` electrical netlist in the
-board-house zip. It uses decimils and unique aliases for net names. Values that
-cannot fit its fixed-width fields are refused instead of silently truncated.
+board-house zip. It uses decimils and unique aliases for net names. Pad names
+longer than 4 characters, such as `A1B12` on a USB-C receptacle, do not fit the
+pin field. They get aliases `P001`, `P002` and so on, in sorted order for each
+part. An alias skips any name that the part already uses. Two parts can use the
+same aliases, because each record also has the reference. A `C  PIN` comment
+line maps each alias to its pad name, for example `C  PIN   J1-P001 A1B12`.
+Values that cannot fit its fixed-width fields are refused instead of silently
+truncated. A part can have at most 999 aliased pad names.
 
 Use `exclude_violation` with a `rule`, the `items` from `check`, and a nonempty
 `reason` to accept a specific violation. The match uses item IDs, so it stays
