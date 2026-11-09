@@ -5,7 +5,7 @@ for tools and pull requests are all welcome.
 
 ## Report a problem
 
-Open an issue with:
+Open an issue and pick the form that fits. It asks for:
 
 - what you did (the tool calls of the agent, or the steps in the viewer),
 - what you expected and what happened,
@@ -53,6 +53,17 @@ make them again:
 cargo build --release -p lamina-mcp
 cargo build --release -p lamina-viewer --features headless
 python3 scripts/readme-media.py
+```
+
+The script also makes `docs/images/social-preview.png`, the image that GitHub shows when
+someone shares a link to the repository. After it changes, a maintainer uploads it again
+in Settings → Social preview.
+
+The scripts and the issue forms in `.github/ISSUE_TEMPLATE` have their own tests:
+
+```sh
+python3 scripts/check_issue_forms.py
+python3 -m unittest discover -s scripts -p 'test_*.py' -v
 ```
 
 ## Licence
