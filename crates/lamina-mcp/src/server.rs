@@ -104,6 +104,12 @@ impl Lamina {
         }
     }
 
+    /// The tools, as `tools/list` returns them.
+    #[cfg(test)]
+    pub fn tools(&self) -> Vec<rmcp::model::Tool> {
+        self.tool_router.list_all()
+    }
+
     /// Run `f` on the open project.
     pub fn with<T: Serialize>(
         &self,

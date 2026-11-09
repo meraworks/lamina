@@ -29,6 +29,10 @@ cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked
 ```
 
+The tests also check the documents against the programs: the tool names, the number of
+tools, the `lamina` subcommands and the links. When you add or remove a tool, change the
+number of tools in the README.
+
 [docs/architecture.md](docs/architecture.md) explains the crates. In short: the domain
 crates know only the board, `lamina-core` talks to the outside through ports, and an
 adapter crate implements each port. A new part source, file format or fab output is one

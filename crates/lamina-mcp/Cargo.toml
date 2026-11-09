@@ -19,6 +19,8 @@ base64 = "0.22"
 
 [dev-dependencies]
 tempfile.workspace = true
+# The DRC check names, for the documentation test in src/doc_check.rs.
+lamina-drc.workspace = true
 
 [[bin]]
 name = "lamina"
