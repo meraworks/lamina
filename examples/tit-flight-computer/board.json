@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "name": "tit-flight-computer",
+  "outline": {
+    "vertices": [
+      {
+        "x": 70,
+        "y": 35,
+        "arc": { "center": { "x": 35, "y": 35 }, "ccw": true }
+      }
+    ]
+  },
+  "stackup": {
+    "copper_layers": 2,
+    "thickness": 1.6,
+    "outer_copper_oz": 1,
+    "inner_copper_oz": 0.5,
+    "finish": "LeadFree HASL",
+    "mask_color": "green",
+    "silk_color": "white"
+  },
+  "rules": {
+    "min_thermal_spokes": 1,
+    "exclusions": [
+      {
+        "rule": "starved_thermal",
+        "items": ["U1.41", "z1"],
+        "reason": "The via pads are inside the 3.9 mm ground pad of the module. The solid zone z3 connects this pad to GND."
+      },
+      {
+        "rule": "courtyard_outside_board",
+        "items": ["U1"],
+        "reason": "Only the corners of the antenna keep-out area of the ESP32-S3-WROOM-1 are outside the round edge. The module body is on the board."
+      },
+      {
+        "rule": "courtyard_outside_board",
+        "items": ["J7"],
+        "reason": "Only a corner of the courtyard margin is outside the round edge. The connector body is 0.4 mm inside the edge."
+      }
+    ],
+    "clearance": 0.15,
+    "track_width": 0.25,
+    "min_track_width": 0.2,
+    "via_diameter": 0.6,
+    "via_drill": 0.3,
+    "min_via_drill": 0.3,
+    "min_annular_ring": 0.15,
+    "min_drill": 0.3,
+    "hole_to_hole": 0.25,
+    "copper_to_edge": 0.3,
+    "mask_margin": 0.05,
+    "paste_margin": 0,
+    "silk_width": 0.15,
+    "silk_to_pad": 0.15,
+    "silk_to_edge": 0.15,
+    "min_silk_text_height": 1,
+    "min_mask_web": 0,
+    "net_classes": {
+      "Ground": {
+        "clearance": 0.15,
+        "track_width": 0.3,
+        "via_diameter": 0.6,
+        "via_drill": 0.3
+      },
+      "Mid": {
+        "clearance": 0.15,
+        "track_width": 0.4,
+        "via_diameter": 0.6,
+        "via_drill": 0.3
+      },
+      "Power": {
+        "clearance": 0.25,
+        "track_width": 0.7,
+        "via_diameter": 0.8,
+        "via_drill": 0.4
+      }
+    }
+  }
+}

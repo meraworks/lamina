@@ -1,0 +1,284 @@
+{
+  "schema": 1,
+  "id": "SOT-23",
+  "description": "SOT, 3 Pin (JEDEC TO-236 Var AB https://www.jedec.org/document_search?search_api_views_fulltext=TO-236)",
+  "pads": [
+    {
+      "number": "1",
+      "at": { "x": -0.9375, "y": 0.95 },
+      "shape": { "type": "round_rect", "width": 1.475, "height": 0.6, "radius": 0.15 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "2",
+      "at": { "x": -0.9375, "y": -0.95 },
+      "shape": { "type": "round_rect", "width": 1.475, "height": 0.6, "radius": 0.15 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "3",
+      "at": { "x": 0.9375, "y": 0 },
+      "shape": { "type": "round_rect", "width": 1.475, "height": 0.6, "radius": 0.15 },
+      "kind": { "type": "smd" }
+    }
+  ],
+  "graphics": [
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.76, "y": 1.56 },
+        "b": { "x": 0.76, "y": 1.56 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.76, "y": 1.51 },
+        "b": { "x": -0.76, "y": 1.56 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.76, "y": -0.39 },
+        "b": { "x": -0.76, "y": 0.39 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.76, "y": -1.56 },
+        "b": { "x": -0.76, "y": -1.51 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.76, "y": 1.56 },
+        "b": { "x": 0.76, "y": 0.56 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.76, "y": -0.56 },
+        "b": { "x": 0.76, "y": -1.56 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.76, "y": -1.56 },
+        "b": { "x": -0.76, "y": -1.56 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "polygon",
+        "points": [
+          { "x": -1.3, "y": 0.38 },
+          { "x": -1.06, "y": 0.05 },
+          { "x": -1.54, "y": 0.05 }
+        ]
+      },
+      "width": 0.15,
+      "filled": true
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.93, "y": 1.5 },
+        "b": { "x": -0.9, "y": 1.5 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.93, "y": 0.39 },
+        "b": { "x": -1.93, "y": 1.5 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.93, "y": -0.39 },
+        "b": { "x": -0.9, "y": -0.39 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.93, "y": -1.5 },
+        "b": { "x": -1.93, "y": -0.39 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.9, "y": 1.7 },
+        "b": { "x": 0.9, "y": 1.7 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.9, "y": 1.5 },
+        "b": { "x": -0.9, "y": 1.7 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.9, "y": 0.39 },
+        "b": { "x": -1.93, "y": 0.39 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.9, "y": -0.39 },
+        "b": { "x": -0.9, "y": 0.39 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.9, "y": -1.5 },
+        "b": { "x": -1.93, "y": -1.5 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.9, "y": -1.7 },
+        "b": { "x": -0.9, "y": -1.5 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.9, "y": 1.7 },
+        "b": { "x": 0.9, "y": 0.55 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.9, "y": 0.55 },
+        "b": { "x": 1.93, "y": 0.55 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.9, "y": -0.55 },
+        "b": { "x": 0.9, "y": -1.7 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.9, "y": -1.7 },
+        "b": { "x": -0.9, "y": -1.7 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.93, "y": 0.55 },
+        "b": { "x": 1.93, "y": -0.55 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.93, "y": -0.55 },
+        "b": { "x": 0.9, "y": -0.55 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "polygon",
+        "points": [
+          { "x": -0.325, "y": 1.45 },
+          { "x": 0.65, "y": 1.45 },
+          { "x": 0.65, "y": -1.45 },
+          { "x": -0.65, "y": -1.45 },
+          { "x": -0.65, "y": 1.125 }
+        ]
+      },
+      "width": 0.1
+    }
+  ],
+  "texts": [
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.5
+    },
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.72,
+      "rotation": 90
+    }
+  ],
+  "height": 1.2,
+  "model": { "file": "kicad/Package_TO_SOT_SMD/SOT-23.step" },
+  "provenance": {
+    "source": "kicad",
+    "library": "",
+    "footprint": "SOT-23",
+    "path": "kicad_pcb"
+  }
+}

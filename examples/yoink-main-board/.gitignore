@@ -1,0 +1,5 @@
+cache/render/
+cache/build.json
+.lamina.lock
+*.tmp
+*.mesh

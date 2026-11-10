@@ -1,0 +1,182 @@
+{
+  "schema": 1,
+  "parts": {
+    "C1": {
+      "footprint": "CP_Radial_D10.0mm_P5.00mm_2",
+      "value": "100uF 63V",
+      "fields": { "kilib_generator": "capacitor/THT/other" }
+    },
+    "C10": {
+      "footprint": "C_Disc_D5.0mm_W2.5mm_P5.00mm",
+      "value": "100nF",
+      "fields": { "kilib_generator": "capacitor/THT/other" }
+    },
+    "C11": {
+      "footprint": "C_Disc_D5.0mm_W2.5mm_P5.00mm_2",
+      "value": "100nF",
+      "fields": { "kilib_generator": "capacitor/THT/other" }
+    },
+    "C2": {
+      "footprint": "CP_Radial_D10.0mm_P5.00mm",
+      "value": "100uF 63V",
+      "fields": { "kilib_generator": "capacitor/THT/other" }
+    },
+    "C3": {
+      "footprint": "CP_Radial_D10.0mm_P5.00mm",
+      "value": "100uF 63V",
+      "fields": { "kilib_generator": "capacitor/THT/other" }
+    },
+    "C4": {
+      "footprint": "CP_Radial_D10.0mm_P5.00mm",
+      "value": "100uF 63V",
+      "fields": { "kilib_generator": "capacitor/THT/other" }
+    },
+    "C5": {
+      "footprint": "CP_Radial_D10.0mm_P5.00mm_2",
+      "value": "100uF 63V",
+      "fields": { "kilib_generator": "capacitor/THT/other" }
+    },
+    "C6": {
+      "footprint": "C_Disc_D5.0mm_W2.5mm_P5.00mm",
+      "value": "100nF",
+      "fields": { "kilib_generator": "capacitor/THT/other" }
+    },
+    "C7": {
+      "footprint": "C_Disc_D5.0mm_W2.5mm_P5.00mm",
+      "value": "100nF",
+      "fields": { "kilib_generator": "capacitor/THT/other" }
+    },
+    "C8": {
+      "footprint": "C_Disc_D5.0mm_W2.5mm_P5.00mm",
+      "value": "100nF",
+      "fields": { "kilib_generator": "capacitor/THT/other" }
+    },
+    "C9": {
+      "footprint": "C_Disc_D5.0mm_W2.5mm_P5.00mm",
+      "value": "100nF",
+      "fields": { "kilib_generator": "capacitor/THT/other" }
+    },
+    "D1": {
+      "footprint": "LED_D5.0mm",
+      "value": "PWR",
+      "fields": { "kilib_generator": "LED/THT" }
+    },
+    "H1": {
+      "footprint": "MountingHole_3.2mm_M3",
+      "value": "MountingHole_3.2mm_M3",
+      "fields": {
+        "exclude_from_bom": "yes",
+        "kilib_generator": "mounting_hardware/mounting_hole"
+      }
+    },
+    "H2": {
+      "footprint": "MountingHole_3.2mm_M3",
+      "value": "MountingHole_3.2mm_M3",
+      "fields": {
+        "exclude_from_bom": "yes",
+        "kilib_generator": "mounting_hardware/mounting_hole"
+      }
+    },
+    "H3": {
+      "footprint": "MountingHole_3.2mm_M3",
+      "value": "MountingHole_3.2mm_M3",
+      "fields": {
+        "exclude_from_bom": "yes",
+        "kilib_generator": "mounting_hardware/mounting_hole"
+      }
+    },
+    "H4": {
+      "footprint": "MountingHole_3.2mm_M3",
+      "value": "MountingHole_3.2mm_M3",
+      "fields": {
+        "exclude_from_bom": "yes",
+        "kilib_generator": "mounting_hardware/mounting_hole"
+      }
+    },
+    "J1": {
+      "footprint": "TerminalBlock_Phoenix_MKDS-1_5-2_1x02_P5.00mm_Horizontal",
+      "value": "VBAT_IN",
+      "fields": { "kilib_generator": "terminal_block/Phoenix" }
+    },
+    "J10": {
+      "footprint": "PinHeader_1x04_P2.54mm_Vertical",
+      "value": "LM2596",
+      "fields": { "kilib_generator": "connector/pin_header_socket" }
+    },
+    "J11": {
+      "footprint": "PinHeader_1x05_P2.54mm_Vertical",
+      "value": "PCA_KONTROL",
+      "fields": { "kilib_generator": "connector/pin_header_socket" }
+    },
+    "J12": {
+      "footprint": "PinHeader_1x06_P2.54mm_Vertical",
+      "value": "PCA_PWM",
+      "fields": { "kilib_generator": "connector/pin_header_socket" }
+    },
+    "J2": {
+      "footprint": "TerminalBlock_Phoenix_MKDS-1_5-2_1x02_P5.00mm_Horizontal",
+      "value": "MOTOR1",
+      "fields": { "kilib_generator": "terminal_block/Phoenix" }
+    },
+    "J3": {
+      "footprint": "TerminalBlock_Phoenix_MKDS-1_5-2_1x02_P5.00mm_Horizontal",
+      "value": "MOTOR2",
+      "fields": { "kilib_generator": "terminal_block/Phoenix" }
+    },
+    "J4": {
+      "footprint": "TerminalBlock_Phoenix_MKDS-1_5-2_1x02_P5.00mm_Horizontal",
+      "value": "MOTOR3",
+      "fields": { "kilib_generator": "terminal_block/Phoenix" }
+    },
+    "J5": {
+      "footprint": "IDC-Header_2x07_P2.54mm_Vertical",
+      "value": "XIAO_KABLO",
+      "fields": { "kilib_generator": "connector/pin_header_socket" }
+    },
+    "J6": {
+      "footprint": "JST_XH_B6B-XH-A_1x06_P2.50mm_Vertical",
+      "value": "MOTOR1_KABLO",
+      "fields": { "kilib_generator": "connector/JST" }
+    },
+    "J7": {
+      "footprint": "JST_XH_B6B-XH-A_1x06_P2.50mm_Vertical",
+      "value": "MOTOR2_KABLO",
+      "fields": { "kilib_generator": "connector/JST" }
+    },
+    "J8": {
+      "footprint": "JST_XH_B6B-XH-A_1x06_P2.50mm_Vertical",
+      "value": "MOTOR3_KABLO",
+      "fields": { "kilib_generator": "connector/JST" }
+    },
+    "R1": {
+      "footprint": "R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal",
+      "value": "100k",
+      "fields": { "kilib_generator": "resistor/THT" }
+    },
+    "R2": {
+      "footprint": "R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal",
+      "value": "33k",
+      "fields": { "kilib_generator": "resistor/THT" }
+    },
+    "R3": {
+      "footprint": "R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal",
+      "value": "1k",
+      "fields": { "kilib_generator": "resistor/THT" }
+    },
+    "U1": {
+      "footprint": "DIP-8_W7.62mm_Socket",
+      "value": "TA6586",
+      "fields": { "kilib_generator": "package/DIP/legacy" }
+    },
+    "U2": {
+      "footprint": "DIP-8_W7.62mm_Socket",
+      "value": "TA6586",
+      "fields": { "kilib_generator": "package/DIP/legacy" }
+    },
+    "U3": {
+      "footprint": "DIP-8_W7.62mm_Socket",
+      "value": "TA6586",
+      "fields": { "kilib_generator": "package/DIP/legacy" }
+    }
+  }
+}

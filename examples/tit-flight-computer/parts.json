@@ -1,0 +1,466 @@
+{
+  "schema": 1,
+  "parts": {
+    "BZ1": {
+      "footprint": "Buzzer_Murata_PKMCS0909E",
+      "value": "PKMCS0909E",
+      "mpn": "PKMCS0909E4000-R1"
+    },
+    "C1": {
+      "footprint": "C_0805_2012Metric",
+      "value": "10uF",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C10": {
+      "footprint": "C_0603_1608Metric",
+      "value": "100nF",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C11": {
+      "footprint": "C_0805_2012Metric",
+      "value": "22uF",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C12": {
+      "footprint": "C_0805_2012Metric",
+      "value": "22uF",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C13": {
+      "footprint": "CP_Elec_6.3x7.7",
+      "value": "220uF 10V",
+      "fields": {
+        "kilib_generator": "capacitor/SMD/elec_round_polarized"
+      }
+    },
+    "C14": {
+      "footprint": "C_0603_1608Metric",
+      "value": "100nF",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C15": {
+      "footprint": "C_0603_1608Metric",
+      "value": "2.2uF",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C16": {
+      "footprint": "C_0603_1608Metric",
+      "value": "10nF",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C17": {
+      "footprint": "C_0603_1608Metric",
+      "value": "100nF",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C18": {
+      "footprint": "C_0603_1608Metric",
+      "value": "1uF",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C19": {
+      "footprint": "C_0603_1608Metric",
+      "value": "100nF",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C2": {
+      "footprint": "C_0603_1608Metric",
+      "value": "100nF",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C3": {
+      "footprint": "C_0603_1608Metric",
+      "value": "1uF",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C4": {
+      "footprint": "C_0805_2012Metric",
+      "value": "10uF 25V",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C5": {
+      "footprint": "C_0603_1608Metric",
+      "value": "100nF",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C6": {
+      "footprint": "C_0805_2012Metric",
+      "value": "22uF",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C7": {
+      "footprint": "C_0805_2012Metric",
+      "value": "22uF",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C8": {
+      "footprint": "C_0805_2012Metric",
+      "value": "10uF 25V",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "C9": {
+      "footprint": "C_0805_2012Metric",
+      "value": "10uF 25V",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "D1": {
+      "footprint": "D_SOD-123",
+      "value": "B5819W",
+      "mpn": "B5819W"
+    },
+    "D2": {
+      "footprint": "D_SOD-123",
+      "value": "B5819W",
+      "mpn": "B5819W"
+    },
+    "FB1": {
+      "footprint": "L_0603_1608Metric",
+      "value": "220R@100MHz",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      },
+      "mpn": "BLM18PG221SN1D"
+    },
+    "FID1": {
+      "footprint": "Fiducial_1mm_Mask2mm",
+      "value": "Fiducial_1mm_Mask2mm",
+      "fields": {
+        "exclude_from_bom": "yes",
+        "kilib_generator": "fiducial"
+      }
+    },
+    "FID2": {
+      "footprint": "Fiducial_1mm_Mask2mm",
+      "value": "Fiducial_1mm_Mask2mm",
+      "fields": {
+        "exclude_from_bom": "yes",
+        "kilib_generator": "fiducial"
+      }
+    },
+    "H1": {
+      "footprint": "MountingHole_3.2mm_M3",
+      "value": "MountingHole_3.2mm_M3",
+      "fields": {
+        "exclude_from_bom": "yes",
+        "kilib_generator": "mounting_hardware/mounting_hole"
+      }
+    },
+    "H2": {
+      "footprint": "MountingHole_3.2mm_M3",
+      "value": "MountingHole_3.2mm_M3",
+      "fields": {
+        "exclude_from_bom": "yes",
+        "kilib_generator": "mounting_hardware/mounting_hole"
+      }
+    },
+    "H3": {
+      "footprint": "MountingHole_3.2mm_M3",
+      "value": "MountingHole_3.2mm_M3",
+      "fields": {
+        "exclude_from_bom": "yes",
+        "kilib_generator": "mounting_hardware/mounting_hole"
+      }
+    },
+    "H4": {
+      "footprint": "MountingHole_3.2mm_M3",
+      "value": "MountingHole_3.2mm_M3",
+      "fields": {
+        "exclude_from_bom": "yes",
+        "kilib_generator": "mounting_hardware/mounting_hole"
+      }
+    },
+    "J1": {
+      "footprint": "USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal",
+      "value": "USB-C",
+      "mpn": "USB4105-GF-A"
+    },
+    "J2": {
+      "footprint": "AMASS_XT30UPB-M_1x02_P5.0mm_Vertical",
+      "value": "XT30 2S LiPo",
+      "mpn": "XT30UPB-M"
+    },
+    "J3": {
+      "footprint": "PinHeader_1x03_P2.54mm_Horizontal",
+      "value": "SERVO1",
+      "fields": {
+        "kilib_generator": "connector/pin_header_socket"
+      }
+    },
+    "J4": {
+      "footprint": "PinHeader_1x03_P2.54mm_Horizontal",
+      "value": "SERVO2",
+      "fields": {
+        "kilib_generator": "connector/pin_header_socket"
+      }
+    },
+    "J5": {
+      "footprint": "PinHeader_1x03_P2.54mm_Horizontal_2",
+      "value": "SERVO3",
+      "fields": {
+        "kilib_generator": "connector/pin_header_socket"
+      }
+    },
+    "J6": {
+      "footprint": "PinHeader_1x03_P2.54mm_Horizontal_2",
+      "value": "SERVO4",
+      "fields": {
+        "kilib_generator": "connector/pin_header_socket"
+      }
+    },
+    "J7": {
+      "footprint": "JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical",
+      "value": "ARM",
+      "fields": {
+        "kilib_generator": "connector/JST"
+      },
+      "mpn": "B2B-XH-A"
+    },
+    "J8": {
+      "footprint": "JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical",
+      "value": "PYRO1",
+      "fields": {
+        "kilib_generator": "connector/JST"
+      },
+      "mpn": "B2B-XH-A"
+    },
+    "J9": {
+      "footprint": "JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical",
+      "value": "PYRO2",
+      "fields": {
+        "kilib_generator": "connector/JST"
+      },
+      "mpn": "B2B-XH-A"
+    },
+    "L1": {
+      "footprint": "L_Sunlord_SWPA4020S",
+      "value": "4.7uH",
+      "fields": {
+        "kilib_generator": "inductor/SMD"
+      },
+      "mpn": "SWPA4020S4R7MT"
+    },
+    "L2": {
+      "footprint": "L_Sunlord_MWSA0603S",
+      "value": "6.8uH",
+      "fields": {
+        "kilib_generator": "inductor/SMD"
+      },
+      "mpn": "MWSA0603S-6R8MT"
+    },
+    "LED1": {
+      "footprint": "LED_0603_1608Metric",
+      "value": "RED",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "LED2": {
+      "footprint": "LED_0603_1608Metric",
+      "value": "BLUE",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "Q1": {
+      "footprint": "SOT-23",
+      "value": "AO3400A",
+      "fields": {
+        "kilib_generator": "package/gullwing"
+      },
+      "mpn": "AO3400A"
+    },
+    "Q2": {
+      "footprint": "SOT-23",
+      "value": "AO3400A",
+      "fields": {
+        "kilib_generator": "package/gullwing"
+      },
+      "mpn": "AO3400A"
+    },
+    "R1": {
+      "footprint": "R_0603_1608Metric",
+      "value": "10k",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "R10": {
+      "footprint": "R_0603_1608Metric",
+      "value": "33k",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "R11": {
+      "footprint": "R_0603_1608Metric",
+      "value": "100k",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "R12": {
+      "footprint": "R_0603_1608Metric",
+      "value": "33k",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "R13": {
+      "footprint": "R_0603_1608Metric",
+      "value": "100k",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "R14": {
+      "footprint": "R_0603_1608Metric",
+      "value": "33k",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "R15": {
+      "footprint": "R_0603_1608Metric",
+      "value": "1k",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "R2": {
+      "footprint": "R_0603_1608Metric",
+      "value": "5.1k",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "R3": {
+      "footprint": "R_0603_1608Metric",
+      "value": "5.1k",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "R4": {
+      "footprint": "R_0603_1608Metric",
+      "value": "100k",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "R5": {
+      "footprint": "R_0603_1608Metric",
+      "value": "13.3k",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "R6": {
+      "footprint": "R_0603_1608Metric",
+      "value": "100k",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "R7": {
+      "footprint": "R_0603_1608Metric",
+      "value": "100k",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "R8": {
+      "footprint": "R_0603_1608Metric",
+      "value": "2.2k",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "R9": {
+      "footprint": "R_0603_1608Metric",
+      "value": "100k",
+      "fields": {
+        "kilib_generator": "SMD_2terminal_chip_molded"
+      }
+    },
+    "SW1": {
+      "footprint": "SW_SPST_PTS810",
+      "value": "BOOT",
+      "mpn": "PTS810 SJM 250 SMTR LFS"
+    },
+    "U1": {
+      "footprint": "ESP32-S3-WROOM-1",
+      "value": "ESP32-S3-WROOM-1-N8",
+      "mpn": "ESP32-S3-WROOM-1-N8"
+    },
+    "U2": {
+      "footprint": "SOT-23-6",
+      "value": "USBLC6-2SC6",
+      "fields": {
+        "kilib_generator": "package/gullwing"
+      },
+      "mpn": "USBLC6-2SC6"
+    },
+    "U3": {
+      "footprint": "TSOT-23-6",
+      "value": "AP63203WU",
+      "fields": {
+        "kilib_generator": "package/gullwing"
+      },
+      "mpn": "AP63203WU-7"
+    },
+    "U4": {
+      "footprint": "SOT-23-6_2",
+      "value": "TPS54302",
+      "fields": {
+        "kilib_generator": "package/gullwing"
+      },
+      "mpn": "TPS54302DDCR"
+    },
+    "U5": {
+      "footprint": "Bosch_LGA-14_3x2.5mm_P0.5mm",
+      "value": "ICM-42688-P",
+      "mpn": "ICM-42688-P"
+    },
+    "U6": {
+      "footprint": "LGA-8_3x5mm_P1.25mm",
+      "value": "MS5611-01BA03",
+      "mpn": "MS5611-01BA03"
+    }
+  }
+}

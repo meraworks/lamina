@@ -1,0 +1,134 @@
+{
+  "schema": 1,
+  "id": "LED_0603_1608Metric",
+  "description": "LED SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: http://www.tortai-tech.com/upload/download/2011102023233369053.pdf)",
+  "pads": [
+    {
+      "number": "1",
+      "at": { "x": -0.7875, "y": 0 },
+      "shape": {
+        "type": "round_rect",
+        "width": 0.875,
+        "height": 0.95,
+        "radius": 0.21875
+      },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "2",
+      "at": { "x": 0.7875, "y": 0 },
+      "shape": {
+        "type": "round_rect",
+        "width": 0.875,
+        "height": 0.95,
+        "radius": 0.21875
+      },
+      "kind": { "type": "smd" }
+    }
+  ],
+  "graphics": [
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.485, "y": 0.735 },
+        "b": { "x": -1.485, "y": -0.735 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.485, "y": -0.735 },
+        "b": { "x": 0.8, "y": -0.735 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.8, "y": 0.735 },
+        "b": { "x": -1.485, "y": 0.735 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "rect",
+        "min": { "x": -1.48, "y": -0.73 },
+        "max": { "x": 1.48, "y": 0.73 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.8, "y": 0.1 },
+        "b": { "x": -0.8, "y": -0.4 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.8, "y": -0.4 },
+        "b": { "x": 0.8, "y": -0.4 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.5, "y": 0.4 },
+        "b": { "x": -0.8, "y": 0.1 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.8, "y": 0.4 },
+        "b": { "x": -0.5, "y": 0.4 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.8, "y": -0.4 },
+        "b": { "x": 0.8, "y": 0.4 }
+      },
+      "width": 0.1
+    }
+  ],
+  "texts": [
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.5
+    },
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.4
+    }
+  ],
+  "height": 1.1,
+  "model": { "file": "kicad/LED_SMD/LED_0603_1608Metric.step" },
+  "provenance": {
+    "source": "kicad",
+    "library": "",
+    "footprint": "LED_0603_1608Metric",
+    "path": "kicad_pcb"
+  }
+}

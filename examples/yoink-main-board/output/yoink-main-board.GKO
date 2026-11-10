@@ -1,0 +1,16 @@
+%TF.GenerationSoftware,Lamina,lamina,0.3.0*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Profile,NP*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+%MOMM*%
+%LPD*%
+G01*
+%ADD10C,0.100000*%
+D10*
+X86000000Y0D02*
+X86000000Y58000000D01*
+X0Y58000000D01*
+X0Y0D01*
+X86000000Y0D01*
+M02*

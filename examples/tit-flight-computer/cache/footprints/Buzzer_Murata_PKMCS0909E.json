@@ -1,0 +1,254 @@
+{
+  "schema": 1,
+  "id": "Buzzer_Murata_PKMCS0909E",
+  "description": "Murata Buzzer http://www.murata.com/en-us/api/pdfdownloadapi?cate=&partno=PKMCS0909E4000-R1",
+  "pads": [
+    {
+      "number": "1",
+      "at": { "x": -4.35, "y": 0 },
+      "shape": { "type": "rect", "width": 1.3, "height": 3.4 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "2",
+      "at": { "x": 4.35, "y": 0 },
+      "shape": { "type": "rect", "width": 1.3, "height": 3.4 },
+      "kind": { "type": "smd" }
+    }
+  ],
+  "graphics": [
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.61, "y": 4.61 },
+        "b": { "x": 4.61, "y": 4.61 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.61, "y": 1.96 },
+        "b": { "x": -4.94, "y": 1.96 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.61, "y": 1.96 },
+        "b": { "x": -4.61, "y": 4.61 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.61, "y": -4.61 },
+        "b": { "x": -4.61, "y": -1.96 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.61, "y": 4.61 },
+        "b": { "x": 4.61, "y": 1.96 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.61, "y": -1.96 },
+        "b": { "x": 4.61, "y": -4.61 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.61, "y": -4.61 },
+        "b": { "x": -4.61, "y": -4.61 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -5.25, "y": -1.95 },
+        "b": { "x": -5.25, "y": 1.95 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.75, "y": 4.75 },
+        "b": { "x": 4.75, "y": 4.75 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.75, "y": 1.95 },
+        "b": { "x": -5.25, "y": 1.95 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.75, "y": 1.95 },
+        "b": { "x": -4.75, "y": 4.75 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.75, "y": -1.95 },
+        "b": { "x": -5.25, "y": -1.95 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.75, "y": -4.75 },
+        "b": { "x": -4.75, "y": -1.95 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.75, "y": 1.95 },
+        "b": { "x": 4.75, "y": 4.75 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.75, "y": 1.95 },
+        "b": { "x": 5.25, "y": 1.95 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.75, "y": -1.95 },
+        "b": { "x": 5.25, "y": -1.95 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.75, "y": -4.75 },
+        "b": { "x": -4.75, "y": -4.75 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.75, "y": -4.75 },
+        "b": { "x": 4.75, "y": -1.95 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 5.25, "y": -1.95 },
+        "b": { "x": 5.25, "y": 1.95 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.5, "y": 3.5 },
+        "b": { "x": -3.5, "y": 4.5 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.5, "y": -4.5 },
+        "b": { "x": -4.5, "y": 3.5 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.5, "y": 4.5 },
+        "b": { "x": 4.5, "y": 4.5 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.5, "y": 4.5 },
+        "b": { "x": 4.5, "y": -4.5 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.5, "y": -4.5 },
+        "b": { "x": -4.5, "y": -4.5 }
+      },
+      "width": 0.1
+    }
+  ],
+  "texts": [
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.5
+    },
+    { "layer": "fab", "text": "${ref}", "at": { "x": 0, "y": 0 }, "size": 1 }
+  ],
+  "height": 1.93,
+  "model": { "file": "kicad/Buzzer_Beeper/Buzzer_Murata_PKMCS0909E.step" },
+  "provenance": {
+    "source": "kicad",
+    "library": "",
+    "footprint": "Buzzer_Murata_PKMCS0909E",
+    "path": "kicad_pcb"
+  }
+}

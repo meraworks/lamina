@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "id": "Fiducial_1mm_Mask2mm",
+  "description": "Fiducial, circular marking, 1mm bare copper, 2mm soldermask opening (Level A)",
+  "pads": [
+    {
+      "number": "",
+      "at": { "x": 0, "y": 0 },
+      "shape": { "type": "circle", "diameter": 1 },
+      "kind": { "type": "smd" },
+      "mask_margin": 0.5,
+      "paste": false
+    }
+  ],
+  "graphics": [
+    {
+      "layer": "courtyard",
+      "shape": { "type": "circle", "center": { "x": 0, "y": 0 }, "radius": 1.25 },
+      "width": 0.05
+    },
+    {
+      "layer": "fab",
+      "shape": { "type": "circle", "center": { "x": 0, "y": 0 }, "radius": 1 },
+      "width": 0.1
+    }
+  ],
+  "texts": [
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.5
+    },
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.5
+    }
+  ],
+  "provenance": {
+    "source": "kicad",
+    "library": "",
+    "footprint": "Fiducial_1mm_Mask2mm",
+    "path": "kicad_pcb"
+  }
+}

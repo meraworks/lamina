@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "name": "yoink-main-board",
+  "outline": {
+    "vertices": [
+      { "x": 86, "y": 0 },
+      { "x": 86, "y": 58 },
+      { "x": 0, "y": 58 },
+      { "x": 0, "y": 0 }
+    ]
+  },
+  "stackup": {
+    "copper_layers": 2,
+    "thickness": 1.6,
+    "outer_copper_oz": 1,
+    "inner_copper_oz": 0.5,
+    "finish": "LeadFree HASL",
+    "mask_color": "green",
+    "silk_color": "white"
+  },
+  "rules": {
+    "min_thermal_spokes": 2,
+    "exclusions": [
+      {
+        "rule": "starved_thermal",
+        "items": ["J5.4", "z1"],
+        "reason": "Through-hole GND pad. The bottom zone z2 connects it with the full number of spokes."
+      },
+      {
+        "rule": "starved_thermal",
+        "items": ["J7.2", "z1"],
+        "reason": "Through-hole GND pad. The bottom zone z2 connects it with the full number of spokes."
+      },
+      {
+        "rule": "starved_thermal",
+        "items": ["J8.2", "z1"],
+        "reason": "Through-hole GND pad. The bottom zone z2 connects it with the full number of spokes."
+      },
+      {
+        "rule": "starved_thermal",
+        "items": ["U1.3", "z1"],
+        "reason": "Through-hole GND pad. The bottom zone z2 connects it with the full number of spokes."
+      },
+      {
+        "rule": "starved_thermal",
+        "items": ["U2.3", "z1"],
+        "reason": "Through-hole GND pad. The bottom zone z2 connects it with the full number of spokes."
+      }
+    ],
+    "clearance": 0.3,
+    "track_width": 0.4,
+    "min_track_width": 0.2,
+    "via_diameter": 0.6,
+    "via_drill": 0.3,
+    "min_via_drill": 0.3,
+    "min_annular_ring": 0.15,
+    "min_drill": 0.3,
+    "hole_to_hole": 0.25,
+    "copper_to_edge": 0.3,
+    "mask_margin": 0.05,
+    "paste_margin": 0,
+    "silk_width": 0.15,
+    "silk_to_pad": 0.15,
+    "silk_to_edge": 0.15,
+    "min_silk_text_height": 1,
+    "min_mask_web": 0,
+    "net_classes": {
+      "Guc": {
+        "clearance": 0.35,
+        "track_width": 1.5,
+        "via_diameter": 1.2,
+        "via_drill": 0.6
+      }
+    }
+  }
+}

@@ -1,0 +1,214 @@
+{
+  "schema": 1,
+  "id": "PinHeader_1x06_P2.54mm_Vertical",
+  "description": "Through hole straight pin header, 1x06, 2.54mm pitch, single row",
+  "pads": [
+    {
+      "number": "1",
+      "at": { "x": 0, "y": 0 },
+      "shape": { "type": "rect", "width": 1.7, "height": 1.7 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 1 },
+        "plated": true
+      },
+      "paste": false
+    },
+    {
+      "number": "2",
+      "at": { "x": 0, "y": -2.54 },
+      "shape": { "type": "circle", "diameter": 1.7 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 1 },
+        "plated": true
+      },
+      "paste": false
+    },
+    {
+      "number": "3",
+      "at": { "x": 0, "y": -5.08 },
+      "shape": { "type": "circle", "diameter": 1.7 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 1 },
+        "plated": true
+      },
+      "paste": false
+    },
+    {
+      "number": "4",
+      "at": { "x": 0, "y": -7.62 },
+      "shape": { "type": "circle", "diameter": 1.7 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 1 },
+        "plated": true
+      },
+      "paste": false
+    },
+    {
+      "number": "5",
+      "at": { "x": 0, "y": -10.16 },
+      "shape": { "type": "circle", "diameter": 1.7 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 1 },
+        "plated": true
+      },
+      "paste": false
+    },
+    {
+      "number": "6",
+      "at": { "x": 0, "y": -12.7 },
+      "shape": { "type": "circle", "diameter": 1.7 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 1 },
+        "plated": true
+      },
+      "paste": false
+    }
+  ],
+  "graphics": [
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.38, "y": -14.08 },
+        "b": { "x": 1.38, "y": -14.08 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.38, "y": -1.27 },
+        "b": { "x": -1.38, "y": -14.08 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.38, "y": -1.27 },
+        "b": { "x": 1.38, "y": -1.27 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.38, "y": -1.27 },
+        "b": { "x": 1.38, "y": -14.08 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.38, "y": 0 },
+        "b": { "x": -1.38, "y": 1.38 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.38, "y": 1.38 },
+        "b": { "x": 0, "y": 1.38 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "rect",
+        "min": { "x": -1.77, "y": -14.47 },
+        "max": { "x": 1.77, "y": 1.77 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.27, "y": -13.97 },
+        "b": { "x": -1.27, "y": 0.635 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.27, "y": -13.97 },
+        "b": { "x": -1.27, "y": -13.97 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.27, "y": 0.635 },
+        "b": { "x": -0.635, "y": 1.27 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.635, "y": 1.27 },
+        "b": { "x": 1.27, "y": 1.27 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.27, "y": 1.27 },
+        "b": { "x": 1.27, "y": -13.97 }
+      },
+      "width": 0.1
+    }
+  ],
+  "texts": [
+    {
+      "layer": "silk",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 2.38 },
+      "size": 1
+    },
+    {
+      "layer": "fab",
+      "text": "${value}",
+      "at": { "x": 0, "y": -15.08 },
+      "size": 1
+    },
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": -6.35 },
+      "size": 1,
+      "rotation": 90
+    }
+  ],
+  "height": 8.54,
+  "model": {
+    "file": "kicad/Connector_PinHeader_2.54mm/PinHeader_1x06_P2.54mm_Vertical.step"
+  },
+  "provenance": {
+    "source": "kicad",
+    "library": "",
+    "footprint": "PinHeader_1x06_P2.54mm_Vertical",
+    "path": "kicad_pcb"
+  }
+}

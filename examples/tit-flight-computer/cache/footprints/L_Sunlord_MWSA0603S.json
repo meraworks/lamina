@@ -1,0 +1,209 @@
+{
+  "schema": 1,
+  "id": "L_Sunlord_MWSA0603S",
+  "description": "Inductor, Sunlord, MWSA0603S, 7.0x6.6x2.8mm, (https://sunlordinc.com/Download.aspx?file=L1VwbG9hZEZpbGVzL1BERl9DYXQvMjAyMjExMTUxNDQ4MDU0NTQucGRm&lan=en)",
+  "pads": [
+    {
+      "number": "1",
+      "at": { "x": -3.025, "y": 0 },
+      "shape": { "type": "round_rect", "width": 2.35, "height": 3.5, "radius": 0.25 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "2",
+      "at": { "x": 3.025, "y": 0 },
+      "shape": { "type": "round_rect", "width": 2.35, "height": 3.5, "radius": 0.25 },
+      "kind": { "type": "smd" }
+    }
+  ],
+  "graphics": [
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.61, "y": 3.41 },
+        "b": { "x": 3.61, "y": 3.41 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.61, "y": 2.01 },
+        "b": { "x": -3.61, "y": 3.41 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.61, "y": -3.41 },
+        "b": { "x": -3.61, "y": -2.01 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 3.61, "y": 3.41 },
+        "b": { "x": 3.61, "y": 2.01 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 3.61, "y": -2.01 },
+        "b": { "x": 3.61, "y": -3.41 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 3.61, "y": -3.41 },
+        "b": { "x": -3.61, "y": -3.41 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.45, "y": 2 },
+        "b": { "x": -3.75, "y": 2 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.45, "y": -2 },
+        "b": { "x": -4.45, "y": 2 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.75, "y": 3.55 },
+        "b": { "x": 3.75, "y": 3.55 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.75, "y": 2 },
+        "b": { "x": -3.75, "y": 3.55 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.75, "y": -2 },
+        "b": { "x": -4.45, "y": -2 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.75, "y": -3.55 },
+        "b": { "x": -3.75, "y": -2 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 3.75, "y": 3.55 },
+        "b": { "x": 3.75, "y": 2 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 3.75, "y": 2 },
+        "b": { "x": 4.45, "y": 2 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 3.75, "y": -2 },
+        "b": { "x": 3.75, "y": -3.55 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 3.75, "y": -3.55 },
+        "b": { "x": -3.75, "y": -3.55 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.45, "y": 2 },
+        "b": { "x": 4.45, "y": -2 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.45, "y": -2 },
+        "b": { "x": 3.75, "y": -2 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "rect",
+        "min": { "x": -3.5, "y": -3.3 },
+        "max": { "x": 3.5, "y": 3.3 }
+      },
+      "width": 0.1
+    }
+  ],
+  "texts": [
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.5
+    },
+    { "layer": "fab", "text": "${ref}", "at": { "x": 0, "y": 0 }, "size": 1 }
+  ],
+  "height": 2.8,
+  "model": { "file": "kicad/Inductor_SMD/L_Sunlord_MWSA0603S.step" },
+  "provenance": {
+    "source": "kicad",
+    "library": "",
+    "footprint": "L_Sunlord_MWSA0603S",
+    "path": "kicad_pcb"
+  }
+}

@@ -193,6 +193,9 @@ Edit the files in a text editor if you like. The agent and the viewer see the ch
   developer tools.
 - [Design document](docs/specs/2026-11-05-lamina-design.md).
 - [Example board](examples/c3-sensor): the board of the GIF, built through the MCP tools.
+- [T.I.T flight computer](examples/tit-flight-computer) and
+  [Yoink main board](examples/yoink-main-board): two real boards, imported from KiCad
+  and checked.
 - [Contributing](CONTRIBUTING.md): build, test, and how to report a problem.
 
 ## Licence

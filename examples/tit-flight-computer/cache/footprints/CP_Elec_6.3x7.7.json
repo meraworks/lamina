@@ -1,0 +1,331 @@
+{
+  "schema": 1,
+  "id": "CP_Elec_6.3x7.7",
+  "description": "SMD capacitor, aluminum electrolytic, Nichicon, 6.3x7.7mm",
+  "pads": [
+    {
+      "number": "1",
+      "at": { "x": -2.7, "y": 0 },
+      "shape": { "type": "round_rect", "width": 3.5, "height": 1.6, "radius": 0.25 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "2",
+      "at": { "x": 2.7, "y": 0 },
+      "shape": { "type": "round_rect", "width": 3.5, "height": 1.6, "radius": 0.25 },
+      "kind": { "type": "smd" }
+    }
+  ],
+  "graphics": [
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.4375, "y": 1.8475 },
+        "b": { "x": -3.65, "y": 1.8475 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.04375, "y": 2.24125 },
+        "b": { "x": -4.04375, "y": 1.45375 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.41, "y": 2.345563 },
+        "b": { "x": -3.41, "y": 1.06 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.41, "y": 2.345563 },
+        "b": { "x": -2.345563, "y": 3.41 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.41, "y": -2.345563 },
+        "b": { "x": -3.41, "y": -1.06 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.41, "y": -2.345563 },
+        "b": { "x": -2.345563, "y": -3.41 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.345563, "y": 3.41 },
+        "b": { "x": 3.41, "y": 3.41 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.345563, "y": -3.41 },
+        "b": { "x": 3.41, "y": -3.41 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 3.41, "y": 3.41 },
+        "b": { "x": 3.41, "y": 1.06 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 3.41, "y": -3.41 },
+        "b": { "x": 3.41, "y": -1.06 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.7, "y": 1.05 },
+        "b": { "x": -4.7, "y": -1.05 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -4.7, "y": -1.05 },
+        "b": { "x": -3.55, "y": -1.05 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.55, "y": 2.4 },
+        "b": { "x": -3.55, "y": 1.05 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.55, "y": 2.4 },
+        "b": { "x": -2.4, "y": 3.55 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.55, "y": 1.05 },
+        "b": { "x": -4.7, "y": 1.05 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.55, "y": -1.05 },
+        "b": { "x": -3.55, "y": -2.4 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.55, "y": -2.4 },
+        "b": { "x": -2.4, "y": -3.55 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.4, "y": 3.55 },
+        "b": { "x": 3.55, "y": 3.55 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.4, "y": -3.55 },
+        "b": { "x": 3.55, "y": -3.55 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 3.55, "y": 3.55 },
+        "b": { "x": 3.55, "y": 1.05 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 3.55, "y": 1.05 },
+        "b": { "x": 4.7, "y": 1.05 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 3.55, "y": -1.05 },
+        "b": { "x": 3.55, "y": -3.55 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.7, "y": 1.05 },
+        "b": { "x": 4.7, "y": -1.05 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.7, "y": -1.05 },
+        "b": { "x": 3.55, "y": -1.05 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.3, "y": 2.3 },
+        "b": { "x": -3.3, "y": -2.3 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.3, "y": 2.3 },
+        "b": { "x": -2.3, "y": 3.3 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -3.3, "y": -2.3 },
+        "b": { "x": -2.3, "y": -3.3 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.704838, "y": 1.33 },
+        "b": { "x": -2.074838, "y": 1.33 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.389838, "y": 1.645 },
+        "b": { "x": -2.389838, "y": 1.015 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.3, "y": 3.3 },
+        "b": { "x": 3.3, "y": 3.3 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.3, "y": -3.3 },
+        "b": { "x": 3.3, "y": -3.3 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 3.3, "y": 3.3 },
+        "b": { "x": 3.3, "y": -3.3 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": { "type": "circle", "center": { "x": 0, "y": 0 }, "radius": 3.15 },
+      "width": 0.1
+    }
+  ],
+  "texts": [
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.5
+    },
+    { "layer": "fab", "text": "${ref}", "at": { "x": 0, "y": 0 }, "size": 1 }
+  ],
+  "height": 7.7,
+  "model": { "file": "kicad/Capacitor_SMD/CP_Elec_6.3x7.7.step" },
+  "provenance": {
+    "source": "kicad",
+    "library": "",
+    "footprint": "CP_Elec_6.3x7.7",
+    "path": "kicad_pcb"
+  }
+}

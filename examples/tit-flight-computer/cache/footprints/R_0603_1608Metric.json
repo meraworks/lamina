@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "id": "R_0603_1608Metric",
+  "description": "Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)",
+  "pads": [
+    {
+      "number": "1",
+      "at": { "x": -0.825, "y": 0 },
+      "shape": { "type": "round_rect", "width": 0.8, "height": 0.95, "radius": 0.2 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "2",
+      "at": { "x": 0.825, "y": 0 },
+      "shape": { "type": "round_rect", "width": 0.8, "height": 0.95, "radius": 0.2 },
+      "kind": { "type": "smd" }
+    }
+  ],
+  "graphics": [
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.237258, "y": 0.5225 },
+        "b": { "x": 0.237258, "y": 0.5225 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.237258, "y": -0.5225 },
+        "b": { "x": 0.237258, "y": -0.5225 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "rect",
+        "min": { "x": -1.48, "y": -0.73 },
+        "max": { "x": 1.48, "y": 0.73 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "rect",
+        "min": { "x": -0.8, "y": -0.4125 },
+        "max": { "x": 0.8, "y": 0.4125 }
+      },
+      "width": 0.1
+    }
+  ],
+  "texts": [
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.5
+    },
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.4
+    }
+  ],
+  "height": 0.45,
+  "model": { "file": "kicad/Resistor_SMD/R_0603_1608Metric.step" },
+  "provenance": {
+    "source": "kicad",
+    "library": "",
+    "footprint": "R_0603_1608Metric",
+    "path": "kicad_pcb"
+  }
+}

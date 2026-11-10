@@ -1,0 +1,173 @@
+{
+  "schema": 1,
+  "id": "L_Sunlord_SWPA4020S",
+  "description": "Inductor, Sunlord, SWPA4020S, 4.0x4.0x2.0mm, (https://www.sunlordinc.com/UploadFiles/PDF_Cat/20120704094224784.pdf)",
+  "pads": [
+    {
+      "number": "1",
+      "at": { "x": -1.5, "y": 0 },
+      "shape": { "type": "round_rect", "width": 1.1, "height": 3.7, "radius": 0.25 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "2",
+      "at": { "x": 1.5, "y": 0 },
+      "shape": { "type": "round_rect", "width": 1.1, "height": 3.7, "radius": 0.25 },
+      "kind": { "type": "smd" }
+    }
+  ],
+  "graphics": [
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.11, "y": 2.11 },
+        "b": { "x": 2.11, "y": 2.11 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.11, "y": -2.11 },
+        "b": { "x": -2.11, "y": -2.11 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.3, "y": 2.1 },
+        "b": { "x": -2.25, "y": 2.1 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.3, "y": -2.1 },
+        "b": { "x": -2.3, "y": 2.1 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.25, "y": 2.25 },
+        "b": { "x": 2.25, "y": 2.25 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.25, "y": 2.1 },
+        "b": { "x": -2.25, "y": 2.25 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.25, "y": -2.1 },
+        "b": { "x": -2.3, "y": -2.1 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.25, "y": -2.25 },
+        "b": { "x": -2.25, "y": -2.1 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.25, "y": 2.25 },
+        "b": { "x": 2.25, "y": 2.1 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.25, "y": 2.1 },
+        "b": { "x": 2.3, "y": 2.1 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.25, "y": -2.1 },
+        "b": { "x": 2.25, "y": -2.25 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.25, "y": -2.25 },
+        "b": { "x": -2.25, "y": -2.25 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.3, "y": 2.1 },
+        "b": { "x": 2.3, "y": -2.1 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.3, "y": -2.1 },
+        "b": { "x": 2.25, "y": -2.1 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "rect",
+        "min": { "x": -2, "y": -2 },
+        "max": { "x": 2, "y": 2 }
+      },
+      "width": 0.1
+    }
+  ],
+  "texts": [
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.5
+    },
+    { "layer": "fab", "text": "${ref}", "at": { "x": 0, "y": 0 }, "size": 1 }
+  ],
+  "height": 2,
+  "model": { "file": "kicad/Inductor_SMD/L_Sunlord_SWPA4020S.step" },
+  "provenance": {
+    "source": "kicad",
+    "library": "",
+    "footprint": "L_Sunlord_SWPA4020S",
+    "path": "kicad_pcb"
+  }
+}

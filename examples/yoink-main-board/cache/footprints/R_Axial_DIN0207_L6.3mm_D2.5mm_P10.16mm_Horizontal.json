@@ -1,0 +1,120 @@
+{
+  "schema": 1,
+  "id": "R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal",
+  "description": "Resistor, Axial_DIN0207 series, Axial, Horizontal, pin pitch=10.16mm, 0.25W = 1/4W, length*diameter=6.3*2.5mm^2, http://cdn-reichelt.de/documents/datenblatt/B400/1_4W%23YAG.pdf",
+  "pads": [
+    {
+      "number": "1",
+      "at": { "x": 0, "y": 0 },
+      "shape": { "type": "circle", "diameter": 1.6 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 0.8 },
+        "plated": true
+      },
+      "paste": false
+    },
+    {
+      "number": "2",
+      "at": { "x": 10.16, "y": 0 },
+      "shape": { "type": "circle", "diameter": 1.6 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 0.8 },
+        "plated": true
+      },
+      "paste": false
+    }
+  ],
+  "graphics": [
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.04, "y": 0 },
+        "b": { "x": 1.81, "y": 0 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 9.12, "y": 0 },
+        "b": { "x": 8.35, "y": 0 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "rect",
+        "min": { "x": 1.81, "y": -1.37 },
+        "max": { "x": 8.35, "y": 1.37 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "rect",
+        "min": { "x": -1.05, "y": -1.5 },
+        "max": { "x": 11.21, "y": 1.5 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "fab",
+      "shape": { "type": "line", "a": { "x": 0, "y": 0 }, "b": { "x": 1.93, "y": 0 } },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 10.16, "y": 0 },
+        "b": { "x": 8.23, "y": 0 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "rect",
+        "min": { "x": 1.93, "y": -1.25 },
+        "max": { "x": 8.23, "y": 1.25 }
+      },
+      "width": 0.1
+    }
+  ],
+  "texts": [
+    {
+      "layer": "silk",
+      "text": "${ref}",
+      "at": { "x": 5.08, "y": 2.37 },
+      "size": 1
+    },
+    {
+      "layer": "fab",
+      "text": "${value}",
+      "at": { "x": 5.08, "y": -2.37 },
+      "size": 1
+    },
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 5.08, "y": 0 },
+      "size": 1
+    }
+  ],
+  "height": 2.5,
+  "model": {
+    "file": "kicad/Resistor_THT/R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal.step"
+  },
+  "provenance": {
+    "source": "kicad",
+    "library": "",
+    "footprint": "R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal",
+    "path": "kicad_pcb"
+  }
+}

@@ -1,0 +1,272 @@
+{
+  "schema": 1,
+  "id": "Bosch_LGA-14_3x2.5mm_P0.5mm",
+  "description": "LGA-14 Bosch https://ae-bst.resource.bosch.com/media/_tech/media/datasheets/BST-BMI160-DS000-07.pdf",
+  "pads": [
+    {
+      "number": "1",
+      "at": { "x": -1.2625, "y": 0.75 },
+      "shape": { "type": "rect", "width": 0.675, "height": 0.25 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "2",
+      "at": { "x": -1.2625, "y": 0.25 },
+      "shape": { "type": "rect", "width": 0.675, "height": 0.25 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "3",
+      "at": { "x": -1.2625, "y": -0.25 },
+      "shape": { "type": "rect", "width": 0.675, "height": 0.25 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "4",
+      "at": { "x": -1.2625, "y": -0.75 },
+      "shape": { "type": "rect", "width": 0.675, "height": 0.25 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "5",
+      "at": { "x": -0.5, "y": -1.0125 },
+      "shape": { "type": "rect", "width": 0.25, "height": 0.675 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "6",
+      "at": { "x": 0, "y": -1.0125 },
+      "shape": { "type": "rect", "width": 0.25, "height": 0.675 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "7",
+      "at": { "x": 0.5, "y": -1.0125 },
+      "shape": { "type": "rect", "width": 0.25, "height": 0.675 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "8",
+      "at": { "x": 1.2625, "y": -0.75 },
+      "shape": { "type": "rect", "width": 0.675, "height": 0.25 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "9",
+      "at": { "x": 1.2625, "y": -0.25 },
+      "shape": { "type": "rect", "width": 0.675, "height": 0.25 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "10",
+      "at": { "x": 1.2625, "y": 0.25 },
+      "shape": { "type": "rect", "width": 0.675, "height": 0.25 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "11",
+      "at": { "x": 1.2625, "y": 0.75 },
+      "shape": { "type": "rect", "width": 0.675, "height": 0.25 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "12",
+      "at": { "x": 0.5, "y": 1.0125 },
+      "shape": { "type": "rect", "width": 0.25, "height": 0.675 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "13",
+      "at": { "x": 0, "y": 1.0125 },
+      "shape": { "type": "rect", "width": 0.25, "height": 0.675 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "14",
+      "at": { "x": -0.5, "y": 1.0125 },
+      "shape": { "type": "rect", "width": 0.25, "height": 0.675 },
+      "kind": { "type": "smd" }
+    }
+  ],
+  "graphics": [
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.6, "y": -1.35 },
+        "b": { "x": -1.6, "y": -1.13 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.6, "y": -1.35 },
+        "b": { "x": -0.88, "y": -1.35 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.4, "y": 1.35 },
+        "b": { "x": -0.88, "y": 1.35 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.88, "y": 1.35 },
+        "b": { "x": 1.6, "y": 1.35 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.6, "y": 1.35 },
+        "b": { "x": 1.6, "y": 1.13 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.6, "y": -1.13 },
+        "b": { "x": 1.6, "y": -1.35 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.6, "y": -1.35 },
+        "b": { "x": 0.88, "y": -1.35 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "polygon",
+        "points": [
+          { "x": -1.6, "y": 1.35 },
+          { "x": -1.96, "y": 1.35 },
+          { "x": -1.6, "y": 1.71 }
+        ]
+      },
+      "width": 0.15,
+      "filled": true
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.85, "y": 1.6 },
+        "b": { "x": 1.85, "y": 1.6 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.85, "y": -1.6 },
+        "b": { "x": -1.85, "y": 1.6 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.85, "y": 1.6 },
+        "b": { "x": 1.85, "y": -1.6 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.85, "y": -1.6 },
+        "b": { "x": -1.85, "y": -1.6 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.5, "y": -1.25 },
+        "b": { "x": -1.5, "y": 0.5 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.75, "y": 1.25 },
+        "b": { "x": -1.5, "y": 0.5 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.75, "y": 1.25 },
+        "b": { "x": 1.5, "y": 1.25 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.5, "y": 1.25 },
+        "b": { "x": 1.5, "y": -1.25 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.5, "y": -1.25 },
+        "b": { "x": -1.5, "y": -1.25 }
+      },
+      "width": 0.1
+    }
+  ],
+  "texts": [
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.5
+    },
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.5
+    }
+  ],
+  "height": 0.78,
+  "model": { "file": "kicad/Package_LGA/Bosch_LGA-14_3x2.5mm_P0.5mm.step" },
+  "provenance": {
+    "source": "kicad",
+    "library": "",
+    "footprint": "Bosch_LGA-14_3x2.5mm_P0.5mm",
+    "path": "kicad_pcb"
+  }
+}

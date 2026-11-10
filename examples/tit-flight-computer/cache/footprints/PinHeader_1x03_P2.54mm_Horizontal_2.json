@@ -1,0 +1,446 @@
+{
+  "schema": 1,
+  "id": "PinHeader_1x03_P2.54mm_Horizontal_2",
+  "description": "Through hole angled pin header, 1x03, 2.54mm pitch, 6mm pin length, single row",
+  "pads": [
+    {
+      "number": "1",
+      "at": { "x": 0, "y": 0 },
+      "shape": { "type": "rect", "width": 1.7, "height": 1.7 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 1 },
+        "plated": true
+      },
+      "paste": false
+    },
+    {
+      "number": "2",
+      "at": { "x": 0, "y": -2.54 },
+      "shape": { "type": "circle", "diameter": 1.7 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 1 },
+        "plated": true
+      },
+      "paste": false
+    },
+    {
+      "number": "3",
+      "at": { "x": 0, "y": -5.08 },
+      "shape": { "type": "circle", "diameter": 1.7 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 1 },
+        "plated": true
+      },
+      "paste": false
+    }
+  ],
+  "graphics": [
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.27, "y": 1.27 },
+        "b": { "x": 0, "y": 1.27 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.27, "y": 0 },
+        "b": { "x": -1.27, "y": 1.27 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.077358, "y": -2.11 },
+        "b": { "x": 1.39, "y": -2.11 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.077358, "y": -2.97 },
+        "b": { "x": 1.39, "y": -2.97 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.077358, "y": -4.65 },
+        "b": { "x": 1.39, "y": -4.65 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.077358, "y": -5.51 },
+        "b": { "x": 1.39, "y": -5.51 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.16, "y": 0.43 },
+        "b": { "x": 1.39, "y": 0.43 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.16, "y": -0.43 },
+        "b": { "x": 1.39, "y": -0.43 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.39, "y": -1.27 },
+        "b": { "x": 4.15, "y": -1.27 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.39, "y": -3.81 },
+        "b": { "x": 4.15, "y": -3.81 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.15, "y": -2.11 },
+        "b": { "x": 10.15, "y": -2.11 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.15, "y": -4.65 },
+        "b": { "x": 10.15, "y": -4.65 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 10.15, "y": -2.11 },
+        "b": { "x": 10.15, "y": -2.97 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 10.15, "y": -2.97 },
+        "b": { "x": 4.15, "y": -2.97 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 10.15, "y": -4.65 },
+        "b": { "x": 10.15, "y": -5.51 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 10.15, "y": -5.51 },
+        "b": { "x": 4.15, "y": -5.51 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "rect",
+        "min": { "x": 1.39, "y": -6.46 },
+        "max": { "x": 4.15, "y": 1.38 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "rect",
+        "min": { "x": 4.15, "y": -0.43 },
+        "max": { "x": 10.15, "y": 0.43 }
+      },
+      "width": 0.15,
+      "filled": true
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "rect",
+        "min": { "x": -1.77, "y": -6.85 },
+        "max": { "x": 10.54, "y": 1.77 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.32, "y": 0.32 },
+        "b": { "x": -0.32, "y": -0.32 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.32, "y": 0.32 },
+        "b": { "x": 1.5, "y": 0.32 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.32, "y": -0.32 },
+        "b": { "x": 1.5, "y": -0.32 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.32, "y": -2.22 },
+        "b": { "x": -0.32, "y": -2.86 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.32, "y": -2.22 },
+        "b": { "x": 1.5, "y": -2.22 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.32, "y": -2.86 },
+        "b": { "x": 1.5, "y": -2.86 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.32, "y": -4.76 },
+        "b": { "x": -0.32, "y": -5.4 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.32, "y": -4.76 },
+        "b": { "x": 1.5, "y": -4.76 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.32, "y": -5.4 },
+        "b": { "x": 1.5, "y": -5.4 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.5, "y": 0.635 },
+        "b": { "x": 2.135, "y": 1.27 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.5, "y": -6.35 },
+        "b": { "x": 1.5, "y": 0.635 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.135, "y": 1.27 },
+        "b": { "x": 4.04, "y": 1.27 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.04, "y": 1.27 },
+        "b": { "x": 4.04, "y": -6.35 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.04, "y": 0.32 },
+        "b": { "x": 10.04, "y": 0.32 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.04, "y": -0.32 },
+        "b": { "x": 10.04, "y": -0.32 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.04, "y": -2.22 },
+        "b": { "x": 10.04, "y": -2.22 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.04, "y": -2.86 },
+        "b": { "x": 10.04, "y": -2.86 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.04, "y": -4.76 },
+        "b": { "x": 10.04, "y": -4.76 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.04, "y": -5.4 },
+        "b": { "x": 10.04, "y": -5.4 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 4.04, "y": -6.35 },
+        "b": { "x": 1.5, "y": -6.35 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 10.04, "y": 0.32 },
+        "b": { "x": 10.04, "y": -0.32 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 10.04, "y": -2.22 },
+        "b": { "x": 10.04, "y": -2.86 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 10.04, "y": -4.76 },
+        "b": { "x": 10.04, "y": -5.4 }
+      },
+      "width": 0.1
+    }
+  ],
+  "texts": [
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.5
+    },
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 2.77, "y": -2.54 },
+      "size": 1,
+      "rotation": 90
+    }
+  ],
+  "height": 2.54,
+  "model": {
+    "file": "kicad/Connector_PinHeader_2.54mm/PinHeader_1x03_P2.54mm_Horizontal.step"
+  },
+  "provenance": {
+    "source": "kicad",
+    "library": "",
+    "footprint": "PinHeader_1x03_P2.54mm_Horizontal",
+    "path": "kicad_pcb"
+  }
+}

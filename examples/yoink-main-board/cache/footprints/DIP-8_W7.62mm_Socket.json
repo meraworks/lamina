@@ -1,0 +1,257 @@
+{
+  "schema": 1,
+  "id": "DIP-8_W7.62mm_Socket",
+  "description": "8-lead though-hole mounted DIP package, row spacing 7.62mm (300 mils), Socket",
+  "pads": [
+    {
+      "number": "1",
+      "at": { "x": 0, "y": 0 },
+      "shape": { "type": "round_rect", "width": 1.6, "height": 1.6, "radius": 0.25 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 0.8 },
+        "plated": true
+      },
+      "paste": false
+    },
+    {
+      "number": "2",
+      "at": { "x": 0, "y": -2.54 },
+      "shape": { "type": "circle", "diameter": 1.6 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 0.8 },
+        "plated": true
+      },
+      "paste": false
+    },
+    {
+      "number": "3",
+      "at": { "x": 0, "y": -5.08 },
+      "shape": { "type": "circle", "diameter": 1.6 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 0.8 },
+        "plated": true
+      },
+      "paste": false
+    },
+    {
+      "number": "4",
+      "at": { "x": 0, "y": -7.62 },
+      "shape": { "type": "circle", "diameter": 1.6 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 0.8 },
+        "plated": true
+      },
+      "paste": false
+    },
+    {
+      "number": "5",
+      "at": { "x": 7.62, "y": -7.62 },
+      "shape": { "type": "circle", "diameter": 1.6 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 0.8 },
+        "plated": true
+      },
+      "paste": false
+    },
+    {
+      "number": "6",
+      "at": { "x": 7.62, "y": -5.08 },
+      "shape": { "type": "circle", "diameter": 1.6 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 0.8 },
+        "plated": true
+      },
+      "paste": false
+    },
+    {
+      "number": "7",
+      "at": { "x": 7.62, "y": -2.54 },
+      "shape": { "type": "circle", "diameter": 1.6 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 0.8 },
+        "plated": true
+      },
+      "paste": false
+    },
+    {
+      "number": "8",
+      "at": { "x": 7.62, "y": 0 },
+      "shape": { "type": "circle", "diameter": 1.6 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 0.8 },
+        "plated": true
+      },
+      "paste": false
+    }
+  ],
+  "graphics": [
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.16, "y": 1.33 },
+        "b": { "x": 1.16, "y": -8.95 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.16, "y": -8.95 },
+        "b": { "x": 6.46, "y": -8.95 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.81, "y": 1.33 },
+        "b": { "x": 1.16, "y": 1.33 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 6.46, "y": 1.33 },
+        "b": { "x": 4.81, "y": 1.33 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 6.46, "y": -8.95 },
+        "b": { "x": 6.46, "y": 1.33 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "rect",
+        "min": { "x": -1.33, "y": -9.01 },
+        "max": { "x": 8.95, "y": 1.39 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "arc",
+        "center": { "x": 3.81, "y": 1.33 },
+        "start": { "x": 4.81, "y": 1.33 },
+        "angle": -180
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "rect",
+        "min": { "x": -1.52, "y": -9.2 },
+        "max": { "x": 9.14, "y": 1.58 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.635, "y": 0.27 },
+        "b": { "x": 1.635, "y": 1.27 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.635, "y": -8.89 },
+        "b": { "x": 0.635, "y": 0.27 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.635, "y": 1.27 },
+        "b": { "x": 6.985, "y": 1.27 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 6.985, "y": 1.27 },
+        "b": { "x": 6.985, "y": -8.89 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 6.985, "y": -8.89 },
+        "b": { "x": 0.635, "y": -8.89 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "rect",
+        "min": { "x": -1.27, "y": -8.95 },
+        "max": { "x": 8.89, "y": 1.33 }
+      },
+      "width": 0.1
+    }
+  ],
+  "texts": [
+    {
+      "layer": "silk",
+      "text": "${ref}",
+      "at": { "x": 3.81, "y": 2.33 },
+      "size": 1
+    },
+    {
+      "layer": "fab",
+      "text": "${value}",
+      "at": { "x": 3.81, "y": -9.95 },
+      "size": 1
+    },
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 3.81, "y": -3.81 },
+      "size": 1,
+      "rotation": 90
+    }
+  ],
+  "height": 4.8,
+  "model": {
+    "file": "kicad/socket/DS1009-08AT1NX-0A2.step",
+    "offset": [3.81, -3.81, 0.2],
+    "rotation": [0, 0, -90]
+  },
+  "provenance": {
+    "source": "kicad",
+    "library": "",
+    "footprint": "DIP-8_W7.62mm_Socket",
+    "path": "kicad_pcb"
+  }
+}

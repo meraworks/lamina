@@ -1,0 +1,237 @@
+{
+  "schema": 1,
+  "id": "SW_SPST_PTS810",
+  "description": "C&K Components, PTS 810 Series, Microminiature SMT Top Actuated, http://www.ckswitches.com/media/1476/pts810.pdf",
+  "pads": [
+    {
+      "number": "1",
+      "at": { "x": -2.075, "y": 1.075 },
+      "shape": { "type": "rect", "width": 1.05, "height": 0.65 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "1",
+      "at": { "x": 2.075, "y": 1.075 },
+      "shape": { "type": "rect", "width": 1.05, "height": 0.65 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "2",
+      "at": { "x": -2.075, "y": -1.075 },
+      "shape": { "type": "rect", "width": 1.05, "height": 0.65 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "2",
+      "at": { "x": 2.075, "y": -1.075 },
+      "shape": { "type": "rect", "width": 1.05, "height": 0.65 },
+      "kind": { "type": "smd" }
+    }
+  ],
+  "graphics": [
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.2, "y": 1.7 },
+        "b": { "x": -2.2, "y": 1.58 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.2, "y": 0.57 },
+        "b": { "x": -2.2, "y": -0.57 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.2, "y": -1.58 },
+        "b": { "x": -2.2, "y": -1.7 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.2, "y": -1.7 },
+        "b": { "x": 2.2, "y": -1.7 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.2, "y": 1.7 },
+        "b": { "x": -2.2, "y": 1.7 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.2, "y": 1.58 },
+        "b": { "x": 2.2, "y": 1.7 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.2, "y": -0.57 },
+        "b": { "x": 2.2, "y": 0.57 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.2, "y": -1.7 },
+        "b": { "x": 2.2, "y": -1.58 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.85, "y": 1.85 },
+        "b": { "x": 2.85, "y": 1.85 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.85, "y": -1.85 },
+        "b": { "x": -2.85, "y": 1.85 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.85, "y": 1.85 },
+        "b": { "x": 2.85, "y": -1.85 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.85, "y": -1.85 },
+        "b": { "x": -2.85, "y": -1.85 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.1, "y": 1.6 },
+        "b": { "x": -2.1, "y": -1.6 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.1, "y": -1.6 },
+        "b": { "x": 2.1, "y": -1.6 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.4, "y": 1.1 },
+        "b": { "x": 0.4, "y": 1.1 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.4, "y": -1.1 },
+        "b": { "x": -0.4, "y": -1.1 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.1, "y": 1.6 },
+        "b": { "x": -2.1, "y": 1.6 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.1, "y": -1.6 },
+        "b": { "x": 2.1, "y": 1.6 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "arc",
+        "center": { "x": -0.4, "y": 0 },
+        "start": { "x": -0.4, "y": -1.1 },
+        "angle": -180
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "arc",
+        "center": { "x": 0.4, "y": 0 },
+        "start": { "x": 0.4, "y": 1.1 },
+        "angle": -180
+      },
+      "width": 0.1
+    }
+  ],
+  "texts": [
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.5
+    },
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.6
+    }
+  ],
+  "height": 2.5,
+  "model": { "file": "kicad/Button_Switch_SMD/SW_SPST_PTS810.step" },
+  "provenance": {
+    "source": "kicad",
+    "library": "",
+    "footprint": "SW_SPST_PTS810",
+    "path": "kicad_pcb"
+  }
+}

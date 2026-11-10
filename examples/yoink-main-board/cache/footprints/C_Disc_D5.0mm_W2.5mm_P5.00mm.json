@@ -1,0 +1,134 @@
+{
+  "schema": 1,
+  "id": "C_Disc_D5.0mm_W2.5mm_P5.00mm",
+  "description": "C, Disc series, Radial, pin pitch=5.00mm, diameter*width=5*2.5mm^2, Capacitor, http://cdn-reichelt.de/documents/datenblatt/B300/DS_KERKO_TC.pdf",
+  "pads": [
+    {
+      "number": "1",
+      "at": { "x": 0, "y": 0 },
+      "shape": { "type": "circle", "diameter": 1.6 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 0.8 },
+        "plated": true
+      },
+      "paste": false
+    },
+    {
+      "number": "2",
+      "at": { "x": 5, "y": 0 },
+      "shape": { "type": "circle", "diameter": 1.6 },
+      "kind": {
+        "type": "through",
+        "drill": { "type": "round", "diameter": 0.8 },
+        "plated": true
+      },
+      "paste": false
+    }
+  ],
+  "graphics": [
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.12, "y": 1.37 },
+        "b": { "x": 5.12, "y": 1.37 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.12, "y": 1.033 },
+        "b": { "x": -0.12, "y": 1.37 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.12, "y": -1.37 },
+        "b": { "x": -0.12, "y": -1.033 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 5.12, "y": 1.37 },
+        "b": { "x": 5.12, "y": 1.033 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 5.12, "y": -1.033 },
+        "b": { "x": 5.12, "y": -1.37 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": 5.12, "y": -1.37 },
+        "b": { "x": -0.12, "y": -1.37 }
+      },
+      "width": 0.12
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "rect",
+        "min": { "x": -1.05, "y": -1.5 },
+        "max": { "x": 6.05, "y": 1.5 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "rect",
+        "min": { "x": 0, "y": -1.25 },
+        "max": { "x": 5, "y": 1.25 }
+      },
+      "width": 0.1
+    }
+  ],
+  "texts": [
+    {
+      "layer": "silk",
+      "text": "${ref}",
+      "at": { "x": 2.5, "y": 2.5 },
+      "size": 1
+    },
+    {
+      "layer": "fab",
+      "text": "${value}",
+      "at": { "x": 2.5, "y": -2.5 },
+      "size": 1
+    },
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 2.5, "y": 0 },
+      "size": 1
+    }
+  ],
+  "height": 5.5,
+  "model": {
+    "file": "kicad/ceramic_100nF/CT4-0805B104K500F3.step",
+    "offset": [2.5, 0, 3]
+  },
+  "provenance": {
+    "source": "kicad",
+    "library": "",
+    "footprint": "C_Disc_D5.0mm_W2.5mm_P5.00mm",
+    "path": "kicad_pcb"
+  }
+}

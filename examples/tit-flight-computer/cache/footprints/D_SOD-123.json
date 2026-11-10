@@ -1,0 +1,200 @@
+{
+  "schema": 1,
+  "id": "D_SOD-123",
+  "description": "SOD-123",
+  "pads": [
+    {
+      "number": "1",
+      "at": { "x": -1.65, "y": 0 },
+      "shape": { "type": "round_rect", "width": 0.9, "height": 1.2, "radius": 0.225 },
+      "kind": { "type": "smd" }
+    },
+    {
+      "number": "2",
+      "at": { "x": 1.65, "y": 0 },
+      "shape": { "type": "round_rect", "width": 0.9, "height": 1.2, "radius": 0.225 },
+      "kind": { "type": "smd" }
+    }
+  ],
+  "graphics": [
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.36, "y": 1 },
+        "b": { "x": -2.36, "y": -1 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.36, "y": 1 },
+        "b": { "x": 1.65, "y": 1 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "silk",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.36, "y": -1 },
+        "b": { "x": 1.65, "y": -1 }
+      },
+      "width": 0.15
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.35, "y": 1.15 },
+        "b": { "x": -2.35, "y": -1.15 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": -2.35, "y": 1.15 },
+        "b": { "x": 2.35, "y": 1.15 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.35, "y": 1.15 },
+        "b": { "x": 2.35, "y": -1.15 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "courtyard",
+      "shape": {
+        "type": "line",
+        "a": { "x": 2.35, "y": -1.15 },
+        "b": { "x": -2.35, "y": -1.15 }
+      },
+      "width": 0.05
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.4, "y": 0.9 },
+        "b": { "x": 1.4, "y": 0.9 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -1.4, "y": -0.9 },
+        "b": { "x": -1.4, "y": 0.9 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.75, "y": 0 },
+        "b": { "x": -0.35, "y": 0 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.35, "y": 0 },
+        "b": { "x": -0.35, "y": 0.55 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.35, "y": 0 },
+        "b": { "x": -0.35, "y": -0.55 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": -0.35, "y": 0 },
+        "b": { "x": 0.25, "y": 0.4 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.25, "y": 0.4 },
+        "b": { "x": 0.25, "y": -0.4 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.25, "y": 0 },
+        "b": { "x": 0.75, "y": 0 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 0.25, "y": -0.4 },
+        "b": { "x": -0.35, "y": 0 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.4, "y": 0.9 },
+        "b": { "x": 1.4, "y": -0.9 }
+      },
+      "width": 0.1
+    },
+    {
+      "layer": "fab",
+      "shape": {
+        "type": "line",
+        "a": { "x": 1.4, "y": -0.9 },
+        "b": { "x": -1.4, "y": -0.9 }
+      },
+      "width": 0.1
+    }
+  ],
+  "texts": [
+    {
+      "layer": "fab",
+      "text": "${ref}",
+      "at": { "x": 0, "y": 0 },
+      "size": 0.5
+    },
+    { "layer": "fab", "text": "${ref}", "at": { "x": 0, "y": 2 }, "size": 1 }
+  ],
+  "height": 1.26,
+  "model": { "file": "kicad/Diode_SMD/D_SOD-123.step" },
+  "provenance": {
+    "source": "kicad",
+    "library": "",
+    "footprint": "D_SOD-123",
+    "path": "kicad_pcb"
+  }
+}

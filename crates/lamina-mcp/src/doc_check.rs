@@ -42,7 +42,12 @@ const OTHER_WORDS: &[&str] = &[
 
 /// Board folders that the documents give to `lamina-viewer` as examples. The viewer
 /// takes a board folder as its first argument, so these look like subcommands.
-const EXAMPLE_BOARDS: &[&str] = &["my-board", "c3-sensor"];
+const EXAMPLE_BOARDS: &[&str] = &[
+    "my-board",
+    "c3-sensor",
+    "tit-flight-computer",
+    "yoink-main-board",
+];
 
 /// This file, for the failure messages.
 const THIS_FILE: &str = "crates/lamina-mcp/src/doc_check.rs";
