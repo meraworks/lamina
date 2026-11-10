@@ -15,6 +15,7 @@ pub mod library;
 pub mod project;
 pub mod provider;
 pub mod rules;
+pub mod voltage;
 pub use lengths::*;
 pub use rules::*;
 pub mod sexpr;
