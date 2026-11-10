@@ -10,7 +10,8 @@ use crate::project::{OpResult, Project, Touched};
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct SetNets {
     /// A map from net name to pads, optional class, length_min/length_max in mm,
-    /// and skew_group/max_skew. Length limits use the sum of all tracks.
+    /// skew_group/max_skew, max_vias, and `current` in A and `voltage` in V
+    /// for the electrical checks. Length limits use the sum of all tracks.
     pub nets: BTreeMap<String, Net>,
     /// If true (default), replace the full netlist. If false, merge into it.
     #[serde(default = "super::yes")]
@@ -87,6 +88,16 @@ impl Project {
                         "Net {name}: {field} must be finite and at least 0 mm."
                     )));
                 }
+            }
+            if net.current.is_some_and(|v| !v.is_finite() || v < 0.0) {
+                return Err(Error::invalid(format!(
+                    "Net {name}: current must be finite and at least 0 A."
+                )));
+            }
+            if net.voltage.is_some_and(|v| !v.is_finite()) {
+                return Err(Error::invalid(format!(
+                    "Net {name}: voltage must be finite."
+                )));
             }
             if net
                 .length_min
