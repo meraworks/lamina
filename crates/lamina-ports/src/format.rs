@@ -39,7 +39,7 @@ pub struct ImportedBoard {
 }
 
 /// What an import dropped.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LossKind {
     /// A full footprint.
     Footprint,
@@ -77,45 +77,19 @@ pub struct Loss {
 }
 
 impl Loss {
-    /// The loss that an import note describes, if the note is about dropped
-    /// data. An adapter writes its notes as text; this function is the one
-    /// place that gives them a type.
-    pub fn from_note(note: &str) -> Option<Loss> {
-        let n = note.to_lowercase();
-        if !n.contains("skipped") && !n.contains("not used") {
-            return None;
-        }
-        let kind = if n.contains("text on") || n.contains("graphics on") {
-            LossKind::Other
-        } else if n.contains("custom rule") {
-            LossKind::Rules
-        } else if n.contains("keep-out") || n.contains("keepout") || n.contains("footprint zones") {
-            LossKind::Keepout
-        } else if n.contains("edge") {
-            LossKind::Edge
-        } else if n.contains("pad") {
-            LossKind::Pad
-        } else if n.contains("zone") {
-            LossKind::Zone
-        } else if n.contains("track") || n.contains("via") {
-            LossKind::Track
-        } else if n.contains("footprint") {
-            LossKind::Footprint
-        } else if n.contains("records") {
-            LossKind::Records
-        } else {
-            LossKind::Other
-        };
-        Some(Loss {
+    pub fn new(kind: LossKind, what: impl Into<String>) -> Loss {
+        Loss {
             kind,
-            what: note.to_string(),
-        })
+            what: what.into(),
+        }
     }
+}
 
-    /// The losses of a list of import notes.
-    pub fn from_notes(notes: &[String]) -> Vec<Loss> {
-        notes.iter().filter_map(|n| Loss::from_note(n)).collect()
-    }
+/// Record that an import dropped data: one note for the user and one loss
+/// with its kind. An adapter calls this at the place where it drops the data.
+pub fn lost(notes: &mut Vec<String>, losses: &mut Vec<Loss>, kind: LossKind, text: String) {
+    losses.push(Loss::new(kind, text.clone()));
+    notes.push(text);
 }
 
 pub trait BoardFormat: Send + Sync {
@@ -151,50 +125,5 @@ pub trait BoardFormat: Send + Sync {
     ) -> Result<String, String> {
         let _ = (path, existing);
         Ok(generated.to_owned())
-    }
-}
-
-#[cfg(test)]
-mod loss_tests {
-    use super::*;
-
-    #[test]
-    fn notes_get_the_kind_of_the_loss() {
-        let kind = |s: &str| Loss::from_note(s).map(|l| l.kind);
-        assert_eq!(kind("renamed `R**` to X1"), None);
-        assert_eq!(
-            kind("skipped a footprint: no name"),
-            Some(LossKind::Footprint)
-        );
-        assert_eq!(
-            kind("QFN: skipped 2 pads without copper on this side"),
-            Some(LossKind::Pad)
-        );
-        assert_eq!(
-            kind("skipped a zone with a degenerate outline"),
-            Some(LossKind::Zone)
-        );
-        assert_eq!(
-            kind("ANT: skipped 1 footprint zones"),
-            Some(LossKind::Keepout)
-        );
-        assert_eq!(
-            kind("skipped a board edge loop: it crosses itself"),
-            Some(LossKind::Edge)
-        );
-        assert_eq!(
-            kind("2 board edge segment(s) do not close a loop and are not used"),
-            Some(LossKind::Edge)
-        );
-        assert_eq!(
-            kind("LOGO: skipped 4 graphics on Dwgs.User"),
-            Some(LossKind::Other)
-        );
-        assert_eq!(
-            kind("b.kicad_dru: 3 custom rule(s) were skipped. Add them with `set_rules`."),
-            Some(LossKind::Rules)
-        );
-        assert!(LossKind::Pad.changes_fab() && LossKind::Edge.changes_fab());
-        assert!(!LossKind::Other.changes_fab() && !LossKind::Rules.changes_fab());
     }
 }

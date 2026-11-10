@@ -165,6 +165,14 @@ fn zone_parts_that_lamina_does_not_have_give_notes() {
     assert!(has("hatch pattern"), "{:?}", b.notes);
     assert!(has("1 more outline(s) of the zone z1"), "{:?}", b.notes);
     assert!(has("1 text box(es)"), "{:?}", b.notes);
+    // Each loss has its kind from the place where the importer drops the data.
+    use lamina_ports::format::LossKind;
+    let kind = |s: &str| b.losses.iter().find(|l| l.what.contains(s)).map(|l| l.kind);
+    assert_eq!(kind("thru_hole_only"), Some(LossKind::Zone));
+    assert_eq!(kind("hatch pattern"), Some(LossKind::Zone));
+    assert_eq!(kind("text box"), Some(LossKind::Other));
+    assert!(LossKind::Zone.changes_fab() && !LossKind::Other.changes_fab());
+    assert_eq!(b.losses.len(), 4, "{:?}", b.losses);
 }
 
 #[test]

@@ -90,7 +90,7 @@ impl BoardFormat for GerberFormat {
             data: b.data,
             models: BTreeMap::new(),
             extras,
-            losses: lamina_ports::format::Loss::from_notes(&notes),
+            losses: b.losses,
             notes,
         })
     }

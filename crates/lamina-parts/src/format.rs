@@ -59,7 +59,7 @@ impl BoardFormat for EasyedaFormat {
             data: imported.data,
             models,
             extras: BTreeMap::new(),
-            losses: lamina_ports::format::Loss::from_notes(&imported.notes),
+            losses: imported.losses,
             notes: imported.notes,
         })
     }

@@ -50,6 +50,7 @@ impl BoardFormat for KicadFormat {
         let text = std::fs::read_to_string(path).map_err(|e| format!("{}: {e}", path.display()))?;
         let imported = crate::import_board(&text, name)?;
         let mut notes = imported.notes;
+        let mut losses = imported.losses;
         let mut data = imported.data;
         // KiCad 6+ keeps the rules and the net classes in the project file.
         let pro = path.with_extension("kicad_pro");
@@ -64,12 +65,17 @@ impl BoardFormat for KicadFormat {
         if let Ok(text) = std::fs::read_to_string(&dru) {
             let count = text.matches("(rule ").count();
             if count > 0 {
-                notes.push(format!(
-                    "{}: {count} custom rule(s) were skipped. Add them with `set_rules`.",
-                    dru.file_name()
-                        .and_then(|n| n.to_str())
-                        .unwrap_or("kicad_dru")
-                ));
+                lamina_ports::format::lost(
+                    &mut notes,
+                    &mut losses,
+                    lamina_ports::format::LossKind::Rules,
+                    format!(
+                        "{}: {count} custom rule(s) were skipped. Add them with `set_rules`.",
+                        dru.file_name()
+                            .and_then(|n| n.to_str())
+                            .unwrap_or("kicad_dru")
+                    ),
+                );
             }
         }
         let project_dir = path.parent();
@@ -114,7 +120,7 @@ impl BoardFormat for KicadFormat {
             data,
             models,
             extras: BTreeMap::new(),
-            losses: lamina_ports::format::Loss::from_notes(&notes),
+            losses,
             notes,
         })
     }

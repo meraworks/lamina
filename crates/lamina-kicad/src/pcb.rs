@@ -1,5 +1,6 @@
 //! `.kicad_pcb` boards: import them into project data, and export them from it.
 
+use lamina_ports::format::{Loss, LossKind, lost};
 use std::collections::BTreeMap;
 
 use lamina_model::*;
@@ -16,6 +17,8 @@ pub struct ImportedBoard {
     /// and uses the first model that resolves.
     pub models: BTreeMap<String, Vec<KicadModel>>,
     pub notes: Vec<String>,
+    /// The data of the board that is not in the result, with its kind.
+    pub losses: Vec<Loss>,
 }
 
 fn r6(v: f64) -> f64 {
@@ -103,6 +106,9 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
     let mut used_refs: BTreeMap<String, usize> = BTreeMap::new();
     let mut next_x = 1;
     let mut skipped_notes: BTreeMap<String, usize> = BTreeMap::new();
+    // The kind of each note of a footprint that is a loss.
+    let mut skipped_kinds: BTreeMap<String, LossKind> = BTreeMap::new();
+    let mut losses: Vec<Loss> = Vec::new();
     // The Edge.Cuts drawings of the footprints, in board coordinates.
     let mut part_edges: Vec<Edge> = Vec::new();
     for node in root
@@ -113,7 +119,12 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
         let inst: Instance = match footprint::convert(node, "", "kicad_pcb") {
             Ok(i) => i,
             Err(e) => {
-                notes.push(format!("skipped a footprint: {e}"));
+                lost(
+                    &mut notes,
+                    &mut losses,
+                    LossKind::Footprint,
+                    format!("skipped a footprint: {e}"),
+                );
                 continue;
             }
         };
@@ -135,6 +146,9 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
             *skipped_notes
                 .entry(format!("{}: {note}", inst.name))
                 .or_default() += 1;
+        }
+        for loss in &inst.losses {
+            skipped_kinds.insert(format!("{}: {}", inst.name, loss.what), loss.kind);
         }
         if !inst.edge.is_empty() {
             let pl = Placement {
@@ -198,11 +212,16 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
         }
     }
     for (what, k) in skipped_notes {
-        notes.push(if k > 1 {
+        let kind = skipped_kinds.get(&what).copied();
+        let text = if k > 1 {
             format!("{what} (x{k})")
         } else {
             what
-        });
+        };
+        match kind {
+            Some(kind) => lost(&mut notes, &mut losses, kind, text),
+            None => notes.push(text),
+        }
     }
 
     // Tracks, vias, zones.
@@ -299,7 +318,12 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
         ls.retain(|l| l.is_copper() && l.exists_in(layers));
         ls.dedup();
         if ls.is_empty() {
-            notes.push("skipped a zone that is on no copper layer".into());
+            lost(
+                &mut notes,
+                &mut losses,
+                LossKind::Zone,
+                "skipped a zone that is on no copper layer".into(),
+            );
             continue;
         }
         let Some(pts) = zone.child("polygon").and_then(|p| p.child("pts")) else {
@@ -307,7 +331,12 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
         };
         let points = points_from(pts, &bp);
         let Some(outline) = contour_from_points(points) else {
-            notes.push("skipped a zone with a degenerate outline".into());
+            lost(
+                &mut notes,
+                &mut losses,
+                LossKind::Zone,
+                "skipped a zone with a degenerate outline".into(),
+            );
             continue;
         };
         if let Some(k) = zone.child("keepout") {
@@ -363,21 +392,34 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
         zid += 1;
         // The parts of a KiCad zone that Lamina does not have.
         if cp.and_then(|c| c.arg(0)) == Some("thru_hole_only") {
-            notes.push(format!(
-                "skipped the pad connection `thru_hole_only` of the zone z{zid}: all its pads get thermal spokes"
-            ));
+            lost(
+                &mut notes,
+                &mut losses,
+                LossKind::Zone,
+                format!(
+                    "skipped the pad connection `thru_hole_only` of the zone z{zid}: all its pads get thermal spokes"
+                ),
+            );
         }
         if fill.and_then(|f| f.child_text("mode")) == Some("hatch") {
-            notes.push(format!(
-                "skipped the hatch pattern of the zone z{zid}: its pour is solid"
-            ));
+            lost(
+                &mut notes,
+                &mut losses,
+                LossKind::Zone,
+                format!("skipped the hatch pattern of the zone z{zid}: its pour is solid"),
+            );
         }
         let outlines = zone.args().iter().filter(|c| c.is("polygon")).count();
         if outlines > 1 {
-            notes.push(format!(
-                "skipped {} more outline(s) of the zone z{zid}",
-                outlines - 1
-            ));
+            lost(
+                &mut notes,
+                &mut losses,
+                LossKind::Zone,
+                format!(
+                    "skipped {} more outline(s) of the zone z{zid}",
+                    outlines - 1
+                ),
+            );
         }
         d.routing.zones.push(Zone {
             id: format!("z{zid}"),
@@ -476,21 +518,34 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
         });
     }
     if *text_boxes > 0 {
-        notes.push(format!("skipped {} text box(es)", *text_boxes));
+        lost(
+            &mut notes,
+            &mut losses,
+            LossKind::Other,
+            format!("skipped {} text box(es)", *text_boxes),
+        );
     }
     edges.extend(part_edges);
     let (loops, open) = chain_edges(edges, 0.01);
     if open > 0 {
-        notes.push(format!(
-            "{open} board edge segment(s) do not close a loop and are not used"
-        ));
+        lost(
+            &mut notes,
+            &mut losses,
+            LossKind::Edge,
+            format!("{open} board edge segment(s) do not close a loop and are not used"),
+        );
     }
     let mut loops: Vec<Contour> = loops
         .into_iter()
         .filter_map(|c| match c.check() {
             Ok(()) => Some(c),
             Err(e) => {
-                notes.push(format!("skipped a board edge loop: {e}"));
+                lost(
+                    &mut notes,
+                    &mut losses,
+                    LossKind::Edge,
+                    format!("skipped a board edge loop: {e}"),
+                );
                 None
             }
         })
@@ -532,6 +587,7 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
         data: d,
         models,
         notes,
+        losses,
     })
 }
 

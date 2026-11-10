@@ -5,6 +5,7 @@
 //! coordinates. The placement changes them back to footprint-local
 //! coordinates.
 
+use lamina_ports::format::{Loss, LossKind, lost};
 use std::collections::BTreeMap;
 
 use lamina_model::*;
@@ -22,6 +23,8 @@ pub struct ImportedBoard {
     /// Maps a footprint id to its EasyEDA 3D model. The caller downloads the models.
     pub models: BTreeMap<String, ModelInfo>,
     pub notes: Vec<String>,
+    /// The data of the board that is not in the result, with its kind.
+    pub losses: Vec<Loss>,
 }
 
 fn r6(v: f64) -> f64 {
@@ -150,7 +153,8 @@ pub fn import_board(doc: &Value, name: &str) -> Result<ImportedBoard, String> {
         true
     };
     let mut edges: Vec<Edge> = Vec::new();
-    let mut skipped: BTreeMap<String, usize> = BTreeMap::new();
+    let mut losses: Vec<Loss> = Vec::new();
+    let mut skipped: BTreeMap<(LossKind, String), usize> = BTreeMap::new();
     let mut ids = Ids::default();
     let mut used_refs: BTreeMap<String, usize> = BTreeMap::new();
 
@@ -176,8 +180,10 @@ pub fn import_board(doc: &Value, name: &str) -> Result<ImportedBoard, String> {
                             notes.push(format!("renamed the duplicate reference {refdes} to {r}"));
                             refdes = r;
                         }
-                        for n in inst.notes {
-                            *skipped.entry(format!("{}: {n}", inst.package)).or_default() += 1;
+                        for l in inst.losses {
+                            *skipped
+                                .entry((l.kind, format!("{}: {}", inst.package, l.what)))
+                                .or_default() += 1;
                         }
                         let fp_id = register_footprint(&mut d, inst.footprint);
                         if let Some(m) = inst.model {
@@ -214,7 +220,12 @@ pub fn import_board(doc: &Value, name: &str) -> Result<ImportedBoard, String> {
                             }
                         }
                     }
-                    Err(e) => notes.push(format!("skipped a footprint: {e}")),
+                    Err(e) => lost(
+                        &mut notes,
+                        &mut losses,
+                        LossKind::Footprint,
+                        format!("skipped a footprint: {e}"),
+                    ),
                 }
             }
             "TRACK" => {
@@ -234,7 +245,7 @@ pub fn import_board(doc: &Value, name: &str) -> Result<ImportedBoard, String> {
                         let net = s(&fields, 3).trim().to_string();
                         if !ensure(&mut nets, &net) {
                             *skipped
-                                .entry("copper tracks without a net".into())
+                                .entry((LossKind::Track, "copper tracks without a net".into()))
                                 .or_default() += 1;
                             continue;
                         }
@@ -358,13 +369,17 @@ pub fn import_board(doc: &Value, name: &str) -> Result<ImportedBoard, String> {
                 // VIA~x~y~diameter~net~holeR~gId~locked
                 let net = s(&fields, 4).trim().to_string();
                 if !ensure(&mut nets, &net) {
-                    *skipped.entry("vias without a net".into()).or_default() += 1;
+                    *skipped
+                        .entry((LossKind::Track, "vias without a net".into()))
+                        .or_default() += 1;
                     continue;
                 }
                 let diameter = r6(f(&fields, 3) * U);
                 let drill = r6(f(&fields, 5) * 2.0 * U);
                 if !(drill > 0.0 && diameter > drill) {
-                    *skipped.entry("vias with a bad size".into()).or_default() += 1;
+                    *skipped
+                        .entry((LossKind::Track, "vias with a bad size".into()))
+                        .or_default() += 1;
                     continue;
                 }
                 d.routing.vias.push(Via {
@@ -442,7 +457,12 @@ pub fn import_board(doc: &Value, name: &str) -> Result<ImportedBoard, String> {
                                 .push(PadRef::new(refdes, number));
                         }
                     }
-                    Err(e) => notes.push(format!("skipped a free pad: {e}")),
+                    Err(e) => lost(
+                        &mut notes,
+                        &mut losses,
+                        LossKind::Pad,
+                        format!("skipped a free pad: {e}"),
+                    ),
                 }
             }
             "COPPERAREA" => {
@@ -456,7 +476,10 @@ pub fn import_board(doc: &Value, name: &str) -> Result<ImportedBoard, String> {
                 let pts = path_points(&ctx, s(&fields, 4));
                 let Some(outline) = contour_from_points(pts) else {
                     *skipped
-                        .entry("copper areas with an outline that is not valid".into())
+                        .entry((
+                            LossKind::Zone,
+                            "copper areas with an outline that is not valid".into(),
+                        ))
                         .or_default() += 1;
                     continue;
                 };
@@ -519,7 +542,10 @@ pub fn import_board(doc: &Value, name: &str) -> Result<ImportedBoard, String> {
                     {
                         if l.is_copper() {
                             *skipped
-                                .entry("solid copper regions (kept only as drawings)".into())
+                                .entry((
+                                    LossKind::Zone,
+                                    "solid copper regions (kept only as drawings)".into(),
+                                ))
                                 .or_default() += 1;
                         }
                         d.routing.graphics.push(BoardGraphic {
@@ -564,7 +590,11 @@ pub fn import_board(doc: &Value, name: &str) -> Result<ImportedBoard, String> {
                 });
             }
             "SVGNODE" | "DIMENSION" | "IMAGE" => {}
-            other => *skipped.entry(format!("{other} records")).or_default() += 1,
+            other => {
+                *skipped
+                    .entry((LossKind::Records, format!("{other} records")))
+                    .or_default() += 1
+            }
         }
     }
 
@@ -584,9 +614,12 @@ pub fn import_board(doc: &Value, name: &str) -> Result<ImportedBoard, String> {
         }
     }
     if open > 0 {
-        notes.push(format!(
-            "{open} board outline segment(s) do not close a loop and are not used"
-        ));
+        lost(
+            &mut notes,
+            &mut losses,
+            LossKind::Edge,
+            format!("{open} board outline segment(s) do not close a loop and are not used"),
+        );
     }
     let mut loops: Vec<Contour> = loops.into_iter().filter(|c| c.check().is_ok()).collect();
     loops.sort_by(|a, b| b.signed_area().abs().total_cmp(&a.signed_area().abs()));
@@ -594,10 +627,15 @@ pub fn import_board(doc: &Value, name: &str) -> Result<ImportedBoard, String> {
         d.board.outline = Some(outline);
         d.board.cutouts.extend(loops[1..].iter().cloned());
     } else {
-        notes.push("the board has no closed outline".into());
+        lost(
+            &mut notes,
+            &mut losses,
+            LossKind::Edge,
+            "the board has no closed outline".into(),
+        );
     }
-    for (what, n) in skipped {
-        notes.push(format!("skipped {n} {what}"));
+    for ((kind, what), n) in skipped {
+        lost(&mut notes, &mut losses, kind, format!("skipped {n} {what}"));
     }
     for net in nets.values_mut() {
         net.pads.sort();
@@ -656,6 +694,7 @@ pub fn import_board(doc: &Value, name: &str) -> Result<ImportedBoard, String> {
         data: d,
         models,
         notes,
+        losses,
     })
 }
 
@@ -679,7 +718,7 @@ struct LibInstance {
     attrs: BTreeMap<String, String>,
     pad_nets: Vec<(String, String)>,
     model: Option<ModelInfo>,
-    notes: Vec<String>,
+    losses: Vec<Loss>,
 }
 
 /// A placed footprint. The children have absolute coordinates, so find the
@@ -806,8 +845,8 @@ fn lib_instance(
     let mut value = None;
     let mut pad_nets = Vec::new();
     let mut model = None;
-    let mut notes = Vec::new();
-    let mut skipped: BTreeMap<String, usize> = BTreeMap::new();
+    let mut losses: Vec<Loss> = Vec::new();
+    let mut skipped: BTreeMap<(LossKind, String), usize> = BTreeMap::new();
     for c in &children {
         match c[0] {
             "PAD" => match pad_any(ctx, c) {
@@ -818,7 +857,9 @@ fn lib_instance(
                 }) => {
                     if let Some(ps) = pside {
                         if ps != side {
-                            *skipped.entry("pads on the other side".into()).or_default() += 1;
+                            *skipped
+                                .entry((LossKind::Pad, "pads on the other side".into()))
+                                .or_default() += 1;
                             continue;
                         }
                     }
@@ -843,7 +884,7 @@ fn lib_instance(
                     }
                     fp.pads.push(pad);
                 }
-                Err(e) => notes.push(format!("skipped a pad: {e}")),
+                Err(e) => losses.push(Loss::new(LossKind::Pad, format!("skipped a pad: {e}"))),
             },
             "HOLE" => {
                 let dia = r6(f(c, 3) * 2.0 * U);
@@ -969,11 +1010,15 @@ fn lib_instance(
                     model = Some(m);
                 }
             }
-            other => *skipped.entry(format!("{other} records")).or_default() += 1,
+            other => {
+                *skipped
+                    .entry((LossKind::Records, format!("{other} records")))
+                    .or_default() += 1
+            }
         }
     }
-    for (what, n) in skipped {
-        notes.push(format!("skipped {n} {what}"));
+    for ((kind, what), n) in skipped {
+        losses.push(Loss::new(kind, format!("skipped {n} {what}")));
     }
     // Add the reference and value placeholders where EasyEDA shows them.
     if let Some(cy) = fp.pads_bbox() {
@@ -1017,7 +1062,7 @@ fn lib_instance(
         attrs: a,
         pad_nets,
         model,
-        notes,
+        losses,
     })
 }
 

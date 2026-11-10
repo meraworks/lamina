@@ -2,6 +2,7 @@
 //! In KiCad, the Y axis points down and the pad angles in a board are
 //! absolute. This module converts both.
 
+use lamina_ports::format::{Loss, LossKind, lost};
 use std::collections::BTreeMap;
 
 use lamina_model::*;
@@ -32,6 +33,8 @@ pub struct Instance {
     /// cut-outs that the part needs in the board.
     pub edge: Vec<Shape>,
     pub notes: Vec<String>,
+    /// The data of the footprint that is not in the result, with its kind.
+    pub losses: Vec<Loss>,
 }
 
 /// The `(model ...)` entry. The KiCad path variables are not expanded.
@@ -156,7 +159,8 @@ pub fn convert(node: &Sx, library_hint: &str, origin: &str) -> Result<Instance, 
     let mut models = Vec::new();
     let mut dnp = false;
     let mut exclude_from_bom = false;
-    let mut skipped: BTreeMap<String, usize> = BTreeMap::new();
+    let mut skipped: BTreeMap<(LossKind, String), usize> = BTreeMap::new();
+    let mut losses: Vec<Loss> = Vec::new();
 
     for item in node.args() {
         let Some(kind) = item.name() else { continue };
@@ -233,7 +237,7 @@ pub fn convert(node: &Sx, library_hint: &str, origin: &str) -> Result<Instance, 
                     }
                     FpLayerMap::OtherSide => {
                         *skipped
-                            .entry(format!("graphics on {layer_name}"))
+                            .entry((LossKind::Other, format!("graphics on {layer_name}")))
                             .or_default() += 1
                     }
                 }
@@ -252,13 +256,18 @@ pub fn convert(node: &Sx, library_hint: &str, origin: &str) -> Result<Instance, 
                     let openings = openings_from(item, &ctx);
                     if openings.is_empty() {
                         *skipped
-                            .entry("pads without copper on this side".into())
+                            .entry((LossKind::Pad, "pads without copper on this side".into()))
                             .or_default() += 1
                     } else {
                         fp.graphics.extend(openings);
                     }
                 }
-                Err(e) => notes.push(format!("skipped pad {}: {e}", item.arg(0).unwrap_or("?"))),
+                Err(e) => lost(
+                    &mut notes,
+                    &mut losses,
+                    LossKind::Pad,
+                    format!("skipped pad {}: {e}", item.arg(0).unwrap_or("?")),
+                ),
             },
             "model" => {
                 let hidden = item.child("hide").is_some_and(|h| h.arg(0) != Some("no"))
@@ -269,13 +278,17 @@ pub fn convert(node: &Sx, library_hint: &str, origin: &str) -> Result<Instance, 
             }
             "zone" => match keepout_from(item, &ctx, (ax, ay)) {
                 Some(k) => fp.keepouts.push(k),
-                None => *skipped.entry("footprint zones".into()).or_default() += 1,
+                None => {
+                    *skipped
+                        .entry((LossKind::Keepout, "footprint zones".into()))
+                        .or_default() += 1
+                }
             },
             _ => {}
         }
     }
-    for (what, n) in skipped {
-        notes.push(format!("skipped {n} {what}"));
+    for ((kind, what), n) in skipped {
+        lost(&mut notes, &mut losses, kind, format!("skipped {n} {what}"));
     }
     if fp.pads.is_empty() {
         notes.push("the footprint has no pads".into());
@@ -297,6 +310,7 @@ pub fn convert(node: &Sx, library_hint: &str, origin: &str) -> Result<Instance, 
         dnp,
         exclude_from_bom,
         edge,
+        losses,
         pad_nets,
         models,
         notes,
@@ -308,7 +322,7 @@ fn push_text(
     item: &Sx,
     text: &str,
     ctx: &Ctx,
-    skipped: &mut BTreeMap<String, usize>,
+    skipped: &mut BTreeMap<(LossKind, String), usize>,
 ) {
     let hidden = item.child("hide").is_some_and(|h| h.arg(0) != Some("no"))
         || item.args().iter().any(|a| a.text() == Some("hide"));
@@ -320,7 +334,9 @@ fn push_text(
         FpLayerMap::Keep(l) => l,
         FpLayerMap::Drop => return,
         FpLayerMap::OtherSide => {
-            *skipped.entry(format!("text on {layer_name}")).or_default() += 1;
+            *skipped
+                .entry((LossKind::Other, format!("text on {layer_name}")))
+                .or_default() += 1;
             return;
         }
     };

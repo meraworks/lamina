@@ -2,6 +2,7 @@
 //! The result is artwork: the outline, holes, copper and silkscreen as drawings,
 //! with no parts or nets. Use it to look at a board and to check it.
 
+use lamina_ports::format::{Loss, LossKind, lost};
 use std::collections::BTreeMap;
 
 use geo::{Area, MultiPolygon, Polygon};
@@ -176,6 +177,8 @@ pub fn keyhole(p: &Polygon<f64>) -> Vec<Point> {
 pub struct FabBoard {
     pub data: ProjectData,
     pub notes: Vec<String>,
+    /// The data of the files that is not in the board, with its kind.
+    pub losses: Vec<Loss>,
     /// The layer of each file, as `import` read it.
     pub layers: BTreeMap<String, String>,
 }
@@ -207,6 +210,7 @@ fn layer_name(l: FabLayer) -> String {
 /// Build a board from fab files given as (name, contents).
 pub fn import(files: &[(String, Vec<u8>)], name: &str) -> Result<FabBoard, String> {
     let mut notes = Vec::new();
+    let mut losses: Vec<Loss> = Vec::new();
     let mut layers = BTreeMap::new();
     let mut copper: Vec<(u8, bool, String, MultiPolygon<f64>)> = Vec::new();
     let mut silk: Vec<(Side, MultiPolygon<f64>)> = Vec::new();
@@ -264,14 +268,19 @@ pub fn import(files: &[(String, Vec<u8>)], name: &str) -> Result<FabBoard, Strin
         .map(|(f, _)| f)
         .collect();
     if !skipped.is_empty() {
-        notes.push(format!(
-            "Not imported, because mask and paste come from pads and artwork has no pads: {}",
-            skipped
-                .iter()
-                .map(|s| s.as_str())
-                .collect::<Vec<_>>()
-                .join(", ")
-        ));
+        lost(
+            &mut notes,
+            &mut losses,
+            LossKind::Other,
+            format!(
+                "Not imported, because mask and paste come from pads and artwork has no pads: {}",
+                skipped
+                    .iter()
+                    .map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+        );
     }
 
     let mut d = ProjectData::new(name);
@@ -339,14 +348,24 @@ pub fn import(files: &[(String, Vec<u8>)], name: &str) -> Result<FabBoard, Strin
             );
             loops = wide;
             if wide_open > 0 {
-                notes.push(format!(
-                    "Lamina ignored {wide_open} outline segment(s) that are not part of a closed loop"
-                ));
+                lost(
+                    &mut notes,
+                    &mut losses,
+                    LossKind::Edge,
+                    format!(
+                        "Lamina ignored {wide_open} outline segment(s) that are not part of a closed loop"
+                    ),
+                );
             }
         } else if open > 0 {
-            notes.push(format!(
-                "Lamina ignored {open} outline segment(s) that are not part of a closed loop"
-            ));
+            lost(
+                &mut notes,
+                &mut losses,
+                LossKind::Edge,
+                format!(
+                    "Lamina ignored {open} outline segment(s) that are not part of a closed loop"
+                ),
+            );
         }
     }
     loops.retain(|c| c.check().is_ok());
@@ -442,6 +461,7 @@ pub fn import(files: &[(String, Vec<u8>)], name: &str) -> Result<FabBoard, Strin
     Ok(FabBoard {
         data: d,
         notes,
+        losses,
         layers,
     })
 }

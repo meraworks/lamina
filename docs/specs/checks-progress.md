@@ -180,7 +180,11 @@ Later items:
   the outputs were made with no `force`. The files of the owner in
   `Desktop\tit` were not changed: the same defect is in them.
 
-The server has 84 tools. The workspace has 413 tests.
+- Each importer (KiCad, EasyEDA, Gerber) gives a loss its kind at the place
+  where it drops the data (`lost(notes, losses, kind, text)`). No function
+  reads the note text to find the kind.
+
+The server has 84 tools. The workspace has 412 tests.
 
 ## As the plan says, for the record
 
@@ -199,9 +203,6 @@ The server has 84 tools. The workspace has 413 tests.
   source code of the `pcb-toolkit` crate gives them. The first version of the
   table came from memory of IPC-2221B and had smaller values for B2 and B4. The
   table was not compared with the standard itself, which is not free.
-- `LossKind` comes from one function that reads the note text of an adapter
-  (`Loss::from_note`). The adapters do not make each loss with its kind at the
-  place where they drop the data.
 - The triage file has the design view of the two boards, not the strict files.
 - The fab profile numbers come from the fab pages on 2026-11-10.
 
