@@ -168,6 +168,38 @@ pub fn export_dsn(d: &ProjectData, name: &str, reroute_all: bool) -> String {
             structure = structure.child(n(kind).str(&k.id).child(poly));
         }
     }
+    // The keep-outs of the footprints, for example below an antenna.
+    let copper_layers = d.board.stackup.copper_layers;
+    for (refdes, pl) in &d.placement.placements {
+        let Some(fp) = d
+            .parts
+            .parts
+            .get(refdes)
+            .and_then(|p| d.footprints.get(&p.footprint))
+        else {
+            continue;
+        };
+        for (index, (layers, points, forbid)) in lamina_geom::part_keepouts(fp, pl, copper_layers)
+            .into_iter()
+            .enumerate()
+        {
+            let kind = match (forbid.tracks, forbid.vias) {
+                (true, true) => "keepout",
+                (true, false) => "wire_keepout",
+                (false, true) => "via_keepout",
+                (false, false) => continue,
+            };
+            for l in layers {
+                let layer = Layer::Copper(Copper::from_index(l, copper_layers));
+                let mut poly = n("polygon").sym(lname(layer)).num(0.0);
+                for p in &points {
+                    poly = poly.num(um(p.x)).num(um(p.y));
+                }
+                structure =
+                    structure.child(n(kind).str(format!("{refdes}-k{}", index + 1)).child(poly));
+            }
+        }
+    }
     // Via padstacks: the default size and each size that a net class sets.
     let mut vias: BTreeSet<(u64, u64)> = BTreeSet::new();
     let key = |d: f64, dr: f64| ((d * 1e6) as u64, (dr * 1e6) as u64);
@@ -571,6 +603,44 @@ pub fn import_ses(src: &str, d: &ProjectData) -> Result<Session, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_keepout_of_a_footprint_is_in_the_design_file() {
+        let mut d = ProjectData::new("k");
+        d.board.outline = Some(Contour::rect(0.0, 0.0, 20.0, 20.0));
+        let mut fp = Footprint::new(
+            "ANT".to_string(),
+            Provenance::Manual {
+                note: "test".into(),
+            },
+        );
+        fp.pads.push(Pad::smd(
+            "1",
+            Point::new(0.0, 0.0),
+            PadShape::Rect {
+                width: 1.0,
+                height: 1.0,
+            },
+        ));
+        fp.keepouts.push(FpKeepout {
+            scope: KeepoutScope::AllCopper,
+            outline: Contour::rect(-2.0, 2.0, 4.0, 3.0),
+            forbid: Forbid {
+                tracks: true,
+                vias: true,
+                pours: true,
+                pads: false,
+                parts: false,
+            },
+        });
+        d.footprints.insert("ANT".into(), fp);
+        d.parts.parts.insert("U1".into(), Part::new("ANT"));
+        d.placement
+            .placements
+            .insert("U1".into(), Placement::at(10.0, 10.0));
+        let text = export_dsn(&d, "k", false);
+        assert_eq!(text.matches("(keepout \"U1-k1\"").count(), 2, "{text}");
+    }
 
     fn board() -> ProjectData {
         let mut d = ProjectData::new("t");

@@ -9,6 +9,7 @@ description = "Specctra DSN export and SES import, for external autorouters, for
 [dependencies]
 lamina-ports.workspace = true
 lamina-model.workspace = true
+lamina-geom.workspace = true
 lamina-kicad.workspace = true
 serde.workspace = true
 schemars.workspace = true

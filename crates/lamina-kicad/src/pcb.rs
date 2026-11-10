@@ -103,6 +103,8 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
     let mut used_refs: BTreeMap<String, usize> = BTreeMap::new();
     let mut next_x = 1;
     let mut skipped_notes: BTreeMap<String, usize> = BTreeMap::new();
+    // The Edge.Cuts drawings of the footprints, in board coordinates.
+    let mut part_edges: Vec<Edge> = Vec::new();
     for node in root
         .args()
         .iter()
@@ -133,6 +135,18 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
             *skipped_notes
                 .entry(format!("{}: {note}", inst.name))
                 .or_default() += 1;
+        }
+        if !inst.edge.is_empty() {
+            let pl = Placement {
+                x: inst.at.x,
+                y: inst.at.y,
+                rotation: inst.rotation,
+                side: inst.side,
+                locked: false,
+            };
+            for shape in &inst.edge {
+                part_edges.extend(edges_of(shape).into_iter().map(|e| place_edge(e, &pl)));
+            }
         }
         // The footprint definition. Identical definitions are shared.
         let fp_id = register_footprint(&mut d, inst.footprint.clone());
@@ -419,6 +433,7 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
             filled,
         });
     }
+    edges.extend(part_edges);
     let (loops, open) = chain_edges(edges, 0.01);
     if open > 0 {
         notes.push(format!(
@@ -1416,6 +1431,42 @@ fn hole_node(i: usize, h: &Hole, net_node: &dyn Fn(&str) -> Option<Node>) -> Nod
                 .sym("exclude_from_pos_files"),
         )
         .child(pad.child(n("uuid").str(uuid(&format!("holepad:{}", h.id)))))
+}
+
+/// An edge of a footprint in board coordinates. A part on the bottom side is
+/// mirrored, so the direction of an arc changes.
+fn place_edge(e: Edge, pl: &Placement) -> Edge {
+    let flip = pl.side == Side::Bottom;
+    let tf = |p: Point| {
+        let q = pl.transform(p);
+        Point::new(r6(q.x), r6(q.y))
+    };
+    match e {
+        Edge::Line(a, b) => Edge::Line(tf(a), tf(b)),
+        Edge::Arc { a, b, center, ccw } => Edge::Arc {
+            a: tf(a),
+            b: tf(b),
+            center: tf(center),
+            ccw: ccw != flip,
+        },
+        Edge::Loop(c) => Edge::Loop(Contour {
+            vertices: c
+                .vertices
+                .iter()
+                .map(|v| {
+                    let p = tf(Point::new(v.x, v.y));
+                    Vertex {
+                        x: p.x,
+                        y: p.y,
+                        arc: v.arc.as_ref().map(|a| ArcTo {
+                            center: tf(a.center),
+                            ccw: a.ccw != flip,
+                        }),
+                    }
+                })
+                .collect(),
+        }),
+    }
 }
 
 #[cfg(test)]

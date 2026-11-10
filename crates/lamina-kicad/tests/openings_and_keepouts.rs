@@ -103,3 +103,42 @@ fn reference_is_hidden_when_only_the_fab_layer_has_it() {
         &text[at..at + end]
     );
 }
+
+#[test]
+fn edge_drawings_of_a_footprint_become_board_cutouts() {
+    // A board of 20 x 20 mm with one footprint at (10, 10), turned 90 degrees.
+    // The footprint has a circle and a rectangle on Edge.Cuts.
+    let text = r#"(kicad_pcb (version 20240108) (generator "test")
+  (layers (0 "F.Cu" signal) (31 "B.Cu" signal) (44 "Edge.Cuts" user))
+  (gr_rect (start 0 0) (end 20 20) (layer "Edge.Cuts") (stroke (width 0.1) (type default)))
+  (footprint "lib:SLOT" (layer "F.Cu") (at 10 10 90)
+    (property "Reference" "J1" (at 0 0 0) (layer "F.SilkS"))
+    (fp_circle (center 0 0) (end 1 0) (layer "Edge.Cuts") (stroke (width 0.1) (type default)))
+    (fp_rect (start 3 -1) (end 5 1) (layer "Edge.Cuts") (stroke (width 0.1) (type default)))
+    (pad "1" smd rect (at 0 4) (size 1 1) (layers "F.Cu" "F.Paste" "F.Mask"))
+  )
+)"#;
+    let b = lamina_kicad::import_board(text, "slots").unwrap();
+    let d = &b.data;
+    assert!(d.board.outline.is_some());
+    assert_eq!(d.board.cutouts.len(), 2, "{:?}", b.notes);
+    let boxes: Vec<lamina_model::Rect> = d
+        .board
+        .cutouts
+        .iter()
+        .map(|c| lamina_model::Rect::from_points(c.flatten(0.01)).unwrap())
+        .collect();
+    let near = |a: f64, b: f64| (a - b).abs() < 0.02;
+    // The circle stays at the part position.
+    assert!(boxes.iter().any(|r| near(r.min.x, 9.0)
+        && near(r.max.x, 11.0)
+        && near(r.min.y, 9.0)
+        && near(r.max.y, 11.0)));
+    // The rectangle is 4 mm from the part, and its size is 2 x 2 mm.
+    assert!(boxes.iter().any(|r| {
+        let (cx, cy) = ((r.min.x + r.max.x) / 2.0, (r.min.y + r.max.y) / 2.0);
+        near(r.max.x - r.min.x, 2.0)
+            && near(r.max.y - r.min.y, 2.0)
+            && near((cx - 10.0).hypot(cy - 10.0), 4.0)
+    }));
+}

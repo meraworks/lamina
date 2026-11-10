@@ -28,6 +28,9 @@ pub struct Instance {
     pub pad_nets: Vec<(String, String)>,
     /// The visible 3D models, in file order. The first model that resolves is used.
     pub models: Vec<KicadModel>,
+    /// The drawings on Edge.Cuts, in footprint coordinates: slots and
+    /// cut-outs that the part needs in the board.
+    pub edge: Vec<Shape>,
     pub notes: Vec<String>,
 }
 
@@ -135,6 +138,7 @@ pub fn convert(node: &Sx, library_hint: &str, origin: &str) -> Result<Instance, 
         })
         .unwrap_or((0.0, 0.0, 0.0));
     let ctx = Ctx { side, rot: arot };
+    let mut edge: Vec<Shape> = Vec::new();
     let mut fp = Footprint::new(
         footprint_id(&name),
         Provenance::Kicad {
@@ -220,7 +224,13 @@ pub fn convert(node: &Sx, library_hint: &str, origin: &str) -> Result<Instance, 
                             });
                         }
                     }
-                    FpLayerMap::Drop => {}
+                    FpLayerMap::Drop => {
+                        if layer_name == "Edge.Cuts" {
+                            if let Some(shape) = shape_from(item, &|x, y| ctx.lp(x, y)) {
+                                edge.push(shape);
+                            }
+                        }
+                    }
                     FpLayerMap::OtherSide => {
                         *skipped
                             .entry(format!("graphics on {layer_name}"))
@@ -286,6 +296,7 @@ pub fn convert(node: &Sx, library_hint: &str, origin: &str) -> Result<Instance, 
         properties,
         dnp,
         exclude_from_bom,
+        edge,
         pad_nets,
         models,
         notes,
