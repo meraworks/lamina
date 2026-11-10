@@ -104,7 +104,38 @@ Defects that the new tests found, and their corrections:
 - `audit_footprints` stored a fail for a footprint that differs from the
   generic package pattern. It now stores only a pass.
 
-The server has 84 tools. The workspace has 399 tests.
+Later items:
+
+- Speed: the analysis of the T.I.T example takes 0.29 s in a release build
+  (before: 0.70 s; limit of the plan: 0.5 s). The thermal spokes cut the pour
+  one time for all pads, and each copper layer is filled in its own thread.
+- Task 6.4: the copper Gerber files have Gerber X2 attributes: the net, the part
+  and the pad of each object, and the function of each aperture.
+- Task 5.4: `verify_footprint` with `package` compares in the three IPC
+  densities. Task 5.6: `audit_footprints` uses a second source (the footprint of
+  the same part from its provider) and has `online`.
+- Task 6.1: `use_fab_preset` accepts a fab profile id.
+- Task 9.1: `review` writes three images if the program has a renderer.
+- Task 6.3: `board_neck` finds a narrow part of the board body.
+- Task 3.3: loss notes for a zone with `thru_hole_only`, a hatch pour, more
+  than one outline of a zone, a text box, and a pad with a drill offset.
+- The scene draws rule areas as lines on the keep-out layer.
+- The outputs of the two example boards come from the current program.
+
+- The `c3-sensor` build test passes (26 tests, zero violations). The new
+  checks found this on that example, and each one is corrected:
+  - The autorouter put six vias in SMD pads. The router does not put a via
+    in an SMD pad now (a large pad, as a thermal pad, can have vias).
+  - The input capacitor C1 of the regulator was at the output side, and the
+    capacitors of U1 and U3 were more than 3 mm from their supply pins. The
+    script places them at the pins.
+  - The script accepted each warning that names J1 or U1. It accepts only the
+    board edge warnings now.
+  - `pin1_mark` gave a false alarm for a footprint with two marks. One mark
+    at pad 1 is sufficient now.
+  - `decoupling_far` does not examine connectors.
+
+The server has 84 tools. The workspace has 407 tests.
 
 ## Differences from the plan
 
@@ -136,18 +167,14 @@ The server has 84 tools. The workspace has 399 tests.
 
 ## Not done
 
-- Gerber X2 aperture, net and component attributes on each object.
-- `audit_footprints`: a second-source mode and an online mode.
-- `verify_footprint` with `package`: the band from the least to the most
-  density. It compares with the nominal pattern.
-- `use_fab_preset` does not use the fab profiles.
-- `review` adds no images.
-- `board_neck` examines only the width of cut-outs.
-- Loss notes for these KiCad items: a zone with `thru_hole_only`, a pad with a
-  drill offset, a hatch pour, a second polygon of a zone, a text box.
-- The viewer does not draw rule areas.
-- Speed: the analysis of T.I.T takes 0.70 s in a release build (limit 0.5 s).
-  The pour takes 0.69 s of it.
-- The two example boards have footprints with no evidence, so `review` gives
-  `not_ready` for them. Their `output` files are from 0.4.0.
-- The `c3-sensor` build test was not run (it needs the network).
+- The two example boards have footprints with no datasheet evidence (15 on
+  T.I.T, 11 on Yoink), so `review` gives `not_ready` for them, and their
+  outputs were made with `force`. A person with the datasheets must verify
+  them; an acceptance with no comparison was not recorded.
+- The second source of `audit_footprints` is the LCSC number of a part. Other
+  providers are not used.
+- The Gerber X2 attributes are on copper layers only, and a pour has only its
+  net. No other program read the files to confirm the attributes; the Lamina
+  reader reads them back.
+- The image `docs/images/viewer-3d.png` shows the `c3-sensor` board before
+  three capacitors moved.

@@ -353,6 +353,18 @@ fn decoupling(d: &ProjectData, v: &mut Vec<Violation>) {
         if fp.pads.len() < 4 {
             continue;
         }
+        // A connector gives or takes power. It is not a load that needs a
+        // capacitor at its pin.
+        let letters: String = refdes
+            .chars()
+            .take_while(|c| c.is_ascii_alphabetic())
+            .collect();
+        if matches!(
+            letters.as_str(),
+            "J" | "P" | "CN" | "X" | "TB" | "BT" | "TP"
+        ) {
+            continue;
+        }
         // The smallest distance between two pads.
         let mut pitch = f64::INFINITY;
         for (i, a) in fp.pads.iter().enumerate() {

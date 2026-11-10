@@ -213,16 +213,21 @@ pub fn pin1_mark(fp: &Footprint) -> Option<String> {
                 first.number
             ));
         }
-        let n = marks.len() as f64;
-        let mark = Point::new(
-            marks.iter().map(|p| p.x).sum::<f64>() / n,
-            marks.iter().map(|p| p.y).sum::<f64>() / n,
-        );
-        let (good, bad) = (mark.dist(first.at), mark.dist(tf(first.at)));
-        if bad + 0.2 < good {
+        // A footprint can have more than one mark: a dot at pad 1 and, for
+        // example, a ground mark at a different pad. One mark at pad 1 is
+        // sufficient. The mark is wrong only if none is at pad 1 and one is
+        // at the pad that takes its position after the turn.
+        let turned = tf(first.at);
+        let at_first = marks
+            .iter()
+            .any(|m| m.dist(first.at) + 0.2 < m.dist(turned));
+        let at_other = marks
+            .iter()
+            .any(|m| m.dist(turned) + 0.2 < m.dist(first.at));
+        if !at_first && at_other {
             let other = pads
                 .iter()
-                .find(|q| q.at.dist(tf(first.at)) <= TOL)
+                .find(|q| q.at.dist(turned) <= TOL)
                 .map(|q| q.number.as_str())
                 .unwrap_or("?");
             return Some(format!(

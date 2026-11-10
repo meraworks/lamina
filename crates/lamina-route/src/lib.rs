@@ -472,6 +472,7 @@ impl<'a> Ctx<'a> {
                 )
             })
             .collect();
+        let mut smd_pads: Vec<Prim> = Vec::new();
         for (refdes, pl) in &self.d.placement.placements {
             let Some(fp) = self
                 .d
@@ -485,8 +486,23 @@ impl<'a> Ctx<'a> {
             for (ls, pts, f) in lamina_geom::part_keepouts(fp, pl, layers) {
                 keepouts.push((ls, lamina_geom::board::poly(pts), f));
             }
+            // A via in an SMD pad takes the solder from the joint. A large
+            // pad (a thermal pad) can have vias.
+            for pad in fp.pads.iter().filter(|x| x.is_smd()) {
+                let (w, h) = pad.shape.size();
+                if w.min(h) <= 6.0 * p.via_r {
+                    smd_pads.push(lamina_geom::pad_prim(pad, pl));
+                }
+            }
         }
         let mut drill_ok = vec![true; g.plane()];
+        for prim in &smd_pads {
+            cells.clear();
+            g.cover(prim, 0, g.pitch * 0.5, &mut cells);
+            for &c in &cells {
+                drill_ok[c as usize] = false;
+            }
+        }
         let via_edge = (rules.copper_to_edge + p.via_r) as f32;
         for (i, ok) in drill_ok.iter_mut().enumerate() {
             if self.edge_dist[i] < via_edge {

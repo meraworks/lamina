@@ -141,7 +141,8 @@ with no net can touch.
 not true, and `status` gives their number in `release_errors`. A severity that
 you set for a rule wins. `export` writes one drill file for the holes that go
 through the board, one for each span of blind or buried vias (for example
-`-L1-L2.DRL`), one for the non-plated holes, and a `.gbrjob` job file. Parts that
+`-L1-L2.DRL`), one for the non-plated holes, and a `.gbrjob` job file. The copper
+Gerber files have the net, the part and the pad of each object (Gerber X2). Parts that
 are not placed (DNP) get no paste; `paste_for_dnp: true` changes that. In the
 IPC-D-356 netlist, a reference longer than 6 characters gets an alias (`Z00001`)
 and a `C  REF` comment line. On the command line,
@@ -184,7 +185,8 @@ datasheet and stores the result in the footprint file. Give one of: `package` (t
 package dimensions), `pads` (the recommended land pattern), `leads` (the lead
 sizes of a through-hole part) or `accept` (a reason to trust the source).
 `audit_footprints` examines all footprints with no evidence against the standard
-packages. `compare_footprints` compares two footprints: the turn, the mirror, the
+packages (in the three IPC densities) and against the footprint of the same part
+from its provider, as a second source. `online: true` permits the network for that. `compare_footprints` compares two footprints: the turn, the mirror, the
 move and each pad that differs.
 
 The rules are `footprint_mismatch` (the evidence is a fail), `footprint_stale`
@@ -198,7 +200,8 @@ error only for release. `status` gives the numbers in `footprint_evidence`.
 `board_minimums` gives the smallest features of the board with their items.
 `fab_profiles` lists the fabricator limits that Lamina has, each with its source
 page and the date of the check. `fab_compat` compares the board with each profile
-and gives the margin of each limit, the worst first. The fab checks are
+and gives the margin of each limit, the worst first. `use_fab_preset` with a
+profile id (`jlcpcb`, `pcbway`) puts the limits of that fab into the rules. The fab checks are
 `hole_to_edge`, `drill_aspect` (`max_drill_aspect`), `mask_sliver`
 (`min_mask_web`) and `board_neck` (`min_route_width`).
 
@@ -256,7 +259,8 @@ These checks need no schematic. They use net data.
 ### Review and CI
 
 `review` gives one verdict for the board (`ready`, `ready_with_warnings` or
-`not_ready`) with the evidence, and writes `output/review.md`. Call it before
+`not_ready`) with the evidence, and writes `output/review.md` with images of the
+top side, the bottom side and the violations. Call it before
 `export`. On the command line:
 
 ```

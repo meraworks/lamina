@@ -126,13 +126,14 @@ WIDTH, HEIGHT, CORNER = 56, 36, 2.5
 # Rotation 270 turns the USB-C mouth to the left edge and the antenna to the right.
 PLACE = [
     ("USB-C", {"J1": (5.0, 18, 270), "R1": (10.6, 13.2, 90), "R2": (13.4, 13.2, 90)}),
-    ("regulator", {"U2": (17.5, 26.5, 0), "C1": (11.2, 26.5, 90), "C3": (24.5, 26.5, 90)}),
-    ("ESP32-C3", {"U1": (44.4, 18, 270), "C2": (47.5, 28.0, 0),
+    # C1 is the input capacitor: it is at the VIN pin, on the right side of U2.
+    ("regulator", {"U2": (17.5, 26.5, 0), "C1": (24.5, 26.5, 270), "C3": (11.2, 26.5, 90)}),
+    ("ESP32-C3", {"U1": (44.4, 18, 270), "C2": (47.5, 26.6, 0),
                   "R3": (39.0, 27.4, 0), "C4": (39.0, 31.2, 0)}),
     ("buttons and LED", {"SW1": (30.5, 30.0, 0), "SW2": (30.5, 6.0, 0),
                          "D1": (31.0, 20.5, 0), "R4": (31.0, 17.5, 0)}),
     ("sensor, RGB LED and header", {"D2": (21.5, 12.0, 0), "C6": (21.5, 7.4, 0),
-                                    "U3": (13.5, 6.0, 0), "C5": (13.5, 9.0, 0),
+                                    "U3": (13.5, 6.0, 0), "C5": (13.5, 3.2, 180),
                                     "R5": (9.6, 6.0, 90), "R6": (17.2, 6.0, 90),
                                     "U4": (27.4, 13.3, 0), "C7": (27.4, 9.7, 0),
                                     "J2": (40.6, 4.6, 90)}),
@@ -223,9 +224,12 @@ def main(argv=None):
     say("accept the warnings that are there by design")
     why = {"J1": "USB-C receptacle overhangs the board edge by design",
            "U1": "Module antenna sits at the board edge by design"}
+    # Only the warnings about the board edge. A different warning for these
+    # parts is a defect.
+    edge_rules = {"courtyard_outside_board", "silk_outside_board", "silk_to_edge"}
     for v in t("check")["violations"]:
         ref = next((r for r in why if r in v["items"]), None)
-        if ref:
+        if ref and v["rule"] in edge_rules:
             t("exclude_violation", rule=v["rule"], items=v["items"], reason=why[ref])
     left = t("check")["total"]
     print(f"  {left} violations left")

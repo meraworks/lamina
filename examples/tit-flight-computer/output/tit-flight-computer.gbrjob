@@ -1,0 +1,70 @@
+{
+  "Header": {
+    "GenerationSoftware": {
+      "Vendor": "Lamina",
+      "Application": "lamina",
+      "Version": "0.4.0"
+    }
+  },
+  "GeneralSpecs": {
+    "ProjectId": {
+      "Name": "tit-flight-computer",
+      "GUID": "",
+      "Revision": ""
+    },
+    "Size": {
+      "X": 69.95,
+      "Y": 69.975
+    },
+    "LayerNumber": 2,
+    "BoardThickness": 1.6,
+    "Finish": "LeadFree HASL"
+  },
+  "FilesAttributes": [
+    {
+      "Path": "tit-flight-computer.GTL",
+      "FileFunction": "Copper,L1,Top",
+      "FilePolarity": "Positive"
+    },
+    {
+      "Path": "tit-flight-computer.GBL",
+      "FileFunction": "Copper,L2,Bot",
+      "FilePolarity": "Positive"
+    },
+    {
+      "Path": "tit-flight-computer.GTS",
+      "FileFunction": "Soldermask,Top",
+      "FilePolarity": "Negative"
+    },
+    {
+      "Path": "tit-flight-computer.GTP",
+      "FileFunction": "Paste,Top",
+      "FilePolarity": "Positive"
+    },
+    {
+      "Path": "tit-flight-computer.GTO",
+      "FileFunction": "Legend,Top",
+      "FilePolarity": "Positive"
+    },
+    {
+      "Path": "tit-flight-computer.GBS",
+      "FileFunction": "Soldermask,Bot",
+      "FilePolarity": "Negative"
+    },
+    {
+      "Path": "tit-flight-computer.GBP",
+      "FileFunction": "Paste,Bot",
+      "FilePolarity": "Positive"
+    },
+    {
+      "Path": "tit-flight-computer.GBO",
+      "FileFunction": "Legend,Bot",
+      "FilePolarity": "Positive"
+    },
+    {
+      "Path": "tit-flight-computer.GKO",
+      "FileFunction": "Profile,NP",
+      "FilePolarity": "Positive"
+    }
+  ]
+}

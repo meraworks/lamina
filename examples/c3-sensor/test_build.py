@@ -250,7 +250,7 @@ class BuiltBoardTest(unittest.TestCase):
         cls.t = build.Lamina(exe)
         cls.t("open", path=cls.board)
         cls.pins = {f"{p['refdes']}.{p['pad']}": p for p in cls.t("pins")}
-        with open(os.path.join(cls.board, "routing.json")) as f:
+        with open(os.path.join(cls.board, "routing.json"), encoding="utf-8") as f:
             cls.routing = json.load(f)
         cls.footprints = {}
 
@@ -260,7 +260,7 @@ class BuiltBoardTest(unittest.TestCase):
         shutil.rmtree(cls.work, ignore_errors=True)
 
     def footprint(self, ref):
-        with open(os.path.join(self.board, "parts.json")) as f:
+        with open(os.path.join(self.board, "parts.json"), encoding="utf-8") as f:
             fid = json.load(f)["parts"][ref]["footprint"]
         if fid not in self.footprints:
             self.footprints[fid] = self.t("get_footprint", id=fid)
@@ -350,7 +350,7 @@ class BuiltBoardTest(unittest.TestCase):
         # copper as filled polygons (KiCad's y axis points down).
         path = os.path.join(self.work, "fill.kicad_pcb")
         self.t("export_board", format="kicad", path=path)
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             text = f.read()
         fills = re.findall(r'\(filled_polygon\s*\(layer "?([^")\s]+)"?\)\s*\(pts(.*?)\)\s*\)',
                            text, re.S)

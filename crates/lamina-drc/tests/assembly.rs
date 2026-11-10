@@ -315,6 +315,13 @@ fn pin1_mark_finds_no_mark_and_a_mark_at_the_wrong_pad() {
     let text = pin1_mark(&fp).expect("wrong mark");
     assert!(text.contains("nearer to pad 3 than to pad 1"), "{text}");
 
+    // A dot at pad 1 and a second mark at pad 3 (a ground mark): good.
+    fp.graphics.pop();
+    fp.graphics.push(dot(-2.1, 1.0));
+    fp.graphics.push(line((1.4, -1.5), (1.8, -1.5)));
+    assert_eq!(pin1_mark(&fp), None, "one mark is at pad 1");
+    fp.graphics.pop();
+
     // Two pads: the check does not apply.
     fp.pads.truncate(2);
     fp.graphics.pop();

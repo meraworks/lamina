@@ -1,0 +1,70 @@
+{
+  "Header": {
+    "GenerationSoftware": {
+      "Vendor": "Lamina",
+      "Application": "lamina",
+      "Version": "0.4.0"
+    }
+  },
+  "GeneralSpecs": {
+    "ProjectId": {
+      "Name": "yoink-main-board",
+      "GUID": "",
+      "Revision": ""
+    },
+    "Size": {
+      "X": 86.0,
+      "Y": 58.0
+    },
+    "LayerNumber": 2,
+    "BoardThickness": 1.6,
+    "Finish": "LeadFree HASL"
+  },
+  "FilesAttributes": [
+    {
+      "Path": "yoink-main-board.GTL",
+      "FileFunction": "Copper,L1,Top",
+      "FilePolarity": "Positive"
+    },
+    {
+      "Path": "yoink-main-board.GBL",
+      "FileFunction": "Copper,L2,Bot",
+      "FilePolarity": "Positive"
+    },
+    {
+      "Path": "yoink-main-board.GTS",
+      "FileFunction": "Soldermask,Top",
+      "FilePolarity": "Negative"
+    },
+    {
+      "Path": "yoink-main-board.GTP",
+      "FileFunction": "Paste,Top",
+      "FilePolarity": "Positive"
+    },
+    {
+      "Path": "yoink-main-board.GTO",
+      "FileFunction": "Legend,Top",
+      "FilePolarity": "Positive"
+    },
+    {
+      "Path": "yoink-main-board.GBS",
+      "FileFunction": "Soldermask,Bot",
+      "FilePolarity": "Negative"
+    },
+    {
+      "Path": "yoink-main-board.GBP",
+      "FileFunction": "Paste,Bot",
+      "FilePolarity": "Positive"
+    },
+    {
+      "Path": "yoink-main-board.GBO",
+      "FileFunction": "Legend,Bot",
+      "FilePolarity": "Positive"
+    },
+    {
+      "Path": "yoink-main-board.GKO",
+      "FileFunction": "Profile,NP",
+      "FilePolarity": "Positive"
+    }
+  ]
+}
