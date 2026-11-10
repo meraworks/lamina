@@ -284,6 +284,7 @@ mod tests {
                 net: Some("GND*".into()),
                 class: None,
                 layer: None,
+                ..Default::default()
             },
             min_annular_ring: Some(0.1),
             min_via_drill: Some(0.2),
@@ -295,6 +296,7 @@ mod tests {
                 net: None,
                 class: Some("HV".into()),
                 layer: Some(Layer::TOP),
+                ..Default::default()
             },
             clearance: Some(0.6),
             ..Default::default()

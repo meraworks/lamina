@@ -50,6 +50,7 @@ fn board() -> ProjectData {
             net: Some("GND".into()),
             class: None,
             layer: None,
+            ..Default::default()
         },
         min_annular_ring: Some(0.04),
         ..Default::default()

@@ -735,6 +735,46 @@ pub struct RoutingFile {
     pub texts: Vec<BoardText>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub graphics: Vec<BoardGraphic>,
+    /// Areas that custom rules can select.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub areas: Vec<RuleArea>,
+}
+
+/// An area of the board that a custom rule can select with `when.area`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct RuleArea {
+    pub id: String,
+    /// The layers of the area. An empty list is all layers.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub layers: Vec<Layer>,
+    pub outline: Contour,
+}
+
+impl RoutingFile {
+    /// The ids of the rule areas that have the point `p` on `layer`.
+    pub fn areas_at(&self, p: Point, layer: Option<Layer>) -> Vec<&str> {
+        self.areas
+            .iter()
+            .filter(|a| a.layers.is_empty() || layer.is_none_or(|l| a.layers.contains(&l)))
+            .filter(|a| {
+                let ring = a.outline.flatten(0.02);
+                let n = ring.len();
+                let mut inside = false;
+                let mut j = n.wrapping_sub(1);
+                for i in 0..n {
+                    let (a, b) = (ring[i], ring[j]);
+                    if (a.y > p.y) != (b.y > p.y)
+                        && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x
+                    {
+                        inside = !inside;
+                    }
+                    j = i;
+                }
+                inside
+            })
+            .map(|a| a.id.as_str())
+            .collect()
+    }
 }
 
 /// A polyline of copper on one layer.
