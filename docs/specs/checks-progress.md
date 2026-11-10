@@ -184,6 +184,13 @@ Later items:
   where it drops the data (`lost(notes, losses, kind, text)`). No function
   reads the note text to find the kind.
 
+- The verification step of Phase 5 was done on a copy of a private board with
+  its first footprints, with the numbers of the datasheets. `verify_footprint`
+  gave a fail for each of the three footprints that a review by hand found
+  wrong: two holes that are too small for the lead (`leads`), and one land
+  pattern with different pad positions and sizes (`pads`). That board is not
+  in this repository.
+
 The server has 84 tools. The workspace has 412 tests.
 
 ## As the plan says, for the record
