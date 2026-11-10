@@ -1,6 +1,6 @@
 name: CI
 
-# Documentation and image changes do not start a run.
+# Documentation and image changes skip this workflow; docs.yml checks the docs.
 on:
   push:
     branches: [master]
