@@ -119,7 +119,32 @@ to a thermal zone than `min_thermal_spokes` (default 2). It counts surviving pou
 arms and same-net tracks from the pad into the fill. It checks Lamina's fill;
 another program that fills the zones again can report different counts.
 
-KiCad board export includes filled zones, a project rules file, a `.pretty`
+`checks` lists all checks: what each one reports, why, its severity on this board
+and the rule fields that set its limits. The checks for data that is not valid
+(for example `unknown_net` and `zone_outline`) are always errors: you cannot
+ignore or exclude them. `pin_role` and the other model checks accept `severities`
+and exclusions.
+
+`hole_to_copper` (default 0.2 mm) is the minimum distance from a hole wall to copper
+of another net, and from a non-plated hole to all copper. The check has the same
+name. Pours and the autorouter keep this distance. The copper of the part that has
+the hole does not count.
+
+Texts and drawings on a copper layer are copper with no net. `clearance`, `short`,
+`keepout`, the edge checks, the pours and the autorouter see them. Two drawings
+with no net can touch.
+
+`check` with `release: true` shows the board as `export` sees it: `unrouted` and
+`unplaced` are errors. `export` refuses a board with release errors if `force` is
+not true, and `status` gives their number in `release_errors`. A severity that
+you set for a rule wins. `export` always refuses blind and buried vias, because
+the drill files have only through holes. On the command line,
+`lamina check <board> --release` has exit code 2 if a violation is an error
+(`--fail-on warning` and `--fail-on never` change this), so CI can use it.
+
+KiCad board import keeps the keep-out zones of a footprint (for example below an
+antenna) and the paste and mask openings that a footprint has as pads with no
+copper. KiCad board export includes filled zones, a project rules file, a `.pretty`
 footprint library, and an `fp-lib-table` with project-relative paths. Keep these
 files together when you share the board. The library includes mounting holes.
 

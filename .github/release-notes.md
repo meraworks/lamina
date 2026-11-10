@@ -1,60 +1,38 @@
-## Changes in 0.3.0
+## Changes in 0.4.0
 
-PCB layout and validation tools for AI agents:
+Checks that find more, and an export that refuses a board that is not complete:
 
-- Structured custom rules select nets, net classes and copper layers. DRC,
-  pours and routing apply the resolved limits.
-- Configure DRC severities and exclude individual violations with recorded
-  reasons. New checks cover mask openings near zones, holes inside courtyards,
-  thermal spokes, silkscreen size/overlap/edge clearance, net lengths and pairs.
-- Measure total net track lengths and via counts with `net_lengths`; configure
-  length and skew limits. `board_stats` reports dimensions, area, components,
-  pads, vias, drill sizes and track measurements. Both tools are read-only.
-- Define differential pairs in projects or modular sources, check their gap and
-  coupling, and route both nets from a centre path with `route_diff_pair`.
-- `tune_length` adds meanders to a selected segment and refuses disconnected
-  contacts or DRC errors. `add_teardrops` and `remove_teardrops` expose the
-  existing copper operations through MCP.
-- KiCad exports include filled zones and a project footprint library. Existing
-  library table entries are preserved; conflicting library names refuse export.
-- Fabrication archives include an IPC-D-356 electrical test netlist.
+- New check `hole_to_copper`: a hole wall near copper of another net, and a
+  non-plated hole near copper. Before, a track through a mounting hole gave no
+  violation. Pours and the autorouter keep the same distance.
+- Texts and drawings on copper layers are checked as copper. Before, they were
+  in the Gerber files, but no check, pour or router saw them.
+- `export` refuses a board with open connections or parts with no placement,
+  if `force` is not true. It always refuses blind and buried vias, because the
+  drill files have only through holes.
+- New tool `checks`: each check with what it reports, why, its severity and the
+  rule fields that set its limits. `check` has `release: true` to see the board
+  as `export` sees it, and `status` has `release_errors`.
+- `lamina check` has `--release`, `--fail-on` and `--rules`, and exit code 2 on
+  violations, for use in CI.
+- The model checks (for example `pin_role`) accept severities and exclusions.
+  Checks of data that is not valid stay errors. New check `zone_outline`: a
+  zone or board outline that is not valid gives a violation and does not stop
+  the program.
+- A violation has `actual` and `required` values where a check compares a
+  number with a limit (first in `hole_to_copper`).
+- KiCad import keeps the keep-out zones of a footprint (antenna areas) and the
+  paste and mask openings that a footprint has as pads with no copper. The
+  KiCad export writes footprint keep-outs.
+- `use_fab_preset` keeps the custom rules, exclusions and severities.
+- `strict` counts violations that have the same key, so a second free track
+  end is refused.
 
-Validation: 259 workspace tests passed, with one real-board overview test ignored.
-Headless MCP tests cover routing, tuning, teardrops, statistics and fabrication.
-On the reference board, all 192 IPC test-point records match KiCad's type, layer
-access and coordinates. KiCad DRC on exported fills reports no unconnected items
-or footprint-library warnings; other board warnings remain.
+Fixed in the examples: `examples/tit-flight-computer` had no paste on the
+ground pad of the ESP32 module. Its antenna keep-out is now in the footprint.
 
-Measurement limits: lengths sum all track branches and exclude via depth;
-length/skew and pair checks do not calculate delay or impedance. Pair checks
-allow short corner/end tolerances. KiCad may produce different thermal warnings
-when it refills zones. IPC validation is not certification by every fabricator.
+Old boards: `hole_to_copper` is 0.2 mm for a board that does not set it. A pour
+with a smaller clearance moves away from non-plated holes. A board with open
+connections now needs `force: true` to export.
 
-Each archive has two programs, the README and the licence files:
-
-- `lamina`: the MCP server and the command line tool.
-- `lamina-viewer`: the 2D and 3D viewer and editor.
-
-| Platform | Archive |
-|---|---|
-| Windows x64 | `x86_64-pc-windows-msvc.zip` |
-| Windows Arm64 | `aarch64-pc-windows-msvc.zip` |
-| Linux x64 | `x86_64-unknown-linux-gnu.tar.gz` |
-| Linux Arm64 | `aarch64-unknown-linux-gnu.tar.gz` |
-| macOS Apple silicon | `aarch64-apple-darwin.tar.gz` |
-| macOS Intel | `x86_64-apple-darwin.tar.gz` |
-
-Each archive has a `.sha256` file with its checksum.
-
-## Install
-
-1. Download the archive for your platform and extract it.
-2. Put the folder in a permanent location.
-3. Connect your MCP client to `lamina mcp`. The README shows the commands for Claude Code and Codex.
-
-## Known limits
-
-- The programs are not signed.
-  - On Windows, SmartScreen can show a warning. Click "More info", then "Run anyway".
-  - On macOS, remove the quarantine flag before the first start: `xattr -d com.apple.quarantine lamina lamina-viewer`.
-- On Linux, the viewer needs a Vulkan or OpenGL driver and an X11 or Wayland session. The Linux builds need glibc 2.35 or later.
+Not in this release: the other checks of `docs/specs/checks-plan.md`.

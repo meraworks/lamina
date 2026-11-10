@@ -44,9 +44,10 @@ texts. Then the `check` tool and a KiCad design rule check examined the result.
 
 ## What changed after the import
 
-1. **Antenna keep-out.** The KiCad footprint of the module has a keep-out below the
-   antenna. The import did not read it, and the ground pour filled that area on both
-   layers. An `add_keepout` area on the two layers puts it back.
+1. **Antenna keep-out and paste.** The KiCad footprint of the module has a keep-out
+   below the antenna, and 9 paste openings on its ground pad. Lamina 0.3 did not
+   read them: the ground pour filled the antenna area, and the ground pad had no
+   paste. From Lamina 0.4 the import keeps the two, and this board has them.
 2. **Silkscreen on pads.** The bottom drawing and the "Flight Computer" text were
    0.04 to 0.08 mm from the servo pads. They moved by 0.15 to 0.25 mm. The outline of
    U6 no longer touches its pads.

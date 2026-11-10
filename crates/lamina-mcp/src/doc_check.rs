@@ -36,6 +36,8 @@ const OTHER_WORDS: &[&str] = &[
     // Fields of lamina.json (the workspace file).
     "kicad_footprints",
     "kicad_models",
+    // A field of the `status` result.
+    "release_errors",
 ];
 
 /// Board folders that the documents give to `lamina-viewer` as examples. The viewer
