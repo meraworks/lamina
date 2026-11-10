@@ -59,6 +59,19 @@ impl BoardFormat for KicadFormat {
                 Err(e) => notes.push(format!("{}: {e}", pro.display())),
             }
         }
+        // Lamina does not read the custom rules of KiCad.
+        let dru = path.with_extension("kicad_dru");
+        if let Ok(text) = std::fs::read_to_string(&dru) {
+            let count = text.matches("(rule ").count();
+            if count > 0 {
+                notes.push(format!(
+                    "{}: {count} custom rule(s) were skipped. Add them with `set_rules`.",
+                    dru.file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("kicad_dru")
+                ));
+            }
+        }
         let project_dir = path.parent();
         let mut models = BTreeMap::new();
         for (fp_id, list) in &imported.models {
@@ -115,6 +128,9 @@ impl BoardFormat for KicadFormat {
             path.with_extension("kicad_pro"),
             crate::export_project(data, name),
         )];
+        if let Some(rules) = crate::export_rules(data) {
+            files.push((path.with_extension("kicad_dru"), rules));
+        }
         let parent = path.parent().unwrap_or(Path::new("."));
         let library = format!("{name}.pretty");
         let table = lamina_model::sexpr::n("fp_lib_table")
