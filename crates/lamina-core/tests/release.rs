@@ -275,3 +275,41 @@ fn a_custom_rule_needs_an_area_that_exists() {
     .unwrap();
     assert!(p.data.routing.areas.is_empty());
 }
+
+#[test]
+fn use_fab_preset_takes_the_limits_of_a_fab_profile() {
+    let (_t, mut p) = project();
+    p.data.board.rules.clearance = 0.3;
+    p.use_fab_preset(UseFabPreset {
+        name: "jlcpcb".into(),
+        strict: false,
+    })
+    .unwrap();
+    let r = &p.data.board.rules;
+    assert_eq!(r.preset.as_deref(), Some("jlcpcb"));
+    assert_eq!(r.clearance, 0.3, "a design value above the limit stays");
+    assert_eq!(r.min_track_width, 0.1);
+    assert_eq!(r.min_annular_ring, 0.18, "the pad ring of the fab");
+    assert_eq!(r.hole_to_copper, 0.2);
+    let via = r.custom.iter().find(|c| c.name == "fab via ring").unwrap();
+    assert_eq!(via.min_annular_ring, Some(0.05));
+    assert_eq!(via.when.kind, Some(RuleKind::Via));
+    // A second call does not add the rule a second time.
+    p.use_fab_preset(UseFabPreset {
+        name: "jlcpcb".into(),
+        strict: false,
+    })
+    .unwrap();
+    assert_eq!(p.data.board.rules.custom.len(), 1);
+    let e = p
+        .use_fab_preset(UseFabPreset {
+            name: "nobody".into(),
+            strict: false,
+        })
+        .unwrap_err()
+        .to_string();
+    assert!(
+        e.contains("jlcpcb") && e.contains("pcbway") && e.contains("relaxed"),
+        "{e}"
+    );
+}

@@ -542,6 +542,27 @@ impl Project {
         Ok(r)
     }
 
+    /// The footprint of a part from a provider, as a second source for a
+    /// comparison. With `online` false, only the project cache and the part
+    /// library are used: no network.
+    pub(crate) fn source_footprint(&self, pid: &str, id: &str, online: bool) -> Option<Footprint> {
+        let rel = record_rel(pid, id);
+        let cache = self.root().join(CACHE_DIR).join(&rel);
+        if cache.is_file() {
+            return read_record(&cache).ok().map(|r| r.footprint);
+        }
+        if let Some(path) = self.library().find(&rel) {
+            return read_record(&path).ok().map(|r| r.footprint);
+        }
+        if !online {
+            return None;
+        }
+        let prov = self.providers().get(pid)?;
+        prov.fetch(id, false)
+            .ok()
+            .map(|b| record_of(pid, id, b).footprint)
+    }
+
     /// The record of a part: from the project cache, the library, or the
     /// provider. A download is written to both.
     fn fetch_record(

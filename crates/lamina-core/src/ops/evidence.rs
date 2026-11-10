@@ -2,7 +2,7 @@
 //! or with a second source, and keep the result in the footprint file.
 
 use lamina_footprint::compare::{Comparison, Tolerance, compare};
-use lamina_footprint::{Options, PackageSpec};
+use lamina_footprint::{Density, Options, PackageSpec};
 use lamina_model::error::Result;
 use lamina_model::*;
 use schemars::JsonSchema;
@@ -82,20 +82,51 @@ pub struct AuditRow {
     pub findings: Vec<String>,
 }
 
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+pub struct AuditFootprints {
+    /// Get the second source of a part from its provider on the network, if
+    /// it is not in the project cache or in the part library.
+    #[serde(default)]
+    pub online: bool,
+}
+
 #[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct Audit {
     pub rows: Vec<AuditRow>,
     pub result: OpResult,
 }
 
+/// Compare a footprint with a package pattern. The pattern has three
+/// densities (least, nominal and most material). The footprint is good if it
+/// agrees with one of them: a library can use any of the three. If it agrees
+/// with none, the result is the comparison with the nominal pattern.
+fn compare_band(
+    fp: &Footprint,
+    make: &dyn Fn(Density) -> std::result::Result<Footprint, String>,
+) -> std::result::Result<Comparison, String> {
+    let nominal = compare(fp, &make(Density::Nominal)?, &Tolerance::SOURCE);
+    if nominal.same {
+        return Ok(nominal);
+    }
+    for density in [Density::Most, Density::Least] {
+        if let Ok(want) = make(density) {
+            let c = compare(fp, &want, &Tolerance::SOURCE);
+            if c.same {
+                return Ok(c);
+            }
+        }
+    }
+    Ok(nominal)
+}
+
 /// The standard package of a footprint id, if the name has one: `R_0603`
 /// for `R_0603_1608Metric`.
-fn preset_of(id: &str) -> Option<(String, Footprint)> {
+fn preset_of(id: &str) -> Option<String> {
     let parts: Vec<&str> = id.split('_').collect();
     for n in (1..=parts.len()).rev() {
         let name = parts[..n].join("_");
-        if let Ok(fp) = lamina_footprint::from_package(&name, &Options::default(), Some("preset")) {
-            return Some((name, fp));
+        if lamina_footprint::from_package(&name, &Options::default(), Some("preset")).is_ok() {
+            return Some(name);
         }
     }
     None
@@ -181,10 +212,18 @@ impl Project {
             }
             (EvidenceMethod::Accepted, reason.clone())
         } else if let Some(spec) = &p.package {
-            let want =
-                lamina_footprint::generate("datasheet", "datasheet", spec, &Options::default())
-                    .map_err(Error::invalid)?;
-            let c = compare(&fp, &want, &Tolerance::SOURCE);
+            let c = compare_band(&fp, &|density| {
+                lamina_footprint::generate(
+                    "datasheet",
+                    "datasheet",
+                    spec,
+                    &Options {
+                        density,
+                        ..Options::default()
+                    },
+                )
+            })
+            .map_err(Error::invalid)?;
             findings = c.findings.clone();
             if c.same && (c.turn != 0.0 || c.mirrored) {
                 // A turn is only a note for a package comparison.
@@ -270,7 +309,7 @@ impl Project {
 
     /// For each footprint in use that has no evidence: compare it with the
     /// standard package of its name, and keep the result.
-    pub fn audit_footprints(&mut self) -> Result<Audit> {
+    pub fn audit_footprints(&mut self, p: AuditFootprints) -> Result<Audit> {
         let mut used: std::collections::BTreeMap<String, Vec<String>> = Default::default();
         for (r, part) in &self.data.parts.parts {
             used.entry(part.footprint.clone())
@@ -298,8 +337,18 @@ impl Project {
                 rows.push(row);
                 continue;
             }
-            if let Some((name, want)) = preset_of(&id) {
-                let c = compare(fp, &want, &Tolerance::SOURCE);
+            if let Some(name) = preset_of(&id) {
+                let c = compare_band(fp, &|density| {
+                    lamina_footprint::from_package(
+                        &name,
+                        &Options {
+                            density,
+                            ..Options::default()
+                        },
+                        Some("preset"),
+                    )
+                })
+                .map_err(Error::invalid)?;
                 row.source = Some(format!("IPC-7351 package {name}"));
                 // The package pattern is not the datasheet. A difference is a
                 // reason to look at the datasheet, not a failed check, so only
@@ -321,6 +370,48 @@ impl Project {
                         findings: Vec::new(),
                     });
                     touched.footprints.insert(id.clone());
+                }
+            }
+            // A second source: the same part from its provider. A footprint
+            // that came from that provider is not a second source.
+            if row.result != "verified" && !matches!(fp.provenance, Provenance::Lcsc { .. }) {
+                let numbers: std::collections::BTreeSet<&str> = row
+                    .parts
+                    .iter()
+                    .filter_map(|r| self.data.parts.parts.get(r))
+                    .filter_map(|part| part.lcsc.as_deref())
+                    .collect();
+                for number in numbers {
+                    let Some(other) = self.source_footprint("lcsc", number, p.online) else {
+                        continue;
+                    };
+                    let c = compare(fp, &other, &Tolerance::SOURCE);
+                    row.source = Some(format!("lcsc:{number}"));
+                    if c.same {
+                        row.result = "verified".into();
+                        row.findings = Vec::new();
+                        if c.turn != 0.0 {
+                            row.findings.push(format!(
+                                "The footprint is turned by {} degrees against lcsc:{number}. If the assembler uses that library, set the field cpl_rotation of the parts.",
+                                c.turn
+                            ));
+                        }
+                        let hash = fp.pads_hash();
+                        fp.evidence.push(Evidence {
+                            pads_hash: hash,
+                            method: EvidenceMethod::SecondSource,
+                            document: format!("lcsc:{number}"),
+                            page: None,
+                            url: None,
+                            checked: lamina_model::time::today(),
+                            pass: true,
+                            findings: Vec::new(),
+                        });
+                        touched.footprints.insert(id.clone());
+                        break;
+                    }
+                    row.result = "differs".into();
+                    row.findings = c.findings;
                 }
             }
             rows.push(row);

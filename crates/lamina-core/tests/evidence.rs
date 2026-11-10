@@ -48,7 +48,7 @@ fn a_footprint_with_no_evidence_stops_the_release_and_audit_clears_it() {
     assert_eq!(hits[0].severity, Severity::Error);
     assert_eq!(p.status().footprint_evidence.unverified, 1);
 
-    let audit = p.audit_footprints().unwrap();
+    let audit = p.audit_footprints(Default::default()).unwrap();
     let row = audit
         .rows
         .iter()
@@ -62,7 +62,7 @@ fn a_footprint_with_no_evidence_stops_the_release_and_audit_clears_it() {
 #[test]
 fn a_changed_pad_makes_the_evidence_stale() {
     let (_t, mut p) = project();
-    p.audit_footprints().unwrap();
+    p.audit_footprints(Default::default()).unwrap();
     let mut d = p.data.clone();
     d.footprints.get_mut("R_0603_1608Metric").unwrap().pads[0]
         .at

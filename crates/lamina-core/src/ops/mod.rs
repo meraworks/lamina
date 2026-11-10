@@ -5,7 +5,9 @@ pub(crate) fn yes() -> bool {
 
 pub mod board;
 pub mod evidence;
-pub use evidence::{Audit, AuditRow, CompareFootprints, Lead, Verified, VerifyFootprint};
+pub use evidence::{
+    Audit, AuditFootprints, AuditRow, CompareFootprints, Lead, Verified, VerifyFootprint,
+};
 pub mod exclusions;
 pub mod fixes;
 pub use exclusions::{ExcludeViolation, IncludeViolation};

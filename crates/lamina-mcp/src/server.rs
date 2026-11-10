@@ -500,11 +500,16 @@ impl Lamina {
     }
 
     /// For each footprint in use that has no evidence: compare it with the
-    /// standard IPC-7351 package of its name, and keep the result. The
+    /// standard IPC-7351 package of its name (in the three densities), then
+    /// with the footprint of the same part from its provider, as a second
+    /// source. `online: true` gets a second source from the network. The
     /// footprints with the result `no_source` or `differs` need `verify_footprint`.
     #[tool(annotations(title = "Audit footprints"))]
-    async fn audit_footprints(&self) -> Result<CallToolResult, McpError> {
-        self.with(|proj| proj.audit_footprints())
+    async fn audit_footprints(
+        &self,
+        Parameters(p): Parameters<AuditFootprints>,
+    ) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.audit_footprints(p))
     }
 
     /// Accept a DRC violation by rule and item IDs from check. A reason is required.
@@ -724,7 +729,10 @@ impl Lamina {
     ) -> Result<CallToolResult, McpError> {
         self.with(|proj| proj.restore_models(p))
     }
-    /// Load design rules from a fab preset: `jlcpcb-2layer`, `jlcpcb-4layer`, `relaxed`.
+    /// Load design rules from a fab preset (`jlcpcb-2layer`, `jlcpcb-4layer`,
+    /// `relaxed`) or the limits of a fab profile (`jlcpcb`, `pcbway`; see
+    /// `fab_profiles`). A profile keeps the design values of the board that are
+    /// above its limits.
     #[tool(annotations(title = "Use fab preset"))]
     async fn use_fab_preset(
         &self,

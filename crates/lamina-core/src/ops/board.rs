@@ -279,18 +279,30 @@ pub struct UseFabPreset {
 
 impl Project {
     pub fn use_fab_preset(&mut self, p: UseFabPreset) -> Result<OpResult> {
-        let rules =
-            lamina_drc::presets::apply(&self.data.board.rules, &p.name).ok_or_else(|| {
-                let names: Vec<&str> = lamina_drc::presets::PRESETS
-                    .iter()
-                    .map(|x| x.name)
-                    .collect();
-                Error::invalid(format!(
-                    "The preset `{}` is unknown. Use one of these presets: {}.",
-                    p.name,
-                    names.join(", ")
-                ))
-            })?;
+        // A name is a preset, or the id of a fab profile.
+        let layers = self.data.board.stackup.copper_layers;
+        let profiles = lamina_drc::fab::profiles();
+        let rules = match lamina_drc::presets::apply(&self.data.board.rules, &p.name) {
+            Some(r) => r,
+            None => match profiles.iter().find(|f| f.id == p.name) {
+                Some(profile) => {
+                    lamina_drc::presets::apply_profile(&self.data.board.rules, profile, layers)
+                        .map_err(Error::invalid)?
+                }
+                None => {
+                    let names: Vec<&str> = lamina_drc::presets::PRESETS
+                        .iter()
+                        .map(|x| x.name)
+                        .chain(profiles.iter().map(|f| f.id.as_str()))
+                        .collect();
+                    return Err(Error::invalid(format!(
+                        "The preset `{}` is unknown. Use one of these: {}.",
+                        p.name,
+                        names.join(", ")
+                    )));
+                }
+            },
+        };
         let mut d = self.data.clone();
         d.board.rules = rules;
         self.commit(
