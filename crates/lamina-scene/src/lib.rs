@@ -119,6 +119,32 @@ pub struct LayerDraw {
     pub items: Vec<Geom>,
     /// The first `pour` items are copper pour fills.
     pub pour: usize,
+    /// What a copper item is, by the index of the item: its net, its part
+    /// and its function. The fabrication output writes this to the files.
+    pub tags: std::collections::BTreeMap<usize, Tag>,
+}
+
+/// The function of a copper item.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord)]
+pub enum TagFunction {
+    /// A track or a pour.
+    #[default]
+    Conductor,
+    SmdPad,
+    /// The pad of a through-hole pin.
+    ComponentPad,
+    ViaPad,
+}
+
+/// What a copper item is.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Tag {
+    pub net: Option<String>,
+    /// The reference of the part of a pad.
+    pub part: Option<String>,
+    /// The number of a pad.
+    pub pad: Option<String>,
+    pub function: TagFunction,
 }
 
 #[derive(Debug, Clone)]
@@ -145,7 +171,16 @@ fn push(layers: &mut Vec<LayerDraw>, l: SceneLayer, g: Geom) {
             layer: l,
             items: vec![g],
             pour: 0,
+            tags: Default::default(),
         }),
+    }
+}
+
+/// Add an item and say what it is.
+fn push_tagged(layers: &mut Vec<LayerDraw>, l: SceneLayer, g: Geom, tag: Tag) {
+    push(layers, l, g);
+    if let Some(d) = layers.iter_mut().find(|d| d.layer == l) {
+        d.tags.insert(d.items.len() - 1, tag);
     }
 }
 
@@ -297,12 +332,16 @@ pub fn build_2d_with(d: &ProjectData, a: &Analysis, options: &Options) -> Scene2
     for f in &a.fills {
         if let Some(c) = f.layer.copper() {
             for p in &f.polygons {
-                push(
+                push_tagged(
                     &mut layers,
                     SceneLayer::Copper(c.index(layers_n)),
                     Geom::Poly {
                         outer: p.outer.clone(),
                         holes: p.holes.clone(),
+                    },
+                    Tag {
+                        net: f.net.clone(),
+                        ..Default::default()
                     },
                 );
             }
@@ -313,12 +352,42 @@ pub fn build_2d_with(d: &ProjectData, a: &Analysis, options: &Options) -> Scene2
     for l in &mut layers {
         l.pour = l.items.len();
     }
+    // The pads that have a hole.
+    let through: std::collections::BTreeSet<String> = g
+        .drills
+        .iter()
+        .filter(|h| matches!(h.owner, lamina_geom::Owner::Pad { .. }))
+        .map(|h| h.owner.body())
+        .collect();
     for it in &g.copper {
-        push(
-            &mut layers,
-            SceneLayer::Copper(it.layer),
-            Geom::from_prim(&it.prim),
-        );
+        let geom = Geom::from_prim(&it.prim);
+        let layer = SceneLayer::Copper(it.layer);
+        let tag = match &it.owner {
+            lamina_geom::Owner::Pad { part, pad, .. } => Some(Tag {
+                net: it.net.clone(),
+                part: Some(part.clone()),
+                pad: Some(pad.clone()),
+                function: if through.contains(&it.owner.body()) {
+                    TagFunction::ComponentPad
+                } else {
+                    TagFunction::SmdPad
+                },
+            }),
+            lamina_geom::Owner::Track { .. } => Some(Tag {
+                net: it.net.clone(),
+                ..Default::default()
+            }),
+            lamina_geom::Owner::Via { .. } => Some(Tag {
+                net: it.net.clone(),
+                function: TagFunction::ViaPad,
+                ..Default::default()
+            }),
+            _ => None,
+        };
+        match tag {
+            Some(tag) => push_tagged(&mut layers, layer, geom, tag),
+            None => push(&mut layers, layer, geom),
+        }
     }
     for dr in &g.drills {
         push(&mut layers, SceneLayer::Drills, Geom::from_prim(&dr.prim));

@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 use std::fmt::Write;
 
 use lamina_model::Point;
-use lamina_scene::Geom;
+use lamina_scene::{Geom, Tag, TagFunction};
 
 /// The Gerber file function attribute, for example `Copper,L1,Top`.
 pub struct Function {
@@ -19,10 +19,38 @@ fn coord(v: f64) -> i64 {
 
 pub struct Writer {
     body: String,
-    apertures: BTreeMap<i64, u32>,
+    /// An aperture for each diameter and function.
+    apertures: BTreeMap<(i64, Option<TagFunction>), u32>,
     next: u32,
     current: Option<u32>,
     dark: bool,
+    /// The function for the apertures of the item in work.
+    function: Option<TagFunction>,
+    /// The object attributes that are in effect now.
+    object: Option<Tag>,
+}
+
+/// A name for an attribute field. The characters that have a function in a
+/// Gerber file become `_`.
+fn field(s: &str) -> String {
+    s.chars()
+        .map(|c| {
+            if c.is_ascii_graphic() && !matches!(c, ',' | '*' | '%' | '\\') {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect()
+}
+
+fn function_name(f: TagFunction) -> &'static str {
+    match f {
+        TagFunction::Conductor => "Conductor",
+        TagFunction::SmdPad => "SMDPad,CuDef",
+        TagFunction::ComponentPad => "ComponentPad",
+        TagFunction::ViaPad => "ViaPad",
+    }
 }
 
 impl Default for Writer {
@@ -39,11 +67,13 @@ impl Writer {
             next: 10,
             current: None,
             dark: true,
+            function: None,
+            object: None,
         }
     }
 
     fn circle(&mut self, d: f64) -> u32 {
-        let key = coord(d.max(0.001));
+        let key = (coord(d.max(0.001)), self.function);
         let next = &mut self.next;
         *self.apertures.entry(key).or_insert_with(|| {
             let n = *next;
@@ -82,6 +112,34 @@ impl Writer {
         }
         self.mv(ring[0], "D01");
         self.body.push_str("G37*\n");
+    }
+
+    /// Add a copper item with its attributes: the net, the part and the
+    /// pad for the object, and the function for its aperture (Gerber X2).
+    pub fn add_tagged(&mut self, g: &Geom, tag: Option<&Tag>) {
+        if self.object.as_ref() != tag {
+            if self.object.is_some() {
+                self.body.push_str("%TD*%\n");
+            }
+            if let Some(t) = tag {
+                if let (Some(part), Some(pad)) = (&t.part, &t.pad) {
+                    let _ = writeln!(self.body, "%TO.P,{},{}*%", field(part), field(pad));
+                    let _ = writeln!(self.body, "%TO.C,{}*%", field(part));
+                }
+                match &t.net {
+                    Some(net) => {
+                        let _ = writeln!(self.body, "%TO.N,{}*%", field(net));
+                    }
+                    // A pad with no net.
+                    None if t.pad.is_some() => self.body.push_str("%TO.N,N/C*%\n"),
+                    None => {}
+                }
+            }
+            self.object = tag.cloned();
+        }
+        self.function = tag.map(|t| t.function);
+        self.add(g);
+        self.function = None;
     }
 
     /// Add a shape in dark polarity. Then clear the polygon holes.
@@ -136,8 +194,14 @@ impl Writer {
         let _ = writeln!(out, "%TF.FileFunction,{}*%", f.function);
         let _ = writeln!(out, "%TF.FilePolarity,{}*%", f.polarity);
         out.push_str("%FSLAX46Y46*%\n%MOMM*%\n%LPD*%\nG01*\n");
-        for (key, n) in &self.apertures {
-            let _ = writeln!(out, "%ADD{n}C,{:.6}*%", *key as f64 / 1e6);
+        for ((size, function), n) in &self.apertures {
+            if let Some(f) = function {
+                let _ = writeln!(out, "%TA.AperFunction,{}*%", function_name(*f));
+            }
+            let _ = writeln!(out, "%ADD{n}C,{:.6}*%", *size as f64 / 1e6);
+            if function.is_some() {
+                out.push_str("%TD*%\n");
+            }
         }
         out.push_str(&self.body);
         out.push_str("M02*\n");

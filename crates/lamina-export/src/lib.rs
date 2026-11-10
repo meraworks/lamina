@@ -72,11 +72,11 @@ pub fn gerbers(s: &Scene2D, name: &str) -> Vec<Output> {
         if let Some(d) = s.layer(layer) {
             // Draw the pours with a lower priority first. Then their clear holes
             // cannot erase a pour with a higher priority.
-            for g in d.items[..d.pour].iter().rev() {
-                w.add(g);
+            for (i, g) in d.items[..d.pour].iter().enumerate().rev() {
+                w.add_tagged(g, d.tags.get(&i));
             }
-            for g in &d.items[d.pour..] {
-                w.add(g);
+            for (i, g) in d.items.iter().enumerate().skip(d.pour) {
+                w.add_tagged(g, d.tags.get(&i));
             }
         }
         out.push(Output {

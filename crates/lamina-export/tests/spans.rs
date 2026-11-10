@@ -147,3 +147,24 @@ fn a_rule_area_is_a_line_on_the_keepout_layer_and_not_in_the_gerbers() {
         assert_eq!(x.contents, y.contents, "{}", x.name);
     }
 }
+
+#[test]
+fn copper_gerbers_have_net_part_and_function_attributes() {
+    let d = board();
+    let a = lamina_drc::analyze(&d);
+    let s = lamina_scene::build_2d(&d, &a);
+    let files = lamina_export::gerbers(&s, "b");
+    let top = text(files.iter().find(|f| f.name == "b.GTL").unwrap());
+    assert!(top.contains("%TO.P,R1,2*%"), "{top}");
+    assert!(top.contains("%TO.C,R1*%"));
+    assert!(top.contains("%TO.N,A*%"));
+    assert!(top.contains("%TO.N,N/C*%"), "a pad with no net");
+    assert!(top.contains("%TA.AperFunction,ViaPad*%"));
+    // An attribute is before the aperture that it is for, and ends after it.
+    let via = top.find("%TA.AperFunction,ViaPad*%").unwrap();
+    let rest = &top[via..];
+    assert!(rest.find("%ADD").unwrap() < rest.find("%TD*%").unwrap());
+    // The silkscreen has no net attributes.
+    let silk = text(files.iter().find(|f| f.name == "b.GTO").unwrap());
+    assert!(!silk.contains("%TO."));
+}
