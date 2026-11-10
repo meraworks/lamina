@@ -732,7 +732,8 @@ impl Lamina {
         self.with(|proj| proj.place_layout_block(p))
     }
 
-    /// Remove placements.
+    /// Remove placements. Already unplaced parts are skipped and listed in
+    /// `already_unplaced`. Unknown parts fail without changing the board.
     #[tool(annotations(title = "Unplace parts"))]
     async fn unplace(
         &self,

@@ -68,6 +68,14 @@ cargo build --release -p lamina-viewer --features headless
 python3 scripts/readme-media.py
 ```
 
+The script uses `lamina-viewer shot --no-cursor --fixed` to hide the pointer and
+runtime timings. Use the same options for repeatable documentation screenshots.
+The GPU regression test can be run explicitly with a Vulkan driver installed:
+
+```sh
+cargo test -p lamina-viewer --features headless fixed_images -- --ignored
+```
+
 The script also makes `docs/images/social-preview.png`, the image that GitHub shows when
 someone shares a link to the repository. After it changes, a maintainer uploads it again
 in Settings → Social preview.

@@ -20,6 +20,8 @@ Options:
   --size WxH     the window size in points (default 1600x900)
   --scale F      pixels for each point (default 1)
   --3d           start in the 3D view
+  --no-cursor    hide the mouse pointer in every saved image
+  --fixed        hide runtime timings and the load pulse for repeatable images
   --out FILE     the PNG image to save after the last step (default shot.png)
   --edit         let the steps change the board files. Without it, the
                  viewer does not write to the board: a drag or a delete
@@ -56,6 +58,8 @@ struct Opts {
     three_d: bool,
     out: PathBuf,
     edit: bool,
+    no_cursor: bool,
+    fixed: bool,
     steps: Vec<String>,
 }
 
@@ -64,6 +68,8 @@ fn parse(args: &[String]) -> Result<Opts, String> {
     let mut scale = 1.0;
     let mut three_d = false;
     let mut edit = false;
+    let mut no_cursor = false;
+    let mut fixed = false;
     let mut out = PathBuf::from("shot.png");
     let mut root = None;
     let mut steps = Vec::new();
@@ -86,6 +92,8 @@ fn parse(args: &[String]) -> Result<Opts, String> {
             "--scale" => scale = positive(&value()?)?,
             "--3d" => three_d = true,
             "--edit" => edit = true,
+            "--no-cursor" => no_cursor = true,
+            "--fixed" => fixed = true,
             "--out" => out = png(&value()?)?,
             s if s.starts_with('-') => return Err(format!("usage: {s} is not a known option")),
             // The first argument that is not a step is the board. A Windows
@@ -106,6 +114,8 @@ fn parse(args: &[String]) -> Result<Opts, String> {
         three_d,
         out,
         edit,
+        no_cursor,
+        fixed,
         steps,
     })
 }
@@ -187,24 +197,7 @@ fn run(args: &[String]) -> Result<(), String> {
             o.root.display()
         ));
     }
-    let (root, three_d) = (o.root.clone(), o.three_d);
-    let mut h = Harness::builder()
-        .with_size(o.size)
-        .with_pixels_per_point(o.scale)
-        .wgpu_setup(gpu_setup())
-        // A missing glyph shows as a box in the image, as in the window.
-        .allow_missing_glyphs()
-        .build_eframe(move |cc| {
-            let mut s = Shell::new(cc, vec![root], three_d);
-            s.remember = false;
-            s
-        });
-    if !o.edit {
-        // Without an editor, the viewer does not write to the board files.
-        for b in &mut h.state_mut().boards {
-            b.editor = None;
-        }
-    }
+    let mut h = harness(&o);
     if let Err(e) = settle(&mut h, Duration::from_secs(20)) {
         // Save the image anyway: it shows the error panel of the viewer.
         save(&mut h, &o.out)?;
@@ -215,6 +208,32 @@ fn run(args: &[String]) -> Result<(), String> {
     }
     idle(&mut h);
     save(&mut h, &o.out)
+}
+
+fn harness(o: &Opts) -> Harness<'static, Shell> {
+    let (root, three_d, fixed) = (o.root.clone(), o.three_d, o.fixed);
+    let mut h = Harness::builder()
+        .with_size(o.size)
+        .with_pixels_per_point(o.scale)
+        .with_render_cursor(!o.no_cursor)
+        .wgpu_setup(gpu_setup())
+        // A missing glyph shows as a box in the image, as in the window.
+        .allow_missing_glyphs()
+        .build_eframe(move |cc| {
+            let mut s = Shell::new(cc, vec![root], three_d);
+            s.remember = false;
+            for b in &mut s.boards {
+                b.fixed_timing = fixed;
+            }
+            s
+        });
+    if !o.edit {
+        // Without an editor, the viewer does not write to the board files.
+        for b in &mut h.state_mut().boards {
+            b.editor = None;
+        }
+    }
+    h
 }
 
 /// A wgpu setup without a window that prefers a real GPU. The default
@@ -398,6 +417,112 @@ mod tests {
         assert_eq!(o.root, PathBuf::from(r"C:\boards\a"));
         assert!(o.three_d);
         assert_eq!(o.steps, ["key:2", "hover:10,20"]);
+    }
+
+    #[test]
+    fn repeatable_images_are_opt_in() {
+        let o = parse(&args(&["board"])).unwrap();
+        assert!(!o.no_cursor && !o.fixed);
+        let o = parse(&args(&["board", "--no-cursor", "--fixed", "hover:400,300"])).unwrap();
+        assert!(o.no_cursor && o.fixed);
+        assert_eq!(o.steps, ["hover:400,300"]);
+        assert!(!parse(&args(&["board", "--fixed"])).unwrap().no_cursor);
+        assert!(!parse(&args(&["board", "--no-cursor"])).unwrap().fixed);
+    }
+
+    // Run explicitly on machines with a Vulkan driver (Mesa lavapipe works):
+    // cargo test -p lamina-viewer --features headless fixed_images -- --ignored
+    #[test]
+    #[ignore = "requires a Vulkan driver"]
+    fn fixed_images_repeat_and_hide_only_the_pointer() {
+        let tmp = tempfile::tempdir().unwrap();
+        let board = tmp.path().join("board");
+        std::fs::create_dir(&board).unwrap();
+        let mut data = lamina_model::ProjectData::new("Repeatable shots");
+        data.board.outline = Some(lamina_model::Contour::rect(0.0, 0.0, 30.0, 20.0));
+        let fp = lamina_footprint::from_package("R_0603", &Default::default(), None).unwrap();
+        data.parts
+            .parts
+            .insert("R1".into(), lamina_model::Part::new(&fp.id));
+        data.placement
+            .placements
+            .insert("R1".into(), lamina_model::Placement::at(12.0, 10.0));
+        data.footprints.insert(fp.id.clone(), fp);
+        data.save_all(&board).unwrap();
+        for three_d in [false, true] {
+            let first = tmp.path().join("first.png");
+            let second = tmp.path().join("second.png");
+            let intermediate = tmp.path().join("intermediate.png");
+            let mut a = args(&[
+                board.to_str().unwrap(),
+                "--size",
+                "960x600",
+                "--no-cursor",
+                "--fixed",
+                "key:F",
+                "hover:480,300",
+                "scroll:480,300,1",
+                "wait:300",
+            ]);
+            if three_d {
+                a.push("--3d".into());
+                a.push("drag:480,300,510,320".into());
+            }
+            a.extend(args(&["--out", first.to_str().unwrap()]));
+            a.push(format!("shot:{}", intermediate.display()));
+            run(&a).unwrap();
+            let first_intermediate = std::fs::read(&intermediate).unwrap();
+            *a.iter_mut()
+                .find(|s| s.as_str() == first.to_str().unwrap())
+                .unwrap() = second.to_string_lossy().into_owned();
+            run(&a).unwrap();
+            assert!(
+                std::fs::read(&first).unwrap() == std::fs::read(&second).unwrap(),
+                "separate runs must produce the same PNG in 3D={three_d}"
+            );
+            assert!(
+                first_intermediate == std::fs::read(&intermediate).unwrap(),
+                "intermediate shots must also be repeatable in 3D={three_d}"
+            );
+
+            let o = parse(&a).unwrap();
+            let mut h = harness(&o);
+            settle(&mut h, Duration::from_secs(20)).unwrap();
+            h.hover_at(Pos2::new(480.0, 300.0));
+            frames(&mut h, 4);
+            let without = h.render().unwrap();
+            // Render the same frame, so pointer painting is the only difference.
+            h.set_render_cursor(true);
+            let with = h.render().unwrap();
+            let mut changed = 0;
+            for (x, y, pixel) in with.enumerate_pixels() {
+                if pixel != without.get_pixel(x, y) {
+                    changed += 1;
+                    assert!(
+                        (478..=498).contains(&x) && (298..=318).contains(&y),
+                        "hiding the pointer changed an unrelated pixel ({x}, {y})"
+                    );
+                }
+            }
+            assert!(changed > 20, "the default pointer must be visible");
+            // The fixed output must ignore even very different rebuild times.
+            h.set_render_cursor(false);
+            h.state_mut().boards[0].loaded.as_mut().unwrap().took = Duration::from_millis(1);
+            frames(&mut h, 1);
+            let short = h.render().unwrap();
+            h.state_mut().boards[0].loaded.as_mut().unwrap().took = Duration::from_millis(9999);
+            frames(&mut h, 1);
+            assert!(
+                short == h.render().unwrap(),
+                "fixed status must omit timings"
+            );
+            h.state_mut().boards[0].fixed_timing = false;
+            frames(&mut h, 1);
+            assert!(
+                short != h.render().unwrap(),
+                "default status shows the rebuild duration"
+            );
+        }
     }
 
     #[test]

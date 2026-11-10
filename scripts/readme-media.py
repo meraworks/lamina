@@ -81,7 +81,7 @@ def main():
     def shot(stage, out, *args):
         shutil.rmtree(board, ignore_errors=True)
         shutil.copytree(os.path.join(stages, stage), board)
-        run(viewer, "shot", board, "--out", out, *args)
+        run(viewer, "shot", board, "--no-cursor", "--fixed", "--out", out, *args)
 
     final, placed = names[-1], next(n for n in names if n.endswith("-placed"))
     zoom = ["scroll:760,470,3"] * 6

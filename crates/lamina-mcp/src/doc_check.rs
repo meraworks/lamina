@@ -14,7 +14,8 @@
 //!     this order:").
 //!
 //!   Also, each word in backticks with an underscore must be a tool, a tool parameter, a
-//!   field of a project file, a DRC check name, or a word in [`OTHER_WORDS`].
+//!   tool result field, a field of a project file, a DRC check name, or a word in
+//!   [`OTHER_WORDS`].
 //! - Each `lamina <subcommand>` and `lamina-viewer <subcommand>` is a real subcommand.
 //! - Each relative link and image points to a file that exists, and each `#anchor` to a
 //!   heading of that file.
@@ -27,9 +28,9 @@ use std::path::{Path, PathBuf};
 
 use clap::CommandFactory;
 
-/// Words in backticks with an underscore that are not tools, tool parameters, project
-/// file fields or DRC check names. Add a word here when the documentation test reports
-/// a word that is not a tool.
+/// Words in backticks with an underscore that are not tools, tool parameters or result
+/// fields, project file fields or DRC check names. Add a word here when the documentation
+/// test reports a word that is not one of these names.
 const OTHER_WORDS: &[&str] = &[
     // A function of lamina.libsonnet.
     "corner_holes",
@@ -56,7 +57,7 @@ struct Doc {
 /// What the documents are checked against.
 struct Facts {
     tools: BTreeSet<String>,
-    /// Tool parameters, project file fields and DRC check names.
+    /// Tool parameters and result fields, project file fields and DRC check names.
     known: BTreeSet<String>,
     lamina: BTreeSet<String>,
     viewer: BTreeSet<String>,
@@ -117,6 +118,18 @@ fn facts() -> Facts {
             &serde_json::Value::Object((*t.input_schema).clone()),
             &mut known,
         );
+    }
+    // The server serializes these typed results with json_result(), so their
+    // schemas are not part of tools/list yet. Read the schemas of the actual
+    // response types instead of maintaining a second list of their field names.
+    // Add other response types here as the documents describe their fields.
+    for schema in [
+        schemars::schema_for!(lamina_core::Status),
+        schemars::schema_for!(lamina_core::ModelsRestored),
+        schemars::schema_for!(lamina_core::OpResult),
+        schemars::schema_for!(lamina_core::place::Unplaced),
+    ] {
+        property_names(&serde_json::to_value(schema).unwrap(), &mut known);
     }
     for kind in lamina_core::model::SCHEMA_KINDS {
         property_names(&lamina_core::model::schema_for(kind).unwrap(), &mut known);
@@ -364,9 +377,10 @@ fn check_tool_names(doc: &Doc, f: &Facts) -> Vec<String> {
                 && !OTHER_WORDS.contains(&w.as_str())
             {
                 errs.push(format!(
-                    "{}:{n}: `{w}` is not a tool, a tool parameter, a project file field or \
-                     a DRC check. If it is a tool, use the real name. If it is another word, \
-                     add it to OTHER_WORDS in {THIS_FILE}.",
+                    "{}:{n}: `{w}` is not a tool, a tool parameter, a tool result field, a \
+                     project file field or a DRC check. If it is a tool, use the real name. \
+                     If it is a result field, add its response schema to facts() in \
+                     {THIS_FILE}. If it is another word, add it to OTHER_WORDS there.",
                     doc.path
                 ));
             }
@@ -866,6 +880,29 @@ fn good_sample_passes() {
     ]
     .concat();
     assert!(errs.is_empty(), "{errs:#?}");
+}
+
+#[test]
+fn real_result_fields_pass_and_made_up_fields_fail() {
+    let f = facts();
+    let good = sample(
+        "`status` returns `missing_models`. Model restoration returns `from_library`. \
+         Changes report `new_violations`; `unplace` reports `already_unplaced`.",
+    );
+    assert!(check_tool_names(&good, &f).is_empty());
+
+    let bad = sample("`status` returns `missing_modelz` and `invented_result_field`.");
+    let errs = check_tool_names(&bad, &f);
+    assert_eq!(errs.len(), 2, "{errs:#?}");
+    for field in ["missing_modelz", "invented_result_field"] {
+        assert!(errs.iter().any(|e| e.contains(&format!("`{field}`"))));
+    }
+
+    // Knowing a result field must not make it a valid tool name.
+    let bad = sample("The `missing_models` tool lists models.");
+    let errs = check_tool_names(&bad, &f);
+    assert_eq!(errs.len(), 1, "{errs:#?}");
+    assert!(errs[0].contains("`missing_models` is not a tool"));
 }
 
 #[test]

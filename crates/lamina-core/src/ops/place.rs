@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use lamina_model::error::Result;
 use lamina_model::*;
@@ -107,9 +107,19 @@ pub struct Distribute {
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct Unplace {
+    /// Known parts to take off the board. Parts already unplaced are skipped.
     pub refdes: Vec<String>,
+    /// Refuse the change if it adds a DRC error.
     #[serde(default)]
     pub strict: bool,
+}
+
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+pub struct Unplaced {
+    #[serde(flatten)]
+    pub result: OpResult,
+    /// Requested parts that were already off the board, in request order.
+    pub already_unplaced: Vec<String>,
 }
 
 /// A location: a pad reference (`U1.3`), a refdes (`U1`) or a point.
@@ -350,19 +360,40 @@ impl Project {
         )
     }
 
-    pub fn unplace(&mut self, p: Unplace) -> Result<OpResult> {
-        let mut d = self.data.clone();
+    pub fn unplace(&mut self, p: Unplace) -> Result<Unplaced> {
+        // Validate the whole request before changing any placement.
         for r in &p.refdes {
-            if d.placement.placements.remove(r).is_none() {
-                return Err(Error::invalid(format!("{r} is not placed.")));
+            self.need_part(r)?;
+        }
+        let mut d = self.data.clone();
+        let mut seen = BTreeSet::new();
+        let mut unplaced = Vec::new();
+        let mut already_unplaced = Vec::new();
+        for r in &p.refdes {
+            if !seen.insert(r) {
+                continue;
+            }
+            if d.placement.placements.remove(r).is_some() {
+                unplaced.push(r.clone());
+            } else {
+                already_unplaced.push(r.clone());
             }
         }
-        self.commit(
-            d,
-            Touched::file(FileKind::Placement),
-            p.strict,
-            format!("unplaced {}", p.refdes.join(" ")),
-        )
+        let touched = if unplaced.is_empty() {
+            Touched::default()
+        } else {
+            Touched::file(FileKind::Placement)
+        };
+        let summary = if unplaced.is_empty() {
+            "no placements changed".to_string()
+        } else {
+            format!("unplaced {}", unplaced.join(" "))
+        };
+        let result = self.commit(d, touched, p.strict, summary)?;
+        Ok(Unplaced {
+            result,
+            already_unplaced,
+        })
     }
 
     /// The position of a pad on the board.

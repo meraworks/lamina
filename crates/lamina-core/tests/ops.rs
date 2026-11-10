@@ -83,6 +83,112 @@ fn add_resistor(p: &mut Project, refdes: &str) {
 }
 
 #[test]
+fn unplace_skips_unplaced_parts_and_repeated_calls_do_not_write() {
+    let (_t, mut p) = new_project();
+    add_resistor(&mut p, "R1");
+    add_resistor(&mut p, "R2");
+    p.place_many(
+        serde_json::from_value(serde_json::json!({
+            "placements": {"R1": {"x": 5, "y": 5}}
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+
+    let request = Unplace {
+        refdes: vec!["R1".into(), "R2".into(), "R1".into(), "R2".into()],
+        strict: false,
+    };
+    let result = p.unplace(request.clone()).unwrap();
+    assert_eq!(result.already_unplaced, ["R2"]);
+    assert_eq!(result.result.changed, ["placement.json"]);
+    assert_eq!(result.result.summary, "unplaced R1");
+    assert!(p.data.placement.placements.is_empty());
+    assert!(
+        ProjectData::load(p.root())
+            .unwrap()
+            .placement
+            .placements
+            .is_empty()
+    );
+
+    let before = p.data.clone();
+    let path = p.root().join("placement.json");
+    let modified = std::fs::metadata(&path).unwrap().modified().unwrap();
+    let result = p.unplace(request).unwrap();
+    assert_eq!(result.already_unplaced, ["R1", "R2"]);
+    assert!(result.result.changed.is_empty());
+    assert!(result.result.new_violations.is_empty());
+    assert_eq!(p.data, before);
+    assert_eq!(
+        std::fs::metadata(&path).unwrap().modified().unwrap(),
+        modified
+    );
+}
+
+#[test]
+fn unplace_unknown_part_does_not_change_memory_or_disk() {
+    let (_t, mut p) = new_project();
+    add_resistor(&mut p, "R1");
+    add_resistor(&mut p, "R2");
+    p.place_many(
+        serde_json::from_value(serde_json::json!({
+            "placements": {"R1": {"x": 5, "y": 5}}
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+    let before = p.data.clone();
+    let error = p
+        .unplace(Unplace {
+            refdes: vec!["R1".into(), "R2".into(), "unknown".into()],
+            strict: false,
+        })
+        .unwrap_err();
+    assert!(error.to_string().contains("unknown does not exist"));
+    assert_eq!(p.data, before);
+    assert_eq!(ProjectData::load(p.root()).unwrap(), before);
+}
+
+#[test]
+fn unplace_strict_retains_drc_semantics() {
+    let (_t, mut p) = new_project();
+    add_resistor(&mut p, "R1");
+    p.place_many(
+        serde_json::from_value(serde_json::json!({
+            "placements": {"R1": {"x": 5, "y": 5}}
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+    p.set_rules(SetRules {
+        rules: serde_json::from_value(serde_json::json!({
+            "severities": {"unplaced": "error"}
+        }))
+        .unwrap(),
+        strict: false,
+    })
+    .unwrap();
+    let before = p.data.clone();
+    let request = Unplace {
+        refdes: vec!["R1".into()],
+        strict: true,
+    };
+    assert!(matches!(p.unplace(request.clone()), Err(Error::Refused(_))));
+    assert_eq!(p.data, before);
+    assert_eq!(ProjectData::load(p.root()).unwrap(), before);
+
+    p.unplace(Unplace {
+        strict: false,
+        ..request.clone()
+    })
+    .unwrap();
+    let result = p.unplace(request).unwrap();
+    assert_eq!(result.already_unplaced, ["R1"]);
+    assert!(result.result.changed.is_empty());
+}
+
+#[test]
 fn outline_and_status() {
     let (_t, mut p) = new_project();
     let r = p

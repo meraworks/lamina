@@ -3,6 +3,40 @@ mod common;
 use serde_json::json;
 
 #[test]
+fn unplace_is_repeatable_and_reports_skipped_parts() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("unplace");
+    let mut c = common::Client::start();
+    c.ok("open", json!({"path": path, "create": true}));
+    c.ok("footprint_from_package", json!({"package": "R_0603"}));
+    c.ok(
+        "add_parts",
+        json!({"parts": [
+            {"refdes": "R1", "footprint": "R_0603"},
+            {"refdes": "R2", "footprint": "R_0603"}
+        ]}),
+    );
+    c.ok("place", json!({"refdes": "R1", "x": 5, "y": 5}));
+    let placement = path.join("placement.json");
+    let before = std::fs::read(&placement).unwrap();
+    let (is_error, error) = c.call("unplace", json!({"refdes": ["R1", "R2", "unknown"]}));
+    assert!(
+        is_error && error.as_str().unwrap().contains("unknown does not exist"),
+        "{error}"
+    );
+    assert_eq!(std::fs::read(&placement).unwrap(), before);
+
+    let result = c.ok("unplace", json!({"refdes": ["R1", "R2"]}));
+    assert_eq!(result["already_unplaced"], json!(["R2"]));
+    assert_eq!(result["changed"], json!(["placement.json"]));
+    assert_eq!(c.ok("status", json!({}))["unplaced"], json!(["R1", "R2"]));
+
+    let result = c.ok("unplace", json!({"refdes": ["R1", "R2"]}));
+    assert_eq!(result["already_unplaced"], json!(["R1", "R2"]));
+    assert_eq!(result["changed"], json!([]));
+}
+
+#[test]
 fn place_route_pour_check() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("lay").to_string_lossy().to_string();
