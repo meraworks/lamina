@@ -169,12 +169,27 @@ Later items:
   it: the comparison test has one clearance violation in an area, and the two
   programs report it. The import reads the area back.
 
+- The T.I.T example is corrected. Its USB-C socket had four pads 0.05 mm to
+  one side of the library position (A1 and B12 at -3.15 mm, A12 and B1 at
+  +3.25 mm; the library has -3.2 and +3.2). The pads are at the library
+  position now, and `footprint_symmetry` reports nothing. The ESP32 module has
+  an acceptance: its pads are those of the library, and the drill of the
+  ground vias is 0.3 mm in place of 0.2 mm, which is the minimum drill of the
+  board. All 25 footprints have evidence, the design check has no violation,
+  `review` gives `ready_with_warnings` (BOM lines with no part number), and
+  the outputs were made with no `force`. The files of the owner in
+  `Desktop\tit` were not changed: the same defect is in them.
+
 The server has 84 tools. The workspace has 413 tests.
+
+## As the plan says, for the record
+
+- `tombstone` is off by default. Decision D5 of the plan: a rule with fewer
+  than 7 true findings of 10 on the real boards defaults to `ignore`. On
+  T.I.T and Yoink it gave 7 warnings, and none was a true defect.
 
 ## Differences from the plan
 
-- `tombstone` is off by default. On T.I.T and Yoink it gave 7 warnings, and all
-  of them were pads on thermal spokes or on short wide tracks (decision D5).
 - `label_pin` and `polarity_mark` prefer a connector within 3.5 mm to a nearer
   part that is not a connector, and measure the distance to a pad along the pad
   row. A word matches the end of a net name only if it has 4 characters or
@@ -192,16 +207,12 @@ The server has 84 tools. The workspace has 413 tests.
 
 ## Not done
 
-These items need a person or a document that this work did not have.
+These items need a document that this work did not have.
 
-- Two footprints of the T.I.T example differ from the KiCad library, so they
-  have no evidence and `review` gives `not_ready` for that board. The owner of
-  the board must decide: the USB-C socket has four pads moved by 0.05 mm, and
-  the ground vias of the ESP32 module have a drill that is 0.1 mm larger. The
-  outputs of that board were made with `force`.
-- The evidence from the KiCad library says that the pads are those of the
-  library. No footprint of the two examples was compared with a datasheet.
 - The voltage spacing table agrees with one secondary source. It was not
-  compared with IPC-2221 itself.
+  compared with IPC-2221 itself, which is not free.
+- The footprint evidence of the two examples says that the pads are those of
+  the KiCad 10 library (and one acceptance with its reason). No footprint was
+  compared with the datasheet of its part.
 - The image `docs/images/viewer-3d.png` shows the `c3-sensor` board before
   three capacitors moved.

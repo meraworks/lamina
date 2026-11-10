@@ -27,7 +27,7 @@
     },
     {
       "number": "A1",
-      "at": { "x": -3.15, "y": 3.68 },
+      "at": { "x": -3.2, "y": 3.68 },
       "shape": { "type": "round_rect", "width": 0.6, "height": 1.05, "radius": 0.15 },
       "kind": { "type": "smd" }
     },
@@ -69,13 +69,13 @@
     },
     {
       "number": "A12",
-      "at": { "x": 3.25, "y": 3.68 },
+      "at": { "x": 3.2, "y": 3.68 },
       "shape": { "type": "round_rect", "width": 0.6, "height": 1.05, "radius": 0.15 },
       "kind": { "type": "smd" }
     },
     {
       "number": "B1",
-      "at": { "x": 3.25, "y": 3.68 },
+      "at": { "x": 3.2, "y": 3.68 },
       "shape": { "type": "round_rect", "width": 0.6, "height": 1.05, "radius": 0.15 },
       "kind": { "type": "smd" }
     },
@@ -117,7 +117,7 @@
     },
     {
       "number": "B12",
-      "at": { "x": -3.15, "y": 3.68 },
+      "at": { "x": -3.2, "y": 3.68 },
       "shape": { "type": "round_rect", "width": 0.6, "height": 1.05, "radius": 0.15 },
       "kind": { "type": "smd" }
     },
@@ -222,5 +222,15 @@
     "library": "",
     "footprint": "USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "3adf72431b4564f6",
+  "evidence": [
+    {
+      "pads_hash": "3adf72431b4564f6",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Connector_USB:USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

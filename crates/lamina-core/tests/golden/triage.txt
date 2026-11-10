@@ -2,6 +2,5 @@
 # (tit.txt and yoink.txt): board | rule | items | true or false | reason.
 # `true` is a finding that is correct. `false` is a false alarm of the check.
 # A rule with fewer than 7 true findings of 10 must be off by default.
-tit | footprint_symmetry | USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal | true | The pads A1, B12, A12 and B1 are 0.1 mm off their mirror position. The script that made the board moves them on X. The owner knows.
 tit | courtyard_outside_board | J7 | true | Accepted on the board: only a corner of the courtyard margin is outside the round edge.
 tit | courtyard_outside_board | U1 | true | Accepted on the board: only the corners of the antenna keep-out area are outside the round edge.

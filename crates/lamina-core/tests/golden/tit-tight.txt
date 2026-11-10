@@ -719,12 +719,11 @@ Error | track_width | top | t7 | t7 is 0.25 mm wide, but the minimum width is 0.
 Error | track_width | top | t8 | t8 is 0.25 mm wide, but the minimum width is 0.3 mm | 
 Warning | courtyard_outside_board |  | J7 | The courtyard of J7 is partly outside the board | 45.750,6.475
 Warning | courtyard_outside_board |  | U1 | The courtyard of U1 is partly outside the board | 35.000,60.650
-Warning | footprint_symmetry |  | USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal | The footprint USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal (J1) is almost symmetric: these pads are off their mirror position: A1 (0.1 mm), A12 (0.1 mm), B1 (0.1 mm), B12 (0.1 mm) | 
-Warning | mask_bridge | top.mask | J1.A1,J1.A4 | The mask between pads J1.A1 and J1.A4 is 0.05 mm wide, but the minimum is 0.2 mm | 31.850,8.980
-Warning | mask_bridge | top.mask | J1.A1,J1.B9 | The mask between pads J1.A1 and J1.B9 is 0.05 mm wide, but the minimum is 0.2 mm | 31.850,8.980
-Warning | mask_bridge | top.mask | J1.A12,J1.A9 | The mask between pads J1.A9 and J1.A12 is 0.15 mm wide, but the minimum is 0.2 mm | 37.400,8.980
-Warning | mask_bridge | top.mask | J1.A12,J1.B4 | The mask between pads J1.A12 and J1.B4 is 0.15 mm wide, but the minimum is 0.2 mm | 38.250,8.980
-Warning | mask_bridge | top.mask | J1.A4,J1.B12 | The mask between pads J1.A4 and J1.B12 is 0.05 mm wide, but the minimum is 0.2 mm | 32.600,8.980
+Warning | mask_bridge | top.mask | J1.A1,J1.A4 | The mask between pads J1.A1 and J1.A4 is 0.1 mm wide, but the minimum is 0.2 mm | 31.800,8.980
+Warning | mask_bridge | top.mask | J1.A1,J1.B9 | The mask between pads J1.A1 and J1.B9 is 0.1 mm wide, but the minimum is 0.2 mm | 31.800,8.980
+Warning | mask_bridge | top.mask | J1.A12,J1.A9 | The mask between pads J1.A9 and J1.A12 is 0.1 mm wide, but the minimum is 0.2 mm | 37.400,8.980
+Warning | mask_bridge | top.mask | J1.A12,J1.B4 | The mask between pads J1.A12 and J1.B4 is 0.1 mm wide, but the minimum is 0.2 mm | 38.200,8.980
+Warning | mask_bridge | top.mask | J1.A4,J1.B12 | The mask between pads J1.A4 and J1.B12 is 0.1 mm wide, but the minimum is 0.2 mm | 32.600,8.980
 Warning | mask_bridge | top.mask | J1.A4,J1.B8 | The mask between pads J1.A4 and J1.B8 is 0.1 mm wide, but the minimum is 0.2 mm | 32.600,8.980
 Warning | mask_bridge | top.mask | J1.A5,J1.B7 | The mask between pads J1.A5 and J1.B7 is 0.1 mm wide, but the minimum is 0.2 mm | 33.750,8.980
 Warning | mask_bridge | top.mask | J1.A5,J1.B8 | The mask between pads J1.A5 and J1.B8 is 0.1 mm wide, but the minimum is 0.2 mm | 33.750,8.980
@@ -733,10 +732,10 @@ Warning | mask_bridge | top.mask | J1.A6,J1.B7 | The mask between pads J1.A6 and
 Warning | mask_bridge | top.mask | J1.A7,J1.B6 | The mask between pads J1.A7 and J1.B6 is 0.1 mm wide, but the minimum is 0.2 mm | 35.250,8.980
 Warning | mask_bridge | top.mask | J1.A8,J1.B5 | The mask between pads J1.A8 and J1.B5 is 0.1 mm wide, but the minimum is 0.2 mm | 36.250,8.980
 Warning | mask_bridge | top.mask | J1.A8,J1.B6 | The mask between pads J1.A8 and J1.B6 is 0.1 mm wide, but the minimum is 0.2 mm | 36.250,8.980
-Warning | mask_bridge | top.mask | J1.A9,J1.B1 | The mask between pads J1.A9 and J1.B1 is 0.15 mm wide, but the minimum is 0.2 mm | 37.400,8.980
+Warning | mask_bridge | top.mask | J1.A9,J1.B1 | The mask between pads J1.A9 and J1.B1 is 0.1 mm wide, but the minimum is 0.2 mm | 37.400,8.980
 Warning | mask_bridge | top.mask | J1.A9,J1.B5 | The mask between pads J1.A9 and J1.B5 is 0.1 mm wide, but the minimum is 0.2 mm | 37.400,8.980
-Warning | mask_bridge | top.mask | J1.B1,J1.B4 | The mask between pads J1.B1 and J1.B4 is 0.15 mm wide, but the minimum is 0.2 mm | 38.250,8.980
-Warning | mask_bridge | top.mask | J1.B12,J1.B9 | The mask between pads J1.B9 and J1.B12 is 0.05 mm wide, but the minimum is 0.2 mm | 32.600,8.980
+Warning | mask_bridge | top.mask | J1.B1,J1.B4 | The mask between pads J1.B1 and J1.B4 is 0.1 mm wide, but the minimum is 0.2 mm | 38.200,8.980
+Warning | mask_bridge | top.mask | J1.B12,J1.B9 | The mask between pads J1.B9 and J1.B12 is 0.1 mm wide, but the minimum is 0.2 mm | 32.600,8.980
 Warning | mask_bridge | top.mask | J1.B4,J1.B5 | The mask between pads J1.B4 and J1.B5 is 0.1 mm wide, but the minimum is 0.2 mm | 37.400,8.980
 Warning | mask_bridge | top.mask | J1.B8,J1.B9 | The mask between pads J1.B8 and J1.B9 is 0.1 mm wide, but the minimum is 0.2 mm | 33.250,8.980
 Warning | mask_bridge | top.mask | U5.1,U5.2 | The mask between pads U5.1 and U5.2 is 0.15 mm wide, but the minimum is 0.2 mm | 32.237,35.750
@@ -748,8 +747,6 @@ Warning | mask_bridge | top.mask | U5.2,U5.3 | The mask between pads U5.2 and U5
 Warning | mask_bridge | top.mask | U5.3,U5.4 | The mask between pads U5.3 and U5.4 is 0.15 mm wide, but the minimum is 0.2 mm | 32.237,34.750
 Warning | mask_bridge | top.mask | U5.5,U5.6 | The mask between pads U5.5 and U5.6 is 0.15 mm wide, but the minimum is 0.2 mm | 33.000,33.987
 Warning | mask_bridge | top.mask | U5.8,U5.9 | The mask between pads U5.8 and U5.9 is 0.15 mm wide, but the minimum is 0.2 mm | 34.763,34.250
-Warning | mask_sliver | top.mask | J1.A12,J1.SH | The mask between pads J1.A12 and J1.SH is 0.17 mm wide, but the minimum is 0.2 mm | 38.250,8.980
-Warning | mask_sliver | top.mask | J1.B1,J1.SH | The mask between pads J1.B1 and J1.SH is 0.17 mm wide, but the minimum is 0.2 mm | 38.250,8.980
 Warning | mask_sliver | top.mask | U5.6,U5.7 | The mask between pads U5.6 and U5.7 is 0.15 mm wide, but the minimum is 0.2 mm | 33.500,33.987
 Warning | silk_text_size | bottom.silk | x12 | The silkscreen text "v1" is 1.2 mm high, but the minimum is 1.5 mm | 25.500,32.400
 Warning | silk_text_size | top.silk | x1 | The silkscreen text "SERVO" is 1 mm high, but the minimum is 1.5 mm | 11.000,44.000
@@ -778,10 +775,10 @@ Warning | starved_thermal | top | C2.2,z1 | Pad C2.2 has 1 spoke(s) to zone z1, 
 Warning | starved_thermal | top | C3.2,z1 | Pad C3.2 has 2 spoke(s) to zone z1, but the minimum is 4 | 22.275,52.300
 Warning | starved_thermal | top | C4.2,z1 | Pad C4.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 25.450,36.000
 Warning | starved_thermal | top | C9.2,z1 | Pad C9.2 has 2 spoke(s) to zone z1, but the minimum is 4 | 50.550,23.600
-Warning | starved_thermal | top | J1.A1,z1 | Pad J1.A1 has 2 spoke(s) to zone z1, but the minimum is 4 | 31.850,8.980
-Warning | starved_thermal | top | J1.A12,z1 | Pad J1.A12 has 1 spoke(s) to zone z1, but the minimum is 4 | 38.250,8.980
-Warning | starved_thermal | top | J1.B1,z1 | Pad J1.B1 has 1 spoke(s) to zone z1, but the minimum is 4 | 38.250,8.980
-Warning | starved_thermal | top | J1.B12,z1 | Pad J1.B12 has 2 spoke(s) to zone z1, but the minimum is 4 | 31.850,8.980
+Warning | starved_thermal | top | J1.A1,z1 | Pad J1.A1 has 2 spoke(s) to zone z1, but the minimum is 4 | 31.800,8.980
+Warning | starved_thermal | top | J1.A12,z1 | Pad J1.A12 has 1 spoke(s) to zone z1, but the minimum is 4 | 38.200,8.980
+Warning | starved_thermal | top | J1.B1,z1 | Pad J1.B1 has 1 spoke(s) to zone z1, but the minimum is 4 | 38.200,8.980
+Warning | starved_thermal | top | J1.B12,z1 | Pad J1.B12 has 2 spoke(s) to zone z1, but the minimum is 4 | 31.800,8.980
 Warning | starved_thermal | top | LED2.1,z1 | Pad LED2.1 has 3 spoke(s) to zone z1, but the minimum is 4 | 57.413,47.600
 Warning | starved_thermal | top | Q2.2,z1 | Pad Q2.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 30.062,19.550
 Warning | starved_thermal | top | R10.2,z1 | Pad R10.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 22.525,24.000
