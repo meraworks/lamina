@@ -848,6 +848,10 @@ pub struct Keepout {
     pub outline: Contour,
     #[serde(default)]
     pub forbid: Forbid,
+    /// The maximum height of a part in this area, in mm: the space below a
+    /// housing, a shield or a second board.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_height: Option<f64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
