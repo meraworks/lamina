@@ -770,7 +770,7 @@ Warning | silk_to_pad | bottom.silk | J6.2,g1 | The silkscreen drawing g1 is 0.2
 Warning | silk_to_pad | bottom.silk | J6.3,g1 | The silkscreen drawing g1 is 0.221 mm from pad J6.3 on bottom.silk, but the minimum is 0.3 mm | 56.000,27.000
 Warning | starved_thermal | bottom | J1.SH,z2 | Pad J1.SH has 2 spoke(s) to zone z2, but the minimum is 4 | 30.680,8.405
 Warning | starved_thermal | bottom | J1.SH,z2 | Pad J1.SH has 3 spoke(s) to zone z2, but the minimum is 4 | 39.320,8.405
-Warning | starved_thermal | bottom | J3.3,z2 | Pad J3.3 has 2 spoke(s) to zone z2, but the minimum is 4 | 14.000,40.800
+Warning | starved_thermal | bottom | J3.3,z2 | Pad J3.3 has 1 spoke(s) to zone z2, but the minimum is 4 | 14.000,40.800
 Warning | starved_thermal | bottom | J5.3,z2 | Pad J5.3 has 3 spoke(s) to zone z2, but the minimum is 4 | 56.000,35.720
 Warning | starved_thermal | bottom | J6.3,z2 | Pad J6.3 has 3 spoke(s) to zone z2, but the minimum is 4 | 56.000,27.000
 Warning | starved_thermal | bottom | U1.41,z2 | Pad U1.41 has 1 spoke(s) to zone z2, but the minimum is 4 | 32.800,51.240
@@ -798,7 +798,8 @@ Warning | starved_thermal | top | J1.A1,z1 | Pad J1.A1 has 2 spoke(s) to zone z1
 Warning | starved_thermal | top | J1.A12,z1 | Pad J1.A12 has 1 spoke(s) to zone z1, but the minimum is 4 | 38.250,8.980
 Warning | starved_thermal | top | J1.B1,z1 | Pad J1.B1 has 1 spoke(s) to zone z1, but the minimum is 4 | 38.250,8.980
 Warning | starved_thermal | top | J1.B12,z1 | Pad J1.B12 has 2 spoke(s) to zone z1, but the minimum is 4 | 31.850,8.980
-Warning | starved_thermal | top | J1.SH,z1 | Pad J1.SH has 3 spoke(s) to zone z1, but the minimum is 4 | 30.680,4.225
+Warning | starved_thermal | top | J1.SH,z1 | Pad J1.SH has 2 spoke(s) to zone z1, but the minimum is 4 | 30.680,4.225
+Warning | starved_thermal | top | J3.3,z1 | Pad J3.3 has 3 spoke(s) to zone z1, but the minimum is 4 | 14.000,40.800
 Warning | starved_thermal | top | J4.3,z1 | Pad J4.3 has 1 spoke(s) to zone z1, but the minimum is 4 | 14.000,32.080
 Warning | starved_thermal | top | J5.3,z1 | Pad J5.3 has 3 spoke(s) to zone z1, but the minimum is 4 | 56.000,35.720
 Warning | starved_thermal | top | LED2.1,z1 | Pad LED2.1 has 3 spoke(s) to zone z1, but the minimum is 4 | 57.413,47.600

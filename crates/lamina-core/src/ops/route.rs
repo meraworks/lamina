@@ -452,6 +452,21 @@ impl Project {
     }
 
     pub fn autoroute(&mut self, p: Autoroute) -> Result<OpResult> {
+        let bad: Vec<String> = lamina_drc::model::validate(&self.data)
+            .into_iter()
+            .filter(|v| {
+                v.severity == Severity::Error
+                    && lamina_drc::registry::get(&v.rule).is_some_and(|c| !c.overridable)
+            })
+            .take(8)
+            .map(|v| v.message)
+            .collect();
+        if !bad.is_empty() {
+            return Err(Error::Refused(format!(
+                "Correct these errors first: {}",
+                bad.join(" ")
+            )));
+        }
         let out = lamina_route::autoroute(&self.data, &p.options).map_err(Error::Invalid)?;
         let mut d = self.data.clone();
         let n_t = out.tracks.len();

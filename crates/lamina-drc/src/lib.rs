@@ -404,6 +404,35 @@ pub fn analyze(d: &ProjectData) -> Analysis {
         );
     }
 
+    // A copper text or drawing with a stroke that the fab cannot make.
+    let mut thin: std::collections::BTreeMap<String, (f64, u8)> = Default::default();
+    for c in &g.copper {
+        if !c.owner.is_art() {
+            continue;
+        }
+        if let lamina_geom::Prim::Capsule { r, .. } = &c.prim {
+            if 2.0 * r + 1e-9 < rules.min_track_width {
+                let e = thin.entry(c.owner.label()).or_insert((2.0 * r, c.layer));
+                e.0 = e.0.min(2.0 * r);
+            }
+        }
+    }
+    for (id, (width, layer)) in thin {
+        v.push(
+            Violation::error(
+                "track_width",
+                format!(
+                    "The copper drawing {id} has a line {} mm wide, but the minimum width is {} mm",
+                    r3(width),
+                    r3(rules.min_track_width)
+                ),
+            )
+            .items([id])
+            .on(Layer::Copper(Copper::from_index(layer, layers)))
+            .measured(width, rules.min_track_width),
+        );
+    }
+
     // Track widths.
     for t in &d.routing.tracks {
         let limits = rules.resolve(

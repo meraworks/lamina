@@ -192,6 +192,9 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                 .chain(rules.net_classes.values().filter_map(|c| c.clearance))
                 .fold(zc.max(z.thermal_gap).max(2.0), f64::max);
             let mut obstacles = Vec::new();
+            // The gaps around the pads of the net of the zone. Thermal spokes
+            // go across them. Spokes do not go across other obstacles.
+            let mut gaps = Vec::new();
             let mut thermal = Vec::new();
             let mut anchors = Vec::new();
             for it in g.copper.iter().filter(|i| i.layer == l) {
@@ -210,7 +213,7 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                         match z.pad_connection {
                             PadConnection::Solid => {}
                             PadConnection::Thermal => {
-                                obstacles.push(inflate(&it.prim, z.thermal_gap));
+                                gaps.push(inflate(&it.prim, z.thermal_gap));
                                 if region.intersection(&inflate(&it.prim, 0.0)).unsigned_area()
                                     > 1e-6
                                 {
@@ -266,20 +269,21 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                 }
             }
 
-            let blocked = union_all(obstacles);
+            let hard = union_all(obstacles);
+            let blocked = if gaps.is_empty() {
+                hard.clone()
+            } else {
+                hard.union(&union_all(gaps))
+            };
             let mut fill = region.difference(&blocked);
             // Remove necks that are thinner than the minimum width.
             fill = fill.buffer(-min_w / 2.0).buffer(min_w / 2.0);
 
             let mut counts = vec![0u8; thermal.len()];
             if !thermal.is_empty() {
-                let allowed = region.difference(&union_all(
-                    g.copper
-                        .iter()
-                        .filter(|i| i.layer == l && !(z.net.is_some() && i.net == z.net))
-                        .map(|i| inflate(&i.prim, zc.max(clearance(&i.net))))
-                        .collect(),
-                ));
+                // A spoke keeps clear of all that the pour keeps clear of:
+                // copper of other nets, holes, keep-outs and other pours.
+                let allowed = region.difference(&hard);
                 let spoke = z.thermal_spoke.max(min_w);
                 let mut spokes = Vec::new();
                 for (index, (_, p)) in thermal.iter().enumerate() {
@@ -310,7 +314,11 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                             Point::new(x1, y1),
                             Point::new(x0, y1),
                         ]))
-                        .intersection(&local_allowed);
+                        .intersection(&local_allowed)
+                        // Remove the parts of the arm that are thinner than the
+                        // minimum width, as for the pour.
+                        .buffer(-0.45 * min_w)
+                        .buffer(0.45 * min_w);
                         if arm.0.iter().any(|piece| {
                             let piece = mp(piece.clone());
                             piece.intersection(&pad).unsigned_area() > 1e-6
@@ -318,22 +326,11 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                         }) {
                             count += 1;
                         }
+                        spokes.push(arm);
                     }
                     counts[index] = count;
-                    spokes.push(mp(gpoly(&[
-                        Point::new(c.x - hx, c.y - s),
-                        Point::new(c.x + hx, c.y - s),
-                        Point::new(c.x + hx, c.y + s),
-                        Point::new(c.x - hx, c.y + s),
-                    ])));
-                    spokes.push(mp(gpoly(&[
-                        Point::new(c.x - s, c.y - hy),
-                        Point::new(c.x + s, c.y - hy),
-                        Point::new(c.x + s, c.y + hy),
-                        Point::new(c.x - s, c.y + hy),
-                    ])));
                 }
-                let spokes = union_all(spokes).intersection(&allowed);
+                let spokes = union_all(spokes);
                 fill = fill.union(&spokes);
             }
 

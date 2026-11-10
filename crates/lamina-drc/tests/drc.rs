@@ -874,3 +874,27 @@ fn pour_keeps_clear_of_copper_text() {
         .any(|f| f.polygons.iter().any(|p| p.prim().contains(text)));
     assert!(!inside, "the pour covers the copper text");
 }
+
+#[test]
+fn a_copper_text_with_a_thin_stroke_is_a_width_error() {
+    let mut d = board();
+    d.board.rules.min_track_width = 0.2;
+    d.routing.texts.push(BoardText {
+        id: "x1".into(),
+        layer: Layer::TOP,
+        text: "AB".into(),
+        at: Point::new(5.0, 3.0),
+        size: 0.5,
+        rotation: 0.0,
+    });
+    let hits = |d: &ProjectData| {
+        analyze(d)
+            .violations
+            .into_iter()
+            .filter(|v| v.rule == "track_width" && v.items == vec!["x1".to_string()])
+            .count()
+    };
+    assert_eq!(hits(&d), 1, "a 0.5 mm text has a stroke below 0.2 mm");
+    d.routing.texts[0].size = 2.0;
+    assert_eq!(hits(&d), 0);
+}

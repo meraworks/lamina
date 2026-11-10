@@ -436,7 +436,11 @@ fn board_from(v: &Value, name: &str) -> Result<BoardFile> {
     if let Value::Object(m) = &mut base {
         m.insert("schema".into(), Value::from(SCHEMA));
     }
-    serde_json::from_value(base).map_err(|e| Error::invalid(format!("board: {e}")))
+    let board: BoardFile =
+        serde_json::from_value(base).map_err(|e| Error::invalid(format!("board: {e}")))?;
+    lamina_drc::registry::check_rules(&board.rules)
+        .map_err(|e| Error::invalid(format!("board.rules: {e}")))?;
+    Ok(board)
 }
 
 fn parts_from(v: &Value) -> Result<PartsFile> {

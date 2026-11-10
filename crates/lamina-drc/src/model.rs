@@ -219,7 +219,69 @@ pub fn validate(d: &ProjectData) -> Vec<Violation> {
             }
         }
     }
+    for x in &mut v {
+        if x.at.is_none() {
+            x.at = x.items.iter().find_map(|i| locate(d, i));
+        }
+    }
     v
+}
+
+/// The board position of an item of a violation: a track, a via, a zone, a
+/// keep-out, a note, a pad, a part or a net. A marker in the viewer uses it.
+pub fn locate(d: &ProjectData, item: &str) -> Option<Point> {
+    let ok = |p: Point| (p.x.is_finite() && p.y.is_finite()).then_some(p);
+    if let Some(t) = d.routing.tracks.iter().find(|t| t.id == item) {
+        return t.points.first().copied().and_then(ok);
+    }
+    if let Some(via) = d.routing.vias.iter().find(|x| x.id == item) {
+        return ok(via.at);
+    }
+    let outline = d
+        .routing
+        .zones
+        .iter()
+        .find(|z| z.id == item)
+        .map(|z| &z.outline)
+        .or_else(|| {
+            d.routing
+                .keepouts
+                .iter()
+                .find(|k| k.id == item)
+                .map(|k| &k.outline)
+        });
+    if let Some(o) = outline {
+        return o
+            .vertices
+            .first()
+            .map(|v| Point::new(v.x, v.y))
+            .and_then(ok);
+    }
+    if let Some(n) = d.notes.notes.iter().find(|n| n.id == item) {
+        return n.at.and_then(ok).or_else(|| {
+            let pl = d.placement.placements.get(n.refdes.as_deref()?)?;
+            ok(Point::new(pl.x, pl.y))
+        });
+    }
+    if let Some(pl) = d.placement.placements.get(item) {
+        return ok(Point::new(pl.x, pl.y));
+    }
+    if let Ok(pad) = item.parse::<PadRef>() {
+        let pl = d.placement.placements.get(&pad.part)?;
+        let at = d
+            .parts
+            .parts
+            .get(&pad.part)
+            .and_then(|p| d.footprints.get(&p.footprint))
+            .and_then(|fp| fp.pad(&pad.pad))
+            .map(|p| pl.transform(p.at))
+            .unwrap_or(Point::new(pl.x, pl.y));
+        return ok(at);
+    }
+    if let Some(net) = d.nets.nets.get(item) {
+        return net.pads.iter().find_map(|p| locate(d, &p.to_string()));
+    }
+    None
 }
 
 /// Pins with a name that does not agree with the net: a ground pin on a

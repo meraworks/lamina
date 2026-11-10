@@ -227,3 +227,24 @@ fn diff_reports_moved_parts_and_new_violations() {
     assert!(adds_error(&a, &b));
     assert!(!adds_error(&b, &b));
 }
+
+#[test]
+fn a_model_error_has_a_position_and_stops_the_autorouter() {
+    let (_dir, mut p) = project();
+    p.data.routing.tracks.push(Track {
+        id: "t9".into(),
+        net: "NOPE".into(),
+        layer: Layer::TOP,
+        width: 0.2,
+        points: vec![Point::new(3.0, 4.0), Point::new(6.0, 4.0)],
+    });
+    let v = p.check();
+    let hit = v.iter().find(|x| x.rule == "unknown_net").unwrap();
+    assert_eq!(hit.at, Some(Point::new(3.0, 4.0)));
+    let e = p
+        .autoroute(serde_json::from_value(serde_json::json!({})).unwrap())
+        .unwrap_err()
+        .to_string();
+    assert!(e.contains("Correct these errors first"), "{e}");
+    assert!(e.contains("unknown net NOPE"), "{e}");
+}
