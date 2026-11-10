@@ -1382,7 +1382,7 @@ pub fn autoroute(d: &ProjectData, opt: &RouteOptions) -> Result<RouteOutcome, St
             .iter()
             .map(|f| (f.net.clone(), f.from.clone(), f.to.clone()))
             .collect();
-        let analysis = lamina_drc::analyze(&d2);
+        let analysis = lamina_drc::connectivity(&d2);
         let mut open: Vec<String> = analysis
             .ratsnest
             .iter()
@@ -1507,12 +1507,12 @@ fn route_once(d: &ProjectData, opt: &RouteOptions) -> Result<RouteOutcome, Strin
     route_once_with(d, opt, None)
 }
 
-/// One router run. `analysis` is the DRC analysis of `d`, if the caller
+/// One router run. `analysis` is the connectivity of `d`, if the caller
 /// already has it.
 fn route_once_with(
     d: &ProjectData,
     opt: &RouteOptions,
-    analysis: Option<lamina_drc::Analysis>,
+    analysis: Option<lamina_drc::Connectivity>,
 ) -> Result<RouteOutcome, String> {
     let t0 = Instant::now();
     let dbg = std::env::var_os("LAMINA_ROUTE_DEBUG").is_some();
@@ -1521,7 +1521,7 @@ fn route_once_with(
         eprintln!("ctx {:?} grid {}", t0.elapsed(), ctx.g.pitch);
     }
     let via_cost = opt.via_cost.unwrap_or(25.0) as f32;
-    let analysis = analysis.unwrap_or_else(|| lamina_drc::analyze(d));
+    let analysis = analysis.unwrap_or_else(|| lamina_drc::connectivity(d));
     if dbg {
         eprintln!("analyze {:?}", t0.elapsed());
     }

@@ -602,6 +602,6 @@ impl Project {
 
     /// The connections that are not routed, as lines between pads.
     pub fn ratsnest(&self) -> Vec<lamina_drc::Ratsnest> {
-        lamina_drc::analyze(&self.data).ratsnest
+        lamina_drc::connectivity(&self.data).ratsnest
     }
 }

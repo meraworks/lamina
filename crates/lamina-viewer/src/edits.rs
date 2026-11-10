@@ -1234,7 +1234,7 @@ fn push_from(d: &mut ProjectData, ours: Vec<Pusher>, router: bool) -> EditResult
     // The open connections of the pushed nets before the push. After it, there
     // must not be more.
     let open_of = |d: &ProjectData| {
-        lamina_drc::analyze(d)
+        lamina_drc::connectivity(d)
             .ratsnest
             .iter()
             .filter(|r| nets.contains(&r.net))

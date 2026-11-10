@@ -132,3 +132,20 @@ fn golden_yoink_tight() {
     tight(&mut d);
     check("yoink-tight", &snapshot(&d));
 }
+
+#[test]
+fn connectivity_gives_the_islands_and_ratsnest_of_analyze() {
+    for board in ["tit-flight-computer", "yoink-main-board"] {
+        let mut d = load(board);
+        // Open some connections, so that the ratsnest is not empty.
+        d.routing.tracks.truncate(d.routing.tracks.len() / 2);
+        let a = lamina_drc::analyze(&d);
+        let c = lamina_drc::connectivity(&d);
+        assert!(!a.ratsnest.is_empty(), "{board}");
+        assert_eq!(a.ratsnest, c.ratsnest, "{board}");
+        assert_eq!(a.island, c.island, "{board}");
+        assert_eq!(a.fill_island, c.fill_island, "{board}");
+        assert_eq!(a.geometry.copper.len(), c.geometry.copper.len(), "{board}");
+        assert_eq!(a.fills, c.fills, "{board}");
+    }
+}

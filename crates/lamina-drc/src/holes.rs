@@ -3,7 +3,7 @@
 use lamina_geom::{BoardGeometry, Index, Owner};
 use lamina_model::*;
 
-use crate::r3;
+use crate::{mid, r3};
 
 fn part_of(o: &Owner) -> Option<&str> {
     match o {
@@ -100,4 +100,42 @@ pub(crate) fn hole_to_copper(d: &ProjectData, g: &BoardGeometry) -> Vec<Violatio
         }
     }
     out
+}
+
+/// Two holes that are too near to each other.
+pub(crate) fn hole_to_hole(ctx: &crate::ctx::Ctx, v: &mut Vec<Violation>) {
+    let (g, rules) = (&ctx.g, &ctx.d.board.rules);
+    // Hole to hole.
+    let dboxes: Vec<Rect> = g.drills.iter().map(|x| x.prim.bbox()).collect();
+    let didx = Index::new(dboxes.iter().copied());
+    for (i, a) in g.drills.iter().enumerate() {
+        for j in didx.near(&dboxes[i], rules.hole_to_hole) {
+            if j <= i {
+                continue;
+            }
+            let b = &g.drills[j];
+            if a.owner.body() == b.owner.body() {
+                continue;
+            }
+            let dist = a.prim.distance(&b.prim);
+            if dist + 1e-6 < rules.hole_to_hole {
+                let mut pair = [a.owner.label(), b.owner.label()];
+                pair.sort();
+                v.push(
+                    Violation::error(
+                        "hole_to_hole",
+                        format!(
+                            "The holes {} and {} are {} mm apart, but the minimum is {} mm",
+                            pair[0],
+                            pair[1],
+                            r3(dist),
+                            r3(rules.hole_to_hole)
+                        ),
+                    )
+                    .at(mid(&a.prim, &b.prim))
+                    .items(pair),
+                );
+            }
+        }
+    }
 }
