@@ -1,6 +1,7 @@
 //! Copper geometry for Lamina: primitives, exact distances, extraction of
 //! board items, and a spatial index.
 
+pub mod art;
 pub mod board;
 pub mod fill;
 pub mod font;

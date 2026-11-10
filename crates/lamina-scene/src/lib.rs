@@ -380,10 +380,10 @@ pub fn build_2d(d: &ProjectData, a: &Analysis) -> Scene2D {
         }
     }
     for t in &d.routing.texts {
+        // A text on a copper layer is in the copper geometry already.
         let l = match t.layer {
             Layer::Silk(s) => SceneLayer::Silk(s),
             Layer::Fab(s) => SceneLayer::Fab(s),
-            Layer::Copper(c) => SceneLayer::Copper(c.index(layers_n)),
             _ => continue,
         };
         for gm in text_geoms(
@@ -398,10 +398,12 @@ pub fn build_2d(d: &ProjectData, a: &Analysis) -> Scene2D {
         }
     }
     for gr in &d.routing.graphics {
+        // A drawing on a copper layer is in the copper geometry already.
         let l = match gr.layer {
             Layer::Silk(s) => SceneLayer::Silk(s),
             Layer::Fab(s) => SceneLayer::Fab(s),
-            Layer::Copper(c) => SceneLayer::Copper(c.index(layers_n)),
+            Layer::Mask(s) => SceneLayer::Mask(s),
+            Layer::Paste(s) => SceneLayer::Paste(s),
             _ => continue,
         };
         push(

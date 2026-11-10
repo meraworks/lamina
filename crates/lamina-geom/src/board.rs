@@ -28,6 +28,16 @@ pub enum Owner {
         id: String,
         piece: usize,
     },
+    /// A board text on a copper layer.
+    Text {
+        id: String,
+    },
+    /// A drawing on a copper layer: a board drawing (its id) or a footprint
+    /// drawing (the reference of its part).
+    Graphic {
+        id: String,
+        index: usize,
+    },
 }
 
 impl Owner {
@@ -45,7 +55,14 @@ impl Owner {
             Owner::Via { id } => id.clone(),
             Owner::Hole { id } => id.clone(),
             Owner::Zone { id, .. } => id.clone(),
+            Owner::Text { id } => id.clone(),
+            Owner::Graphic { id, .. } => id.clone(),
         }
+    }
+
+    /// True for a copper text or a copper drawing.
+    pub fn is_art(&self) -> bool {
+        matches!(self, Owner::Text { .. } | Owner::Graphic { .. })
     }
 
     /// Items with the same body have the same key (a through pad on all layers).
@@ -56,6 +73,8 @@ impl Owner {
             Owner::Via { id } => format!("via:{id}"),
             Owner::Hole { id } => format!("hole:{id}"),
             Owner::Zone { id, piece } => format!("zone:{id}:{piece}"),
+            Owner::Text { id } => format!("text:{id}"),
+            Owner::Graphic { id, index } => format!("graphic:{id}:{index}"),
         }
     }
 }
@@ -386,6 +405,70 @@ pub fn build(d: &ProjectData) -> BoardGeometry {
                         owner: Owner::Hole { id: h.id.clone() },
                     });
                 }
+            }
+        }
+    }
+
+    // Texts and drawings on copper layers are copper with no net. The fab
+    // files have them, so the checks and the pours must see them.
+    let rules = &d.board.rules;
+    for t in &d.routing.texts {
+        let Some(c) = t.layer.copper() else { continue };
+        if !t.layer.exists_in(layers) {
+            continue;
+        }
+        let width = crate::font::silk_stroke_width(t.size, rules.silk_width);
+        let side = t.layer.side().unwrap_or(Side::Top);
+        for prim in crate::art::text_prims(&t.text, t.at, t.size, t.rotation, width, side) {
+            copper.push(CopperItem {
+                layer: c.index(layers),
+                net: None,
+                prim,
+                owner: Owner::Text { id: t.id.clone() },
+            });
+        }
+    }
+    for (index, gr) in d.routing.graphics.iter().enumerate() {
+        let Some(c) = gr.layer.copper() else { continue };
+        if !gr.layer.exists_in(layers) {
+            continue;
+        }
+        for prim in crate::art::shape_prims(&gr.shape, gr.width, gr.filled, &|p| p) {
+            copper.push(CopperItem {
+                layer: c.index(layers),
+                net: None,
+                prim,
+                owner: Owner::Graphic {
+                    id: gr.id.clone(),
+                    index,
+                },
+            });
+        }
+    }
+    for (refdes, pl) in &d.placement.placements {
+        let Some(fp) = d
+            .parts
+            .parts
+            .get(refdes)
+            .and_then(|p| d.footprints.get(&p.footprint))
+        else {
+            continue;
+        };
+        let tf = |p: Point| pl.transform(p);
+        for (index, gr) in fp.graphics.iter().enumerate() {
+            if gr.layer != FpLayer::Copper {
+                continue;
+            }
+            for prim in crate::art::shape_prims(&gr.shape, gr.width, gr.filled, &tf) {
+                copper.push(CopperItem {
+                    layer: smd_layer(pl.side, layers),
+                    net: None,
+                    prim,
+                    owner: Owner::Graphic {
+                        id: refdes.clone(),
+                        index,
+                    },
+                });
             }
         }
     }

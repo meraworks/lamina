@@ -319,7 +319,7 @@ impl App {
                 Owner::Pad { .. } | Owner::Hole { .. } => 0,
                 Owner::Via { .. } => 1,
                 Owner::Track { .. } => 2,
-                Owner::Zone { .. } => continue,
+                Owner::Zone { .. } | Owner::Text { .. } | Owner::Graphic { .. } => continue,
             };
             if best.as_ref().is_some_and(|b| b.0 <= rank) {
                 continue;

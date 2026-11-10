@@ -775,3 +775,102 @@ fn copper_of_the_net_of_a_plated_hole_can_touch_it() {
     );
     assert_eq!(only(&analyze(&d), "hole_to_copper").len(), 1);
 }
+
+fn copper_text(d: &mut ProjectData, at: Point) {
+    d.routing.texts.push(BoardText {
+        id: "c1".into(),
+        layer: Layer::TOP,
+        text: "AB".into(),
+        at,
+        size: 1.5,
+        rotation: 0.0,
+    });
+}
+
+#[test]
+fn copper_text_over_a_track_is_an_error() {
+    let mut d = board();
+    track(
+        &mut d,
+        "A",
+        vec![Point::new(12.0, 5.0), Point::new(18.0, 5.0)],
+    );
+    copper_text(&mut d, Point::new(15.0, 15.0));
+    let a = analyze(&d);
+    assert!(only(&a, "short").is_empty() && only(&a, "clearance").is_empty());
+    d.routing.texts[0].at = Point::new(15.0, 5.0);
+    let a = analyze(&d);
+    let hits = only(&a, "short").len() + only(&a, "clearance").len();
+    assert!(hits > 0, "{:?}", rules(&a));
+    assert!(
+        a.violations
+            .iter()
+            .any(|v| v.items.contains(&"c1".to_string()))
+    );
+}
+
+#[test]
+fn copper_drawings_with_no_net_can_touch() {
+    let mut d = board();
+    for (i, x) in [5.0, 5.5].iter().enumerate() {
+        d.routing.graphics.push(BoardGraphic {
+            id: format!("g{i}"),
+            layer: Layer::TOP,
+            shape: Shape::Rect {
+                min: Point::new(*x, 14.0),
+                max: Point::new(x + 1.0, 16.0),
+            },
+            width: 0.0,
+            filled: true,
+        });
+    }
+    let a = analyze(&d);
+    assert!(only(&a, "short").is_empty() && only(&a, "clearance").is_empty());
+}
+
+#[test]
+fn pour_keeps_clear_of_copper_text() {
+    let mut d = board();
+    d.nets.nets.insert("GND".into(), Net::default());
+    d.nets.nets.get_mut("A").unwrap().pads.clear();
+    d.nets
+        .nets
+        .get_mut("GND")
+        .unwrap()
+        .pads
+        .extend(["R1.2".parse().unwrap(), "R2.1".parse().unwrap()]);
+    d.routing.zones.push(Zone {
+        id: "z1".into(),
+        net: Some("GND".into()),
+        layers: vec![Layer::TOP],
+        outline: Contour::rect(1.0, 1.0, 28.0, 18.0),
+        priority: 0,
+        clearance: None,
+        min_width: None,
+        pad_connection: PadConnection::Solid,
+        thermal_gap: 0.3,
+        thermal_spoke: 0.3,
+    });
+    copper_text(&mut d, Point::new(15.0, 15.0));
+    let a = analyze(&d);
+    assert!(!a.fills.is_empty());
+    assert!(
+        only(&a, "short").is_empty() && only(&a, "clearance").is_empty(),
+        "{:?}",
+        a.violations
+    );
+    // The text is in a hole of the pour: a point of the text is not in the fill.
+    let text = a
+        .geometry
+        .copper
+        .iter()
+        .find(|c| c.owner.is_art())
+        .unwrap()
+        .prim
+        .anchor();
+    let inside = a
+        .fills
+        .iter()
+        .any(|f| f.polygons.iter().any(|p| p.prim().contains(text)));
+    assert!(!inside, "the pour covers the copper text");
+}

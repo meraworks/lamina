@@ -198,6 +198,11 @@ pub fn analyze(d: &ProjectData) -> Analysis {
             if a.layer != b.layer || a.owner.body() == b.owner.body() {
                 continue;
             }
+            // Two drawings with no net can touch: a logo, or the copper of a
+            // board that came from Gerber files.
+            if a.owner.is_art() && b.owner.is_art() {
+                continue;
+            }
             let both_fill = i >= n_items && j >= n_items;
             let same_net = a.net.is_some() && a.net == b.net;
             // A pour fill keeps clear of other nets, so a pour piece is important
@@ -729,7 +734,7 @@ pub fn analyze(d: &ProjectData) -> Analysis {
                 continue;
             }
             let forbidden = match &it.owner {
-                Owner::Track { .. } => forbid.tracks,
+                Owner::Track { .. } | Owner::Text { .. } | Owner::Graphic { .. } => forbid.tracks,
                 Owner::Via { .. } => forbid.vias,
                 Owner::Zone { .. } => false,
                 Owner::Pad { part, .. } => forbid.pads && part != kid,
