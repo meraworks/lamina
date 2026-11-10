@@ -24,6 +24,7 @@ image = { version = "0.25", optional = true, default-features = false, features 
 
 [dev-dependencies]
 lamina-footprint.workspace = true
+tempfile.workspace = true
 
 [lints]
 workspace = true

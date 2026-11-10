@@ -160,6 +160,8 @@ pub(crate) struct App {
     fit_pending: bool,
     flashes: Vec<(Rect, Instant)>,
     last_reload: Option<Instant>,
+    /// Headless screenshots may omit the variable rebuild duration.
+    fixed_timing: bool,
     cursor_mm: Option<Point>,
     note_text: String,
     note_at: Option<Point>,
@@ -262,6 +264,7 @@ impl App {
             fit_pending: false,
             flashes: Vec::new(),
             last_reload: None,
+            fixed_timing: false,
             cursor_mm: None,
             note_text: String::new(),
             note_at: None,
@@ -725,7 +728,7 @@ impl App {
             .count();
         let warnings = l.analysis.violations.len() - errors;
         let unrouted = l.analysis.ratsnest.len();
-        widgets::live_dot(ui, self.last_reload);
+        widgets::live_dot(ui, self.last_reload, self.fixed_timing);
         ui.add_space(6.0);
         if !l.generated.is_empty() {
             widgets::chip(ui, TEXT_2, "design.jsonnet");
@@ -846,7 +849,11 @@ impl App {
                 if let Some(l) = &self.loaded {
                     let d = &l.data;
                     let mut items = vec![
-                        format!("rebuilt in {} ms", l.took.as_millis()),
+                        if self.fixed_timing {
+                            "rebuilt".to_owned()
+                        } else {
+                            format!("rebuilt in {} ms", l.took.as_millis())
+                        },
                         format!(
                             "{} parts · {} nets · {} tracks · {} vias",
                             d.parts.parts.len(),

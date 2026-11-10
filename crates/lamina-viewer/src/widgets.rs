@@ -122,11 +122,15 @@ pub fn chip(ui: &mut egui::Ui, color: Color32, text: &str) {
 }
 
 /// The "live" indicator. It becomes brighter just after a reload.
-pub fn live_dot(ui: &mut egui::Ui, last: Option<Instant>) {
+pub fn live_dot(ui: &mut egui::Ui, last: Option<Instant>, fixed: bool) {
     let (rect, resp) = ui.allocate_exact_size(Vec2::new(64.0, 26.0), Sense::hover());
     let p = ui.painter();
     let age = last.map(|t| t.elapsed().as_secs_f32()).unwrap_or(99.0);
-    let pulse = (1.0 - (age / 0.9)).clamp(0.0, 1.0);
+    let pulse = if fixed {
+        0.0
+    } else {
+        (1.0 - (age / 0.9)).clamp(0.0, 1.0)
+    };
     let c = Pos2::new(rect.left() + 8.0, rect.center().y);
     if pulse > 0.0 {
         p.circle_filled(c, 3.5 + 5.0 * pulse, ACCENT.gamma_multiply(0.25 * pulse));
@@ -141,6 +145,7 @@ pub fn live_dot(ui: &mut egui::Ui, last: Option<Instant>) {
         TEXT_2,
     );
     let tip = match last {
+        Some(_) if fixed => "The viewer watches the project folder.".to_owned(),
         Some(t) => format!(
             "The viewer watches the project folder. The last update was {:.1} s ago.",
             t.elapsed().as_secs_f32()

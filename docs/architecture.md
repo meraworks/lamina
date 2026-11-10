@@ -71,6 +71,13 @@ lamina-viewer shot <board> --3d --size 1280x760 drag:560,560,600,560 --out view.
 `lamina-viewer shot --help` lists the steps. On a computer without a GPU, a software
 Vulkan driver works (Mesa lavapipe, `mesa-vulkan-drivers` on Debian and Ubuntu).
 
+For documentation images, add `--no-cursor --fixed`. The pointer is hidden while
+hover, click and drag steps still work. Rebuild durations, the live update pulse
+and elapsed time in its tooltip are replaced with a stable display. The default
+keeps the pointer and timings. PNGs made with the same steps, board and viewport
+are repeatable on the same machine and graphics driver. The README media script
+uses these options.
+
 ## README images
 
 The screenshots and the GIF in the README come from the real programs.
