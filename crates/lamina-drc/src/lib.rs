@@ -4,6 +4,7 @@ pub mod assembly;
 pub mod fab;
 pub mod footprints;
 mod holes;
+mod labels;
 mod lengths;
 pub mod model;
 mod pairs;
@@ -788,6 +789,7 @@ pub fn analyze(d: &ProjectData) -> Analysis {
     v.extend(parity::check(d, &g));
     v.extend(footprints::check(d));
     v.extend(assembly::check(d, &g, &fills));
+    v.extend(labels::check(d));
     // A join that only touches is a violation if nothing else connects the two sides.
     for (i, j) in weak {
         if strong.find(i) != strong.find(j) {
