@@ -245,3 +245,27 @@ fn each_reported_rule_is_in_the_registry() {
         );
     }
 }
+
+#[test]
+fn an_open_import_note_is_a_loss_until_it_is_resolved() {
+    let mut d = board();
+    d.notes.notes.push(Note {
+        id: "n1".into(),
+        text: "skipped 2 footprint zones".into(),
+        at: None,
+        refdes: None,
+        author: "import".into(),
+        created: 0,
+        resolved: false,
+    });
+    let a = analyze(&d);
+    assert_eq!(count(&d, "import_loss"), 1);
+    let release = release_view(&a, &d.board.rules);
+    assert!(
+        release
+            .iter()
+            .any(|v| v.rule == "import_loss" && v.severity == Severity::Error)
+    );
+    d.notes.notes[0].resolved = true;
+    assert_eq!(count(&d, "import_loss"), 0);
+}

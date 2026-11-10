@@ -176,6 +176,38 @@ impl Project {
         let mut notes = imported.notes;
         let mut d = imported.data;
         d.notes = self.data.notes.clone();
+        // A loss that changes the fabrication files stays as an open note,
+        // so that `import_loss` reports it until someone resolves it.
+        let created = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|t| t.as_secs())
+            .unwrap_or(0);
+        for text in notes.iter().filter(|n| is_fab_loss(n)) {
+            if d.notes
+                .notes
+                .iter()
+                .any(|n| n.author == "import" && &n.text == text)
+            {
+                continue;
+            }
+            let next = d
+                .notes
+                .notes
+                .iter()
+                .filter_map(|x| x.id.strip_prefix('n')?.parse::<u64>().ok())
+                .max()
+                .unwrap_or(0)
+                + 1;
+            d.notes.notes.push(Note {
+                id: format!("n{next}"),
+                text: text.clone(),
+                at: None,
+                refdes: None,
+                author: "import".into(),
+                created,
+                resolved: false,
+            });
+        }
         if p.models && !imported.models.is_empty() {
             let mut found = 0;
             for (fp_id, wanted) in &imported.models {
@@ -226,6 +258,7 @@ impl Project {
             FileKind::Nets,
             FileKind::Placement,
             FileKind::Routing,
+            FileKind::Notes,
         ] {
             touched.files.insert(k);
         }
@@ -404,4 +437,25 @@ impl Project {
         }
         Ok(res)
     }
+}
+
+/// True for an import note about dropped data that changes the copper, the
+/// holes, the mask or the paste. Dropped texts and drawings on other layers
+/// do not count.
+fn is_fab_loss(note: &str) -> bool {
+    let n = note.to_lowercase();
+    n.contains("skipped")
+        && [
+            "pad",
+            "zone",
+            "footprint",
+            "via",
+            "track",
+            "edge",
+            "records",
+        ]
+        .iter()
+        .any(|w| n.contains(w))
+        && !n.contains("text on")
+        && !n.contains("graphics on")
 }

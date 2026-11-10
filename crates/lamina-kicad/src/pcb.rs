@@ -63,7 +63,8 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
         .child("setup")
         .and_then(|s| s.child_num("pad_to_mask_clearance"))
     {
-        if m > 0.0 {
+        // Zero is a value: the mask opening is the pad.
+        if m >= 0.0 {
             d.board.rules.mask_margin = r6(m);
         }
     }
@@ -1099,7 +1100,13 @@ fn footprint_node(
     let ref_at = text_at(FpLayer::Silk, "${ref}", ref_default);
     let val_at = text_at(FpLayer::Fab, "${value}", Point::new(0.0, 0.0));
     // A footprint with no such text shows no such field in Lamina.
-    let absent = |key: &str| !fp.texts.iter().any(|t| t.text == key);
+    // The Reference is on the silkscreen in KiCad. A footprint that has
+    // its reference only on the Fab layer shows none on the silkscreen.
+    let absent = |key: &str| {
+        !fp.texts
+            .iter()
+            .any(|t| t.text == key && (key != "${ref}" || t.layer == FpLayer::Silk))
+    };
     let smd = fp.pads.iter().any(Pad::is_smd);
     let mut attr = n("attr").sym(if smd { "smd" } else { "through_hole" });
     if part.dnp {

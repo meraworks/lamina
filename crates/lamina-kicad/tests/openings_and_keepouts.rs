@@ -57,3 +57,49 @@ fn keepout_of_a_placed_footprint_is_in_the_export() {
     );
     assert!(text.contains("(copperpour not_allowed)"));
 }
+
+#[test]
+fn project_rules_read_the_board_minimums() {
+    let mut d = ProjectData::new("t");
+    let pro = r#"{"board":{"design_settings":{"rules":{
+        "min_clearance":0.3,"min_hole_clearance":0.25,"min_text_height":1.0,"min_resolved_spokes":1}}},
+        "net_settings":{"classes":[{"name":"Default","clearance":0.2}]}}"#;
+    lamina_kicad::apply_project(&mut d, pro).unwrap();
+    let r = &d.board.rules;
+    assert_eq!(
+        r.clearance, 0.3,
+        "the board minimum is above the class value"
+    );
+    assert_eq!(r.hole_to_copper, 0.25);
+    assert_eq!(r.min_silk_text_height, 1.0);
+    assert_eq!(r.min_thermal_spokes, 1);
+    let out = lamina_kicad::export_project(&d, "t");
+    assert!(out.contains("\"min_hole_clearance\": 0.25"), "{out}");
+}
+
+#[test]
+fn reference_is_hidden_when_only_the_fab_layer_has_it() {
+    let mut d = ProjectData::new("t");
+    d.board.outline = Some(Contour::rect(0.0, 0.0, 60.0, 60.0));
+    let mut fp = esp32();
+    fp.texts
+        .retain(|t| !(t.text == "${ref}" && t.layer == FpLayer::Silk));
+    assert!(
+        fp.texts.iter().any(|t| t.text == "${ref}"),
+        "the Fab reference stays"
+    );
+    let id = fp.id.clone();
+    d.footprints.insert(id.clone(), fp);
+    d.parts.parts.insert("U1".into(), Part::new(&id));
+    d.placement
+        .placements
+        .insert("U1".into(), Placement::at(30.0, 30.0));
+    let text = lamina_kicad::export_board(&d);
+    let at = text.find("(property \"Reference\" \"U1\"").unwrap();
+    let end = text[at..].find("(property \"Value\"").unwrap();
+    assert!(
+        text[at..at + end].contains("(hide yes)"),
+        "{}",
+        &text[at..at + end]
+    );
+}

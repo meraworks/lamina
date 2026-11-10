@@ -107,6 +107,24 @@ pub fn validate(d: &ProjectData) -> Vec<Violation> {
 
     pin_roles(d, &mut v);
 
+    for n in d
+        .notes
+        .notes
+        .iter()
+        .filter(|n| n.author == "import" && !n.resolved)
+    {
+        v.push(
+            Violation::warning(
+                "import_loss",
+                format!(
+                    "The import dropped data: {}. Examine it, then resolve the note {}",
+                    n.text, n.id
+                ),
+            )
+            .items([n.id.clone()]),
+        );
+    }
+
     for (id, outline) in d
         .routing
         .zones

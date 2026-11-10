@@ -33,6 +33,19 @@ pub fn apply_project(d: &mut ProjectData, pro: &str) -> Result<Vec<String>, Stri
     if let Some(x) = num(ds, "min_copper_edge_clearance") {
         rules.copper_to_edge = r6(x);
     }
+    if let Some(x) = num(ds, "min_hole_clearance") {
+        rules.hole_to_copper = r6(x);
+    }
+    if let Some(x) = num(ds, "min_text_height") {
+        rules.min_silk_text_height = r6(x);
+    }
+    if let Some(x) = ds
+        .get("min_resolved_spokes")
+        .and_then(Value::as_u64)
+        .filter(|x| *x <= 4)
+    {
+        rules.min_thermal_spokes = x as u8;
+    }
 
     let ns = &v["net_settings"];
     let classes = ns["classes"].as_array().cloned().unwrap_or_default();
@@ -73,6 +86,10 @@ pub fn apply_project(d: &mut ProjectData, pro: &str) -> Result<Vec<String>, Stri
         named += 1;
     }
     rules.preset = None;
+    // The board minimum of KiCad is a floor for the clearance.
+    if let Some(x) = num(ds, "min_clearance") {
+        rules.clearance = rules.clearance.max(r6(x));
+    }
 
     // KiCad 8+: explicit assignments, then patterns in order.
     if let Some(a) = ns["netclass_assignments"].as_object() {
@@ -152,7 +169,9 @@ pub fn export_project(d: &ProjectData, name: &str) -> String {
             "min_via_annular_width": r.min_annular_ring,
             "min_via_diameter": r.min_via_drill + 2.0 * r.min_annular_ring,
             "min_hole_to_hole": r.hole_to_hole,
-            "min_hole_clearance": r.clearance,
+            "min_hole_clearance": r.hole_to_copper,
+            "min_text_height": r.min_silk_text_height,
+            "min_resolved_spokes": r.min_thermal_spokes,
             "min_copper_edge_clearance": r.copper_to_edge,
         }}},
         "meta": {"filename": format!("{name}.kicad_pro"), "version": 3},
@@ -170,9 +189,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn exported_hole_clearance_uses_the_board_clearance() {
+    fn exported_hole_clearance_uses_the_hole_rule() {
         let mut d = ProjectData::new("rules");
-        d.board.rules.clearance = 0.127;
+        d.board.rules.clearance = 0.3;
+        d.board.rules.hole_to_copper = 0.127;
         let value: Value = serde_json::from_str(&export_project(&d, "rules")).unwrap();
         assert_eq!(
             value["board"]["design_settings"]["rules"]["min_hole_clearance"],
