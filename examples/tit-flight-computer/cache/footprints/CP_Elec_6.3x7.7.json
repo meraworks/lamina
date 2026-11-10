@@ -327,5 +327,15 @@
     "library": "",
     "footprint": "CP_Elec_6.3x7.7",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "bda3d2401857418d",
+  "evidence": [
+    {
+      "pads_hash": "bda3d2401857418d",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Capacitor_SMD:CP_Elec_6.3x7.7 in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

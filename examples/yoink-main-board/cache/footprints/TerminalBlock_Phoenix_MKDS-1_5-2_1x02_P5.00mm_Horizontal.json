@@ -270,5 +270,15 @@
     "library": "",
     "footprint": "TerminalBlock_Phoenix_MKDS-1,5-2_1x02_P5.00mm_Horizontal",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "7ab78ab58d11dbff",
+  "evidence": [
+    {
+      "pads_hash": "7ab78ab58d11dbff",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2_1x02_P5.00mm_Horizontal in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

@@ -122,5 +122,15 @@
     "library": "",
     "footprint": "LED_D5.0mm",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "c9d444deaa77cfef",
+  "evidence": [
+    {
+      "pads_hash": "c9d444deaa77cfef",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:LED_THT:LED_D5.0mm in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

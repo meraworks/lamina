@@ -196,5 +196,15 @@
     "library": "",
     "footprint": "D_SOD-123",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "f189c262e49e9771",
+  "evidence": [
+    {
+      "pads_hash": "f189c262e49e9771",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Diode_SMD:D_SOD-123 in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

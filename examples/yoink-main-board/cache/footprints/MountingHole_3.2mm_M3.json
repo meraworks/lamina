@@ -5,20 +5,11 @@
   "pads": [
     {
       "number": "",
-      "at": {
-        "x": 0,
-        "y": 0
-      },
-      "shape": {
-        "type": "circle",
-        "diameter": 3.2
-      },
+      "at": { "x": 0, "y": 0 },
+      "shape": { "type": "circle", "diameter": 3.2 },
       "kind": {
         "type": "through",
-        "drill": {
-          "type": "round",
-          "diameter": 3.2
-        },
+        "drill": { "type": "round", "diameter": 3.2 },
         "plated": false
       },
       "paste": false
@@ -27,14 +18,7 @@
   "graphics": [
     {
       "layer": "courtyard",
-      "shape": {
-        "type": "circle",
-        "center": {
-          "x": 0,
-          "y": 0
-        },
-        "radius": 3.45
-      },
+      "shape": { "type": "circle", "center": { "x": 0, "y": 0 }, "radius": 3.45 },
       "width": 0.05
     }
   ],
@@ -42,26 +26,25 @@
     {
       "layer": "fab",
       "text": "${value}",
-      "at": {
-        "x": 0,
-        "y": -4.15
-      },
+      "at": { "x": 0, "y": -4.15 },
       "size": 1
     },
-    {
-      "layer": "fab",
-      "text": "${ref}",
-      "at": {
-        "x": 0,
-        "y": 0
-      },
-      "size": 1
-    }
+    { "layer": "fab", "text": "${ref}", "at": { "x": 0, "y": 0 }, "size": 1 }
   ],
   "provenance": {
     "source": "kicad",
     "library": "",
     "footprint": "MountingHole_3.2mm_M3",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "e0d0e075bd36f375",
+  "evidence": [
+    {
+      "pads_hash": "e0d0e075bd36f375",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:MountingHole:MountingHole_3.2mm_M3 in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

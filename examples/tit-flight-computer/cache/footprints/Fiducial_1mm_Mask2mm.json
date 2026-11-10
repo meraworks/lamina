@@ -43,5 +43,15 @@
     "library": "",
     "footprint": "Fiducial_1mm_Mask2mm",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "e3b10431305723ff",
+  "evidence": [
+    {
+      "pads_hash": "e3b10431305723ff",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Fiducial:Fiducial_1mm_Mask2mm in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

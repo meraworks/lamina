@@ -431,5 +431,15 @@
     "library": "",
     "footprint": "IDC-Header_2x07_P2.54mm_Vertical",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "b0b6d2e10a95e168",
+  "evidence": [
+    {
+      "pads_hash": "b0b6d2e10a95e168",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Connector_IDC:IDC-Header_2x07_P2.54mm_Vertical in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

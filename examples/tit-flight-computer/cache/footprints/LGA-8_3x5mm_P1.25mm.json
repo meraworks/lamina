@@ -5,123 +5,51 @@
   "pads": [
     {
       "number": "1",
-      "at": {
-        "x": -1.075,
-        "y": 1.875
-      },
-      "shape": {
-        "type": "rect",
-        "width": 0.95,
-        "height": 0.55
-      },
-      "kind": {
-        "type": "smd"
-      }
+      "at": { "x": -1.075, "y": 1.875 },
+      "shape": { "type": "rect", "width": 0.95, "height": 0.55 },
+      "kind": { "type": "smd" }
     },
     {
       "number": "2",
-      "at": {
-        "x": -1.075,
-        "y": 0.625
-      },
-      "shape": {
-        "type": "rect",
-        "width": 0.95,
-        "height": 0.55
-      },
-      "kind": {
-        "type": "smd"
-      }
+      "at": { "x": -1.075, "y": 0.625 },
+      "shape": { "type": "rect", "width": 0.95, "height": 0.55 },
+      "kind": { "type": "smd" }
     },
     {
       "number": "3",
-      "at": {
-        "x": -1.075,
-        "y": -0.625
-      },
-      "shape": {
-        "type": "rect",
-        "width": 0.95,
-        "height": 0.55
-      },
-      "kind": {
-        "type": "smd"
-      }
+      "at": { "x": -1.075, "y": -0.625 },
+      "shape": { "type": "rect", "width": 0.95, "height": 0.55 },
+      "kind": { "type": "smd" }
     },
     {
       "number": "4",
-      "at": {
-        "x": -1.075,
-        "y": -1.875
-      },
-      "shape": {
-        "type": "rect",
-        "width": 0.95,
-        "height": 0.55
-      },
-      "kind": {
-        "type": "smd"
-      }
+      "at": { "x": -1.075, "y": -1.875 },
+      "shape": { "type": "rect", "width": 0.95, "height": 0.55 },
+      "kind": { "type": "smd" }
     },
     {
       "number": "5",
-      "at": {
-        "x": 1.075,
-        "y": -1.875
-      },
-      "shape": {
-        "type": "rect",
-        "width": 0.95,
-        "height": 0.55
-      },
-      "kind": {
-        "type": "smd"
-      }
+      "at": { "x": 1.075, "y": -1.875 },
+      "shape": { "type": "rect", "width": 0.95, "height": 0.55 },
+      "kind": { "type": "smd" }
     },
     {
       "number": "6",
-      "at": {
-        "x": 1.075,
-        "y": -0.625
-      },
-      "shape": {
-        "type": "rect",
-        "width": 0.95,
-        "height": 0.55
-      },
-      "kind": {
-        "type": "smd"
-      }
+      "at": { "x": 1.075, "y": -0.625 },
+      "shape": { "type": "rect", "width": 0.95, "height": 0.55 },
+      "kind": { "type": "smd" }
     },
     {
       "number": "7",
-      "at": {
-        "x": 1.075,
-        "y": 0.625
-      },
-      "shape": {
-        "type": "rect",
-        "width": 0.95,
-        "height": 0.55
-      },
-      "kind": {
-        "type": "smd"
-      }
+      "at": { "x": 1.075, "y": 0.625 },
+      "shape": { "type": "rect", "width": 0.95, "height": 0.55 },
+      "kind": { "type": "smd" }
     },
     {
       "number": "8",
-      "at": {
-        "x": 1.075,
-        "y": 1.875
-      },
-      "shape": {
-        "type": "rect",
-        "width": 0.95,
-        "height": 0.55
-      },
-      "kind": {
-        "type": "smd"
-      }
+      "at": { "x": 1.075, "y": 1.875 },
+      "shape": { "type": "rect", "width": 0.95, "height": 0.55 },
+      "kind": { "type": "smd" }
     }
   ],
   "graphics": [
@@ -129,14 +57,8 @@
       "layer": "silk",
       "shape": {
         "type": "line",
-        "a": {
-          "x": -1.65,
-          "y": -2.6
-        },
-        "b": {
-          "x": -1.65,
-          "y": -2.4
-        }
+        "a": { "x": -1.65, "y": -2.6 },
+        "b": { "x": -1.65, "y": -2.4 }
       },
       "width": 0.15
     },
@@ -144,14 +66,8 @@
       "layer": "silk",
       "shape": {
         "type": "line",
-        "a": {
-          "x": -1.35,
-          "y": 2.6
-        },
-        "b": {
-          "x": -0.6,
-          "y": 2.6
-        }
+        "a": { "x": -1.35, "y": 2.6 },
+        "b": { "x": -0.6, "y": 2.6 }
       },
       "width": 0.15
     },
@@ -159,14 +75,8 @@
       "layer": "silk",
       "shape": {
         "type": "line",
-        "a": {
-          "x": -1.15,
-          "y": -2.6
-        },
-        "b": {
-          "x": -1.65,
-          "y": -2.6
-        }
+        "a": { "x": -1.15, "y": -2.6 },
+        "b": { "x": -1.65, "y": -2.6 }
       },
       "width": 0.15
     },
@@ -174,14 +84,8 @@
       "layer": "silk",
       "shape": {
         "type": "line",
-        "a": {
-          "x": 1.15,
-          "y": 2.6
-        },
-        "b": {
-          "x": 1.65,
-          "y": 2.6
-        }
+        "a": { "x": 1.15, "y": 2.6 },
+        "b": { "x": 1.65, "y": 2.6 }
       },
       "width": 0.15
     },
@@ -189,14 +93,8 @@
       "layer": "silk",
       "shape": {
         "type": "line",
-        "a": {
-          "x": 1.65,
-          "y": 2.6
-        },
-        "b": {
-          "x": 1.65,
-          "y": 2.4
-        }
+        "a": { "x": 1.65, "y": 2.6 },
+        "b": { "x": 1.65, "y": 2.4 }
       },
       "width": 0.15
     },
@@ -204,14 +102,8 @@
       "layer": "silk",
       "shape": {
         "type": "line",
-        "a": {
-          "x": 1.65,
-          "y": -2.4
-        },
-        "b": {
-          "x": 1.65,
-          "y": -2.6
-        }
+        "a": { "x": 1.65, "y": -2.4 },
+        "b": { "x": 1.65, "y": -2.6 }
       },
       "width": 0.15
     },
@@ -219,14 +111,8 @@
       "layer": "silk",
       "shape": {
         "type": "line",
-        "a": {
-          "x": 1.65,
-          "y": -2.6
-        },
-        "b": {
-          "x": 1.15,
-          "y": -2.6
-        }
+        "a": { "x": 1.65, "y": -2.6 },
+        "b": { "x": 1.15, "y": -2.6 }
       },
       "width": 0.15
     },
@@ -235,18 +121,9 @@
       "shape": {
         "type": "polygon",
         "points": [
-          {
-            "x": -1.55,
-            "y": 2.6
-          },
-          {
-            "x": -1.91,
-            "y": 2.6
-          },
-          {
-            "x": -1.55,
-            "y": 2.96
-          }
+          { "x": -1.55, "y": 2.6 },
+          { "x": -1.91, "y": 2.6 },
+          { "x": -1.55, "y": 2.96 }
         ]
       },
       "width": 0.15,
@@ -256,14 +133,8 @@
       "layer": "courtyard",
       "shape": {
         "type": "line",
-        "a": {
-          "x": -1.8,
-          "y": 2.75
-        },
-        "b": {
-          "x": -1.8,
-          "y": -2.75
-        }
+        "a": { "x": -1.8, "y": 2.75 },
+        "b": { "x": -1.8, "y": -2.75 }
       },
       "width": 0.05
     },
@@ -271,14 +142,8 @@
       "layer": "courtyard",
       "shape": {
         "type": "line",
-        "a": {
-          "x": -1.8,
-          "y": 2.75
-        },
-        "b": {
-          "x": 1.8,
-          "y": 2.75
-        }
+        "a": { "x": -1.8, "y": 2.75 },
+        "b": { "x": 1.8, "y": 2.75 }
       },
       "width": 0.05
     },
@@ -286,14 +151,8 @@
       "layer": "courtyard",
       "shape": {
         "type": "line",
-        "a": {
-          "x": 1.8,
-          "y": -2.75
-        },
-        "b": {
-          "x": -1.8,
-          "y": -2.75
-        }
+        "a": { "x": 1.8, "y": -2.75 },
+        "b": { "x": -1.8, "y": -2.75 }
       },
       "width": 0.05
     },
@@ -301,14 +160,8 @@
       "layer": "courtyard",
       "shape": {
         "type": "line",
-        "a": {
-          "x": 1.8,
-          "y": -2.75
-        },
-        "b": {
-          "x": 1.8,
-          "y": 2.75
-        }
+        "a": { "x": 1.8, "y": -2.75 },
+        "b": { "x": 1.8, "y": 2.75 }
       },
       "width": 0.05
     },
@@ -316,14 +169,8 @@
       "layer": "fab",
       "shape": {
         "type": "line",
-        "a": {
-          "x": -1.5,
-          "y": 1.75
-        },
-        "b": {
-          "x": -0.75,
-          "y": 2.5
-        }
+        "a": { "x": -1.5, "y": 1.75 },
+        "b": { "x": -0.75, "y": 2.5 }
       },
       "width": 0.1
     },
@@ -331,14 +178,8 @@
       "layer": "fab",
       "shape": {
         "type": "line",
-        "a": {
-          "x": -1.5,
-          "y": -2.5
-        },
-        "b": {
-          "x": -1.5,
-          "y": 1.75
-        }
+        "a": { "x": -1.5, "y": -2.5 },
+        "b": { "x": -1.5, "y": 1.75 }
       },
       "width": 0.1
     },
@@ -346,14 +187,8 @@
       "layer": "fab",
       "shape": {
         "type": "line",
-        "a": {
-          "x": -0.75,
-          "y": 2.5
-        },
-        "b": {
-          "x": 1.5,
-          "y": 2.5
-        }
+        "a": { "x": -0.75, "y": 2.5 },
+        "b": { "x": 1.5, "y": 2.5 }
       },
       "width": 0.1
     },
@@ -361,14 +196,8 @@
       "layer": "fab",
       "shape": {
         "type": "line",
-        "a": {
-          "x": 1.5,
-          "y": 2.5
-        },
-        "b": {
-          "x": 1.5,
-          "y": -2.5
-        }
+        "a": { "x": 1.5, "y": 2.5 },
+        "b": { "x": 1.5, "y": -2.5 }
       },
       "width": 0.1
     },
@@ -376,14 +205,8 @@
       "layer": "fab",
       "shape": {
         "type": "line",
-        "a": {
-          "x": 1.5,
-          "y": -2.5
-        },
-        "b": {
-          "x": -1.5,
-          "y": -2.5
-        }
+        "a": { "x": 1.5, "y": -2.5 },
+        "b": { "x": -1.5, "y": -2.5 }
       },
       "width": 0.1
     }
@@ -392,30 +215,32 @@
     {
       "layer": "fab",
       "text": "${ref}",
-      "at": {
-        "x": 0,
-        "y": 0
-      },
+      "at": { "x": 0, "y": 0 },
       "size": 0.5
     },
     {
       "layer": "fab",
       "text": "${ref}",
-      "at": {
-        "x": 0,
-        "y": 0
-      },
+      "at": { "x": 0, "y": 0 },
       "size": 0.5
     }
   ],
   "height": 0.78,
-  "model": {
-    "file": "kicad/Package_LGA/LGA-8_3x5mm_P1.25mm.step"
-  },
+  "model": { "file": "kicad/Package_LGA/LGA-8_3x5mm_P1.25mm.step" },
   "provenance": {
     "source": "kicad",
     "library": "",
     "footprint": "LGA-8_3x5mm_P1.25mm",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "d28310fac7cb3d9d",
+  "evidence": [
+    {
+      "pads_hash": "d28310fac7cb3d9d",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Package_LGA:LGA-8_3x5mm_P1.25mm in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

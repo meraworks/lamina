@@ -268,5 +268,15 @@
     "library": "",
     "footprint": "Bosch_LGA-14_3x2.5mm_P0.5mm",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "1d727df411f63a06",
+  "evidence": [
+    {
+      "pads_hash": "1d727df411f63a06",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Package_LGA:Bosch_LGA-14_3x2.5mm_P0.5mm in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

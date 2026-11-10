@@ -1816,5 +1816,15 @@
     "library": "",
     "footprint": "CP_Radial_D10.0mm_P5.00mm",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "fa37a41e4e7ec293",
+  "evidence": [
+    {
+      "pads_hash": "fa37a41e4e7ec293",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Capacitor_THT:CP_Radial_D10.0mm_P5.00mm in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

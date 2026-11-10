@@ -110,3 +110,83 @@ fn a_second_source_that_differs_stores_nothing() {
     assert!(!a.rows[0].findings.is_empty());
     assert!(p.data.footprints["MYPART"].current_evidence().is_none());
 }
+
+/// A project with the KiCad provider on the fixture libraries. Its one part
+/// has the SOT-23 footprint as a KiCad board gives it: no library name.
+fn kicad_board(t: &std::path::Path) -> Project {
+    let libs = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../lamina-kicad/tests/fixtures/footprints");
+    let kicad = lamina_kicad::provider::KicadProvider::new(
+        Arc::new(lamina_kicad::DirSource {
+            footprints: libs.clone(),
+            models: t.join("models"),
+        }),
+        vec![libs.clone()],
+        vec![],
+    );
+    let ports = Ports {
+        providers: vec![Arc::new(kicad)],
+        ..Ports::default()
+    };
+    let mut p = Project::create_with(&t.join("b"), "demo", ports).unwrap();
+    p.set_library(Library::at(&t.join("lib")));
+    let text =
+        std::fs::read_to_string(libs.join("Package_TO_SOT_SMD.pretty/SOT-23.kicad_mod")).unwrap();
+    let mut fp = lamina_kicad::parse_footprint(&text, "", "kicad_pcb")
+        .unwrap()
+        .footprint;
+    fp.id = "BOARD_SOT".into();
+    fp.provenance = Provenance::Kicad {
+        library: String::new(),
+        footprint: "SOT-23".into(),
+        path: "kicad_pcb".into(),
+    };
+    let mut d = p.data.clone();
+    d.footprints.insert("BOARD_SOT".into(), fp);
+    d.parts.parts.insert("Q1".into(), Part::new("BOARD_SOT"));
+    p.commit(
+        d,
+        Touched::default().footprint("BOARD_SOT".to_string()),
+        false,
+        "setup",
+    )
+    .unwrap();
+    p
+}
+
+#[test]
+fn a_board_footprint_is_compared_with_the_kicad_library() {
+    let t = tempfile::tempdir().unwrap();
+    let mut p = kicad_board(t.path());
+    let a = p
+        .audit_footprints(AuditFootprints { online: false })
+        .unwrap();
+    assert_eq!(a.rows[0].result, "verified", "{:?}", a.rows[0]);
+    assert_eq!(
+        a.rows[0].source.as_deref(),
+        Some("kicad:Package_TO_SOT_SMD:SOT-23")
+    );
+    let e = p.data.footprints["BOARD_SOT"].current_evidence().unwrap();
+    assert_eq!(e.method, EvidenceMethod::SecondSource);
+    assert!(e.document.contains("was not compared with a datasheet"));
+}
+
+#[test]
+fn a_pad_that_was_moved_on_the_board_is_found() {
+    let t = tempfile::tempdir().unwrap();
+    let mut p = kicad_board(t.path());
+    let mut d = p.data.clone();
+    d.footprints.get_mut("BOARD_SOT").unwrap().pads[0].at.x += 0.08;
+    p.commit(
+        d,
+        Touched::default().footprint("BOARD_SOT".to_string()),
+        false,
+        "move a pad",
+    )
+    .unwrap();
+    let a = p
+        .audit_footprints(AuditFootprints { online: false })
+        .unwrap();
+    assert_eq!(a.rows[0].result, "differs", "{:?}", a.rows[0]);
+    assert!(p.data.footprints["BOARD_SOT"].current_evidence().is_none());
+}

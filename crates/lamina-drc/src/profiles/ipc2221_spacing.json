@@ -1,22 +1,22 @@
 {
-  "source": "IPC-2221B, Table 6-1, Electrical Conductor Spacing",
-  "note": "The values were written from memory of the table and compared only with secondary sources (0-15 V row, B2 at 101-250 V and at 500 V, the values above 500 V). Compare them with the standard before you use this check for a safety decision. The check does not replace a safety standard such as IEC 62368-1.",
+  "source": "IPC-2221C (2023), Table 6-1, Electrical Conductor Spacing, as given in the source code of the pcb-toolkit crate (https://docs.rs/crate/pcb-toolkit/latest/source/src/spacing.rs)",
+  "note": "The values agree with that secondary source, cell for cell. They were not compared with the standard itself. The check does not replace a safety standard such as IEC 62368-1.",
   "checked": "2026-11-10",
   "columns": {
     "internal": "B1: internal conductors",
     "external_bare": "B2: external conductors, uncoated, sea level to 3050 m",
-    "external_coated": "B4: external conductors with a permanent polymer coating (solder mask)"
+    "external_coated": "B4: external conductors below solder mask"
   },
   "rows": [
-    { "up_to": 15, "internal": 0.05, "external_bare": 0.1, "external_coated": 0.05 },
-    { "up_to": 30, "internal": 0.05, "external_bare": 0.1, "external_coated": 0.05 },
-    { "up_to": 50, "internal": 0.1, "external_bare": 0.6, "external_coated": 0.13 },
-    { "up_to": 100, "internal": 0.1, "external_bare": 0.6, "external_coated": 0.13 },
-    { "up_to": 150, "internal": 0.2, "external_bare": 0.6, "external_coated": 0.4 },
-    { "up_to": 170, "internal": 0.2, "external_bare": 1.25, "external_coated": 0.4 },
-    { "up_to": 250, "internal": 0.2, "external_bare": 1.25, "external_coated": 0.4 },
-    { "up_to": 300, "internal": 0.2, "external_bare": 1.25, "external_coated": 0.4 },
-    { "up_to": 500, "internal": 0.25, "external_bare": 2.5, "external_coated": 0.8 }
+    { "up_to": 15, "internal": 0.05, "external_bare": 0.1, "external_coated": 0.075 },
+    { "up_to": 30, "internal": 0.05, "external_bare": 0.1, "external_coated": 0.075 },
+    { "up_to": 50, "internal": 0.1, "external_bare": 0.64, "external_coated": 0.3 },
+    { "up_to": 100, "internal": 0.1, "external_bare": 0.64, "external_coated": 0.3 },
+    { "up_to": 150, "internal": 0.2, "external_bare": 0.64, "external_coated": 0.8 },
+    { "up_to": 170, "internal": 0.2, "external_bare": 1.25, "external_coated": 0.8 },
+    { "up_to": 250, "internal": 0.2, "external_bare": 1.25, "external_coated": 0.8 },
+    { "up_to": 300, "internal": 0.2, "external_bare": 1.25, "external_coated": 0.8 },
+    { "up_to": 500, "internal": 0.25, "external_bare": 2.5, "external_coated": 1.6 }
   ],
   "above_500_per_volt": { "internal": 0.0025, "external_bare": 0.005, "external_coated": 0.00305 }
 }

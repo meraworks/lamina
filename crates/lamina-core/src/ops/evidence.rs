@@ -307,6 +307,42 @@ impl Project {
         })
     }
 
+    /// The footprint `name` from the KiCad provider. With no library name,
+    /// the libraries on this computer are searched for the exact name. The
+    /// network is used only with `online`.
+    fn library_footprint(
+        &self,
+        library: &str,
+        name: &str,
+        online: bool,
+    ) -> Option<(String, Footprint)> {
+        let prov = self.providers().get("kicad")?;
+        let id = if library.is_empty() {
+            let hits = prov.search(name, 50).ok()?;
+            let mut exact = hits.into_iter().filter(|h| h.title == name);
+            let hit = exact.next()?;
+            // Two libraries with a footprint of this name: do not guess.
+            if exact.next().is_some() {
+                return None;
+            }
+            if !hit.local && !online {
+                return None;
+            }
+            hit.id
+        } else {
+            if !online {
+                // A local library is found by the search.
+                let hits = prov.search(name, 50).ok()?;
+                hits.iter().find(|h| {
+                    h.title == name && h.package.as_deref() == Some(library) && h.local
+                })?;
+            }
+            format!("{library}:{name}")
+        };
+        let bundle = prov.fetch(&id, false).ok()?;
+        Some((format!("kicad:{id}"), bundle.footprint))
+    }
+
     /// For each footprint in use that has no evidence: compare it with the
     /// standard package of its name, and keep the result.
     pub fn audit_footprints(&mut self, p: AuditFootprints) -> Result<Audit> {
@@ -412,6 +448,48 @@ impl Project {
                     }
                     row.result = "differs".into();
                     row.findings = c.findings;
+                }
+            }
+            // A footprint that came with a KiCad board can be different from
+            // the footprint of that name in the KiCad library: someone moved
+            // a pad on the board. The library footprint is the second source.
+            // The pads must be the same, with no tolerance.
+            if row.result != "verified" {
+                if let Provenance::Kicad {
+                    library,
+                    footprint,
+                    path,
+                } = &fp.provenance
+                {
+                    let from_board = path == "kicad_pcb";
+                    let found = from_board
+                        .then(|| self.library_footprint(library, footprint, p.online))
+                        .flatten();
+                    if let Some((name, other)) = found {
+                        let c = compare(fp, &other, &Tolerance::EXACT);
+                        row.source = Some(name.clone());
+                        if c.same && c.turn == 0.0 && !c.mirrored {
+                            row.result = "verified".into();
+                            row.findings = Vec::new();
+                            let hash = fp.pads_hash();
+                            fp.evidence.push(Evidence {
+                                pads_hash: hash,
+                                method: EvidenceMethod::SecondSource,
+                                document: format!(
+                                    "The pads are the same as those of {name} in the KiCad library. The library footprint was not compared with a datasheet."
+                                ),
+                                page: None,
+                                url: None,
+                                checked: lamina_model::time::today(),
+                                pass: true,
+                                findings: Vec::new(),
+                            });
+                            touched.footprints.insert(id.clone());
+                        } else {
+                            row.result = "differs".into();
+                            row.findings = c.findings;
+                        }
+                    }
                 }
             }
             rows.push(row);

@@ -205,5 +205,15 @@
     "library": "",
     "footprint": "L_Sunlord_MWSA0603S",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "629421b30087f341",
+  "evidence": [
+    {
+      "pads_hash": "629421b30087f341",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Inductor_SMD:L_Sunlord_MWSA0603S in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

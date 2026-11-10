@@ -130,5 +130,15 @@
     "library": "",
     "footprint": "C_Disc_D5.0mm_W2.5mm_P5.00mm",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "c2582ebbfb9910c1",
+  "evidence": [
+    {
+      "pads_hash": "c2582ebbfb9910c1",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Capacitor_THT:C_Disc_D5.0mm_W2.5mm_P5.00mm in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

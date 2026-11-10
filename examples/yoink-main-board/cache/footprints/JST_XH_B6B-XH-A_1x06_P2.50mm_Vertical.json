@@ -245,5 +245,15 @@
     "library": "",
     "footprint": "JST_XH_B6B-XH-A_1x06_P2.50mm_Vertical",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "98a1c052c192f6db",
+  "evidence": [
+    {
+      "pads_hash": "98a1c052c192f6db",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Connector_JST:JST_XH_B6B-XH-A_1x06_P2.50mm_Vertical in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

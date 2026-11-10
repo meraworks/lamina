@@ -233,5 +233,15 @@
     "library": "",
     "footprint": "SW_SPST_PTS810",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "02a0811a990ed0cb",
+  "evidence": [
+    {
+      "pads_hash": "02a0811a990ed0cb",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Button_Switch_SMD:SW_SPST_PTS810 in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

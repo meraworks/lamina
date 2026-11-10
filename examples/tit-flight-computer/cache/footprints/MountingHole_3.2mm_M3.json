@@ -36,5 +36,15 @@
     "library": "",
     "footprint": "MountingHole_3.2mm_M3",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "e0d0e075bd36f375",
+  "evidence": [
+    {
+      "pads_hash": "e0d0e075bd36f375",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:MountingHole:MountingHole_3.2mm_M3 in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

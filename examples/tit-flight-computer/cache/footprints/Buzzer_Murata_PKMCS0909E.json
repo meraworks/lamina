@@ -250,5 +250,15 @@
     "library": "",
     "footprint": "Buzzer_Murata_PKMCS0909E",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "070cceeaa1fb8d27",
+  "evidence": [
+    {
+      "pads_hash": "070cceeaa1fb8d27",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Buzzer_Beeper:Buzzer_Murata_PKMCS0909E in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

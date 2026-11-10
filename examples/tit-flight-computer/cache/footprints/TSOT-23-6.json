@@ -253,5 +253,15 @@
     "library": "",
     "footprint": "TSOT-23-6",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "1b10e49fe42dfd87",
+  "evidence": [
+    {
+      "pads_hash": "1b10e49fe42dfd87",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Package_TO_SOT_SMD:TSOT-23-6 in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

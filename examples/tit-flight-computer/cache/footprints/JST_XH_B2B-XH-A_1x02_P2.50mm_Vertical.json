@@ -195,5 +195,15 @@
     "library": "",
     "footprint": "JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "2e418c08177b7267",
+  "evidence": [
+    {
+      "pads_hash": "2e418c08177b7267",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

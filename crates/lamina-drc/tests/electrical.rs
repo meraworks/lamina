@@ -103,8 +103,10 @@ fn a_track_too_narrow_for_its_current_is_found_with_a_fix() {
 #[test]
 fn the_spacing_table_grows_with_the_voltage() {
     assert_eq!(voltage_spacing(12.0, Surface::ExternalBare), 0.1);
-    assert_eq!(voltage_spacing(48.0, Surface::ExternalBare), 0.6);
-    assert_eq!(voltage_spacing(48.0, Surface::ExternalCoated), 0.13);
+    assert_eq!(voltage_spacing(48.0, Surface::ExternalBare), 0.64);
+    assert_eq!(voltage_spacing(48.0, Surface::ExternalCoated), 0.3);
+    assert_eq!(voltage_spacing(12.0, Surface::ExternalCoated), 0.075);
+    assert_eq!(voltage_spacing(400.0, Surface::ExternalCoated), 1.6);
     assert_eq!(voltage_spacing(230.0, Surface::ExternalBare), 1.25);
     assert_eq!(voltage_spacing(230.0, Surface::Internal), 0.2);
     assert_eq!(voltage_spacing(500.0, Surface::ExternalBare), 2.5);
@@ -132,7 +134,7 @@ fn copper_too_near_for_its_voltage_is_an_error() {
     net(&mut d, "HV", &["R1.1"]);
     net(&mut d, "GND", &["R2.2"]);
     let a = pad(&d, "R1", 1);
-    // Two parallel tracks under mask, 0.3 mm apart (edge to edge).
+    // Two parallel tracks under mask, 0.4 mm apart (edge to edge).
     track(
         &mut d,
         "t1",
@@ -145,7 +147,7 @@ fn copper_too_near_for_its_voltage_is_an_error() {
         "t2",
         "GND",
         0.2,
-        vec![Point::new(5.0, 20.5), Point::new(15.0, 20.5)],
+        vec![Point::new(5.0, 20.6), Point::new(15.0, 20.6)],
     );
     let _ = a;
     assert!(
@@ -155,13 +157,13 @@ fn copper_too_near_for_its_voltage_is_an_error() {
     d.nets.nets.get_mut("HV").unwrap().voltage = Some(48.0);
     assert!(
         hits(&d, "voltage_clearance").is_empty(),
-        "48 V below mask needs 0.13 mm"
+        "48 V below mask needs 0.3 mm"
     );
     d.nets.nets.get_mut("HV").unwrap().voltage = Some(200.0);
     let v = hits(&d, "voltage_clearance");
     assert_eq!(v.len(), 1, "{v:?}");
     assert_eq!(v[0].severity, Severity::Error);
-    assert_eq!(v[0].required, Some(0.4));
+    assert_eq!(v[0].required, Some(0.8));
     assert_eq!(v[0].items, vec!["t1", "t2"]);
     // A net with no voltage and no ground name is not checked.
     d.nets.nets.remove("GND");

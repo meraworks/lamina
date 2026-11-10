@@ -51,7 +51,8 @@ fn table() -> &'static SpacingTable {
     })
 }
 
-/// The minimum distance in mm between two conductors with `volts` between them.
+/// The minimum distance in mm between two conductors with `volts` between
+/// them (IPC-2221C, Table 6-1).
 pub fn voltage_spacing(volts: f64, surface: Surface) -> f64 {
     let t = table();
     let pick = |s: &Spacing| match surface {

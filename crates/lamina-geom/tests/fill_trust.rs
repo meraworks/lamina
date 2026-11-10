@@ -132,16 +132,19 @@ fn fill_has_no_thin_necks() {
                 let whole: MultiPolygon<f64> = inflate(&prim, 0.0);
                 let area = whole.unsigned_area();
                 let opened = inflate(&prim, -r).buffer(r).unsigned_area();
-                let lost = (area - opened) / area;
-                worst = worst.max(lost);
+                // The corners of a polygon are not exact circles, so a small
+                // area always goes away. A neck of the minimum width that is
+                // as long as it is wide has an area of width x width.
+                let lost = area - opened;
+                let limit = (0.001 * area).max(0.25 * width * width);
+                worst = worst.max(lost / limit);
                 assert!(
-                    lost < 0.005,
-                    "{name}: a piece of the pour {} of {area:.2} mm2 loses {:.2} % when thin parts go away",
-                    f.zone,
-                    100.0 * lost
+                    lost <= limit,
+                    "{name}: a piece of the pour {} of {area:.2} mm2 loses {lost:.4} mm2 when thin parts go away (limit {limit:.4})",
+                    f.zone
                 );
             }
         }
     }
-    eprintln!("worst loss: {:.3} %", 100.0 * worst);
+    eprintln!("worst loss: {:.0} % of the limit", 100.0 * worst);
 }

@@ -186,7 +186,10 @@ package dimensions), `pads` (the recommended land pattern), `leads` (the lead
 sizes of a through-hole part) or `accept` (a reason to trust the source).
 `audit_footprints` examines all footprints with no evidence against the standard
 packages (in the three IPC densities) and against the footprint of the same part
-from its provider, as a second source. `online: true` permits the network for that. `compare_footprints` compares two footprints: the turn, the mirror, the
+from its provider, as a second source. A footprint that came with a KiCad board is
+compared with the footprint of that name in the KiCad library, with no tolerance:
+this finds a pad that someone moved on the board. `online: true` permits the
+network for a second source. `compare_footprints` compares two footprints: the turn, the mirror, the
 move and each pad that differs.
 
 The rules are `footprint_mismatch` (the evidence is a fail), `footprint_stale`
@@ -247,9 +250,9 @@ These checks need no schematic. They use net data.
 - `track_current`: set `current` (A) on a net. The check uses the IPC-2221 formula
   with `max_temp_rise` and the copper weight of the stackup.
 - `voltage_clearance`: set `voltage` (V) on a net. A ground net has 0 V. The
-  spacing values come from a table of IPC-2221B that is data in the program. The
-  table was not compared with the standard: do not use this check as the only
-  check for a safety distance.
+  spacing values come from a table of IPC-2221C that is data in the program. The
+  table agrees with one secondary source and was not compared with the standard:
+  do not use this check as the only check for a safety distance.
 - `decoupling_far`: a power pin of a part has no capacitor of its net within
   `decoupling_max_distance`. The check needs pin names.
 - `return_path`: a track of a differential pair, of a net with a length limit, or

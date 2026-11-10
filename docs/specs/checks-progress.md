@@ -135,7 +135,20 @@ Later items:
     at pad 1 is sufficient now.
   - `decoupling_far` does not examine connectors.
 
-The server has 84 tools. The workspace has 407 tests.
+- `audit_footprints` compares a footprint that came with a KiCad board with
+  the footprint of that name in the KiCad library (exact pads). With the
+  KiCad 10 library of this computer: all 14 footprints of Yoink agree, and 23
+  of 25 of T.I.T. `review` gives `ready_with_warnings` for Yoink.
+- A second program (the Python library `gerbonara`) read a copper Gerber file
+  of the T.I.T example: 862 objects, 42 nets, and the aperture functions
+  `Conductor`, `ViaPad`, `ComponentPad` and `SMDPad`. It gives no attributes
+  for regions, so the pads that are regions were not confirmed that way.
+- `fill_has_no_thin_necks` has the bound of the plan: a piece loses less than
+  0.1 % of its area, or less than a quarter of the square of the minimum
+  width for a very small piece. The worst piece of the examples is at 6 % of
+  the limit.
+
+The server has 84 tools. The workspace has 409 tests.
 
 ## Differences from the plan
 
@@ -150,31 +163,32 @@ The server has 84 tools. The workspace has 407 tests.
 - `voltage_clearance` is a check only. `Rules::resolve` does not use the table,
   so a pour does not keep the voltage distance. The check reports a pour that
   keeps less than the voltage needs from a net on its layer.
-- The IPC-2221B spacing table (`crates/lamina-drc/src/profiles/ipc2221_spacing.json`)
-  was written from memory. A web search confirmed only the 0 to 15 V row, the B2
-  value for 101 to 250 V, the B2 value at 500 V and the values above 500 V. It
-  was not compared with the standard.
+- The voltage spacing table (`crates/lamina-drc/src/profiles/ipc2221_spacing.json`)
+  has the values of IPC-2221C (2023), Table 6-1, columns B1, B2 and B4, as the
+  source code of the `pcb-toolkit` crate gives them. The first version of the
+  table came from memory of IPC-2221B and had smaller values for B2 and B4. The
+  table was not compared with the standard itself, which is not free.
 - The pours and the autorouter resolve custom rules with `net`, `class` and
   `layer` only. A rule with `kind`, `part` or `area` changes only the checks.
 - A custom rule with `area` is not in the `.kicad_dru` file.
 - `LossKind` comes from one function that reads the note text of an adapter
   (`Loss::from_note`). The adapters do not make each loss with its kind at the
   place where they drop the data.
-- `fill_has_no_thin_necks` accepts a loss of 0.5 % of the area. The plan said
-  0.1 %; the worst piece of the example boards loses 0.3 % at its corners.
 - The triage file has the design view of the two boards, not the strict files.
 - The fab profile numbers come from the fab pages on 2026-11-10.
 
 ## Not done
 
-- The two example boards have footprints with no datasheet evidence (15 on
-  T.I.T, 11 on Yoink), so `review` gives `not_ready` for them, and their
-  outputs were made with `force`. A person with the datasheets must verify
-  them; an acceptance with no comparison was not recorded.
-- The second source of `audit_footprints` is the LCSC number of a part. Other
-  providers are not used.
-- The Gerber X2 attributes are on copper layers only, and a pour has only its
-  net. No other program read the files to confirm the attributes; the Lamina
-  reader reads them back.
+These items need a person or a document that this work did not have.
+
+- Two footprints of the T.I.T example differ from the KiCad library, so they
+  have no evidence and `review` gives `not_ready` for that board. The owner of
+  the board must decide: the USB-C socket has four pads moved by 0.05 mm, and
+  the ground vias of the ESP32 module have a drill that is 0.1 mm larger. The
+  outputs of that board were made with `force`.
+- The evidence from the KiCad library says that the pads are those of the
+  library. No footprint of the two examples was compared with a datasheet.
+- The voltage spacing table agrees with one secondary source. It was not
+  compared with IPC-2221 itself.
 - The image `docs/images/viewer-3d.png` shows the `c3-sensor` board before
   three capacitors moved.

@@ -253,5 +253,15 @@
     "library": "",
     "footprint": "DIP-8_W7.62mm_Socket",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "9e8985bd731bf679",
+  "evidence": [
+    {
+      "pads_hash": "9e8985bd731bf679",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Package_DIP:DIP-8_W7.62mm_Socket in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

@@ -116,5 +116,15 @@
     "library": "",
     "footprint": "R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "a62ba603cecbb316",
+  "evidence": [
+    {
+      "pads_hash": "a62ba603cecbb316",
+      "method": "second_source",
+      "document": "The pads are the same as those of kicad:Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal in the KiCad library. The library footprint was not compared with a datasheet.",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }
