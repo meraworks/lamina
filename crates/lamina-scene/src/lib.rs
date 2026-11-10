@@ -243,7 +243,10 @@ fn fp_side_layer(l: FpLayer, side: Side) -> Option<SceneLayer> {
         FpLayer::Silk => SceneLayer::Silk(side),
         FpLayer::Courtyard => SceneLayer::Courtyard(side),
         FpLayer::Fab => SceneLayer::Fab(side),
-        _ => return None,
+        // Paste and mask drawings are openings, as the pad openings are.
+        FpLayer::Paste => SceneLayer::Paste(side),
+        FpLayer::Mask => SceneLayer::Mask(side),
+        FpLayer::Copper => return None,
     })
 }
 

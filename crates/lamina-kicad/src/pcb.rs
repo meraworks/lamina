@@ -797,6 +797,58 @@ pub fn export_board_with(d: &ProjectData, model_dir: Option<&std::path::Path>) -
                 .child(polygon_node(&k.outline)),
         );
     }
+    // The keep-outs of the footprints, at their board positions.
+    let layer_count = d.board.stackup.copper_layers;
+    for (refdes, pl) in &d.placement.placements {
+        let Some(fp) = d
+            .parts
+            .parts
+            .get(refdes)
+            .and_then(|p| d.footprints.get(&p.footprint))
+        else {
+            continue;
+        };
+        for (i, (ls, pts, forbid)) in lamina_geom::part_keepouts(fp, pl, layer_count)
+            .into_iter()
+            .enumerate()
+        {
+            let Some(outline) = contour_from_points(pts) else {
+                continue;
+            };
+            let layers: Vec<Layer> = ls
+                .iter()
+                .map(|l| Layer::Copper(Copper::from_index(*l, layer_count)))
+                .collect();
+            let allow = |b: bool| if b { "not_allowed" } else { "allowed" };
+            let id = format!("{refdes}-k{}", i + 1);
+            root = root.child(
+                n("zone")
+                    .child(n("net").num(0.0))
+                    .child(n("net_name").str(""))
+                    .child(layers_node(&layers))
+                    .child(n("uuid").str(uuid(&format!("keepout:{id}"))))
+                    .child(n("name").str(&id))
+                    .child(n("hatch").sym("edge").num(0.5))
+                    .child(n("connect_pads").child(n("clearance").num(0.0)))
+                    .child(n("min_thickness").num(0.25))
+                    .child(n("filled_areas_thickness").sym("no"))
+                    .child(
+                        n("keepout")
+                            .child(n("tracks").sym(allow(forbid.tracks)))
+                            .child(n("vias").sym(allow(forbid.vias)))
+                            .child(n("pads").sym(allow(forbid.pads)))
+                            .child(n("copperpour").sym(allow(forbid.pours)))
+                            .child(n("footprints").sym(allow(forbid.parts))),
+                    )
+                    .child(
+                        n("fill")
+                            .child(n("thermal_gap").num(0.5))
+                            .child(n("thermal_bridge_width").num(0.5)),
+                    )
+                    .child(polygon_node(&outline)),
+            );
+        }
+    }
     sexpr::write(&root.done())
 }
 
