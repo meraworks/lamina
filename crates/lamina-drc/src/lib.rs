@@ -1,5 +1,6 @@
 //! Design rule checks, connectivity and fab presets.
 
+pub mod fab;
 pub mod footprints;
 mod holes;
 mod lengths;

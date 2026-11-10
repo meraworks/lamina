@@ -269,3 +269,72 @@ fn an_open_import_note_is_a_loss_until_it_is_resolved() {
     d.notes.notes[0].resolved = true;
     assert_eq!(count(&d, "import_loss"), 0);
 }
+
+#[test]
+fn hole_near_the_edge_deep_drill_and_narrow_cutout() {
+    let mut d = board();
+    d.board.holes.push(Hole {
+        id: "h1".into(),
+        at: Point::new(0.7, 10.0),
+        drill: Drill::Round { diameter: 1.0 },
+        plated: false,
+        pad_diameter: None,
+        net: None,
+        rotation: 0.0,
+    });
+    // The hole wall is 0.2 mm from the edge, and the limit is 0.3 mm.
+    assert_eq!(count(&d, "hole_to_edge"), 1);
+    d.board.holes[0].at.x = 0.8;
+    assert_eq!(count(&d, "hole_to_edge"), 0, "exactly at the limit");
+    d.board.holes.clear();
+
+    d.routing.vias.push(Via {
+        id: "v1".into(),
+        net: "A".into(),
+        at: Point::new(15.0, 15.0),
+        diameter: 0.5,
+        drill: 0.15,
+        from: None,
+        to: None,
+    });
+    d.board.rules.min_via_drill = 0.1;
+    // 1.6 mm through a 0.15 mm drill is a ratio of 10.7.
+    assert_eq!(count(&d, "drill_aspect"), 1);
+    d.routing.vias[0].drill = 0.2;
+    assert_eq!(count(&d, "drill_aspect"), 0);
+
+    d.board.cutouts.push(Contour::rect(5.0, 3.0, 4.0, 0.5));
+    assert_eq!(count(&d, "board_neck"), 1);
+    d.board.cutouts[0] = Contour::rect(5.0, 3.0, 4.0, 1.0);
+    assert_eq!(count(&d, "board_neck"), 0);
+}
+
+#[test]
+fn minimums_and_fab_profiles() {
+    let mut d = board();
+    let (a, b) = (pad(&d, "R1", "2"), pad(&d, "R2", "1"));
+    track(&mut d, vec![a, b]);
+    d.routing.tracks[0].width = 0.08;
+    let g = lamina_geom::build(&d);
+    let mins = fab::minimums(&d, &g, 0.5);
+    let get = |name: &str| mins.iter().find(|m| m.what == name).map(|m| m.value);
+    assert_eq!(get("track_width"), Some(0.08));
+    let track = |r: &fab::FabResult| r.limits.iter().find(|l| l.what == "track_width").cloned();
+    for profile in fab::profiles() {
+        let r = fab::compat(&profile, 2, &mins).unwrap();
+        assert!(
+            !r.fits,
+            "{}: a 0.08 mm track is below the limit",
+            profile.id
+        );
+        let t = track(&r).unwrap();
+        assert!(!t.fits && t.margin < 0.0);
+        assert!(r.limits[0].margin <= t.margin, "the worst limit is first");
+    }
+    d.routing.tracks[0].width = 0.25;
+    let mins = fab::minimums(&d, &lamina_geom::build(&d), 0.5);
+    for profile in fab::profiles() {
+        let r = fab::compat(&profile, 2, &mins).unwrap();
+        assert!(track(&r).unwrap().fits, "{}", profile.id);
+    }
+}

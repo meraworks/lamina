@@ -11,10 +11,10 @@ lamina-footprint.workspace = true
 lamina-model.workspace = true
 lamina-geom.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 schemars.workspace = true
 
 [dev-dependencies]
-serde_json.workspace = true
 
 [lints]
 workspace = true

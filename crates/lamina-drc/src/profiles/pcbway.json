@@ -1,0 +1,28 @@
+{
+  "id": "pcbway",
+  "name": "PCBWay",
+  "source": "https://www.pcbway.com/capabilities.html",
+  "checked": "2026-11-10",
+  "note": "Standard service. Examine the page before an order: the fab changes its limits.",
+  "tiers": [
+    {
+      "id": "standard",
+      "layers": [1, 32],
+      "limits": {
+        "clearance": 0.1,
+        "track_width": 0.1,
+        "via_drill": 0.15,
+        "via_ring": 0.15,
+        "pad_ring": 0.15,
+        "drill": 0.15,
+        "drill_max": 6.0,
+        "slot_width": 0.5,
+        "hole_to_hole": 0.28,
+        "copper_to_edge": 0.25,
+        "silk_line": 0.15,
+        "silk_text_height": 0.8,
+        "drill_aspect_max": 8.0
+      }
+    }
+  ]
+}

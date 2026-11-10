@@ -265,6 +265,33 @@ impl Lamina {
         self.with(|proj| Ok(proj.board_stats()))
     }
 
+    /// The smallest features of the board: copper distance, track width, via
+    /// and drill sizes, rings, hole distances, edge distances and silkscreen
+    /// sizes, each with the items that make it. Distances above 0.5 mm are
+    /// not in the list.
+    #[tool(annotations(title = "Board minimums", read_only_hint = true))]
+    async fn board_minimums(&self) -> Result<CallToolResult, McpError> {
+        self.with(|proj| Ok(proj.board_minimums()))
+    }
+
+    /// The fab profiles: the limits of each fab, with the page that they
+    /// come from and the date of the last check.
+    #[tool(annotations(title = "Fab profiles", read_only_hint = true))]
+    async fn fab_profiles(&self) -> Result<CallToolResult, McpError> {
+        self.with(|proj| Ok(proj.fab_profiles()))
+    }
+
+    /// Compare the board with the limits of one or more fabs. For each fab:
+    /// `fits`, and each limit with the value of the board and the margin,
+    /// the worst first. Examine the page of the fab before an order.
+    #[tool(annotations(title = "Fab compatibility", read_only_hint = true))]
+    async fn fab_compat(
+        &self,
+        Parameters(p): Parameters<FabCompat>,
+    ) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.fab_compat(p))
+    }
+
     /// The board formats that Lamina reads or writes: id, extensions and
     /// what each one holds.
     #[tool(annotations(title = "Formats", read_only_hint = true))]

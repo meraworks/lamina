@@ -1,0 +1,49 @@
+{
+  "id": "jlcpcb",
+  "name": "JLCPCB",
+  "source": "https://jlcpcb.com/capabilities/pcb-capabilities",
+  "checked": "2026-11-10",
+  "note": "1 oz copper. Examine the page before an order: the fab changes its limits.",
+  "tiers": [
+    {
+      "id": "1-2 layers",
+      "layers": [1, 2],
+      "limits": {
+        "clearance": 0.1,
+        "track_width": 0.1,
+        "via_drill": 0.15,
+        "via_diameter": 0.25,
+        "via_ring": 0.05,
+        "pad_ring": 0.18,
+        "drill": 0.15,
+        "drill_max": 6.3,
+        "slot_width": 0.5,
+        "hole_to_hole": 0.2,
+        "hole_to_copper": 0.2,
+        "copper_to_edge": 0.2,
+        "silk_line": 0.15,
+        "silk_text_height": 1.0
+      }
+    },
+    {
+      "id": "4 or more layers",
+      "layers": [3, 32],
+      "limits": {
+        "clearance": 0.09,
+        "track_width": 0.09,
+        "via_drill": 0.15,
+        "via_diameter": 0.25,
+        "via_ring": 0.05,
+        "pad_ring": 0.15,
+        "drill": 0.15,
+        "drill_max": 6.3,
+        "slot_width": 0.35,
+        "hole_to_hole": 0.2,
+        "hole_to_copper": 0.2,
+        "copper_to_edge": 0.2,
+        "silk_line": 0.15,
+        "silk_text_height": 1.0
+      }
+    }
+  ]
+}

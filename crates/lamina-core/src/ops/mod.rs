@@ -22,7 +22,7 @@ pub mod render;
 pub mod route;
 pub mod stats;
 pub mod status;
-pub use stats::{BoardStats, DrillStats};
+pub use stats::{BoardStats, DrillStats, FabCompat};
 pub mod teardrops;
 pub mod text;
 pub mod tuning;

@@ -17,7 +17,7 @@ pub(crate) fn check(d: &ProjectData, g: &BoardGeometry) -> Vec<Violation> {
     tracks(d, &mut v);
     zones(d, &mut v);
     mask_and_text(d, &mut v);
-    let _ = g;
+    fab(d, g, &mut v);
     v
 }
 
@@ -458,4 +458,91 @@ pub(crate) fn weak_violation(a: &Owner, b: &Owner, at: Point, layer: Layer, min:
     .at(at)
     .on(layer)
     .items(pair)
+}
+
+/// Holes near the board edge, the drill depth ratio and narrow cut-outs.
+fn fab(d: &ProjectData, g: &BoardGeometry, v: &mut Vec<Violation>) {
+    let rules = &d.board.rules;
+    if rules.hole_to_edge > 0.0 {
+        let mut edges: Vec<Prim> = Vec::new();
+        for ring in g.outline.iter().chain(g.cutouts.iter()) {
+            for k in 0..ring.len() {
+                edges.push(Prim::Capsule {
+                    a: ring[k],
+                    b: ring[(k + 1) % ring.len()],
+                    r: 0.0,
+                });
+            }
+        }
+        let index = lamina_geom::Index::new(edges.iter().map(Prim::bbox));
+        for hole in &g.drills {
+            let near = index
+                .near(&hole.prim.bbox(), rules.hole_to_edge)
+                .map(|k| hole.prim.distance(&edges[k]))
+                .fold(f64::INFINITY, f64::min);
+            if near + 1e-6 < rules.hole_to_edge {
+                let label = hole.owner.label();
+                v.push(
+                    Violation::error(
+                        "hole_to_edge",
+                        format!(
+                            "The hole of {label} is {} mm from the board edge, but the minimum is {} mm",
+                            r3(near),
+                            r3(rules.hole_to_edge)
+                        ),
+                    )
+                    .at(hole.prim.anchor())
+                    .items([label])
+                    .measured(near, rules.hole_to_edge),
+                );
+            }
+        }
+    }
+    let smallest = g
+        .drills
+        .iter()
+        .filter(|h| h.plated)
+        .map(|h| match &h.prim {
+            Prim::Circle { r, .. } | Prim::Capsule { r, .. } => 2.0 * r,
+            Prim::Poly { .. } => f64::INFINITY,
+        })
+        .fold(f64::INFINITY, f64::min);
+    if smallest.is_finite() && smallest > 0.0 && rules.max_drill_aspect > 0.0 {
+        let aspect = d.board.stackup.thickness / smallest;
+        if aspect > rules.max_drill_aspect + 1e-9 {
+            v.push(
+                Violation::warning(
+                    "drill_aspect",
+                    format!(
+                        "The board is {} mm thick and the smallest plated drill is {} mm: a ratio of {}, but the maximum is {}",
+                        r3(d.board.stackup.thickness),
+                        r3(smallest),
+                        r3(aspect),
+                        r3(rules.max_drill_aspect)
+                    ),
+                )
+                .measured(aspect, rules.max_drill_aspect),
+            );
+        }
+    }
+    for (i, c) in d.board.cutouts.iter().enumerate() {
+        let Some(b) = c.bbox() else { continue };
+        let width = b.width().min(b.height());
+        if width + 1e-9 < rules.min_route_width {
+            v.push(
+                Violation::warning(
+                    "board_neck",
+                    format!(
+                        "The cut-out {} is {} mm wide, but the router bit needs {} mm",
+                        i + 1,
+                        r3(width),
+                        r3(rules.min_route_width)
+                    ),
+                )
+                .at(b.min)
+                .items([format!("cutout{}", i + 1)])
+                .measured(width, rules.min_route_width),
+            );
+        }
+    }
 }

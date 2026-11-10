@@ -285,11 +285,33 @@ fn mask_bridges(pads: &[MaskPad], min_web: f64) -> Vec<Violation> {
         for j in index.near(&a.prim.bbox(), reach) {
             let b = &pads[j];
             let same_pad = a.part == b.part && a.number == b.number;
-            if j <= i || a.side != b.side || same_pad || (a.net.is_some() && a.net == b.net) {
+            if j <= i || a.side != b.side || same_pad {
                 continue;
             }
             let web = a.prim.distance(&b.prim) - a.margin - b.margin;
             if web + 1e-6 >= min_web {
+                continue;
+            }
+            if a.net.is_some() && a.net == b.net {
+                // Openings of one net can join. A thin strip between them breaks off.
+                if web > 1e-6 {
+                    out.push(
+                        Violation::warning(
+                            "mask_sliver",
+                            format!(
+                                "The mask between pads {} and {} is {} mm wide, but the minimum is {} mm",
+                                a.label,
+                                b.label,
+                                r3(web),
+                                r3(min_web)
+                            ),
+                        )
+                        .at(a.prim.anchor())
+                        .on(Layer::Mask(a.side))
+                        .items([a.label.clone(), b.label.clone()])
+                        .measured(web, min_web),
+                    );
+                }
                 continue;
             }
             let layer = Layer::Mask(a.side);

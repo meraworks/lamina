@@ -104,3 +104,55 @@ impl Project {
         s
     }
 }
+
+#[derive(Debug, Clone, Default, serde::Deserialize, Serialize, JsonSchema)]
+pub struct FabCompat {
+    /// The profile ids, for example `["jlcpcb", "pcbway"]`. The default is all profiles.
+    #[serde(default)]
+    pub profiles: Option<Vec<String>>,
+}
+
+impl Project {
+    /// The smallest features of the board, each with its items.
+    pub fn board_minimums(&self) -> Vec<lamina_drc::fab::Minimum> {
+        let g = lamina_geom::build(&self.data);
+        lamina_drc::fab::minimums(&self.data, &g, 0.5)
+    }
+
+    /// The fab profiles that the program has.
+    pub fn fab_profiles(&self) -> Vec<lamina_drc::fab::FabProfile> {
+        lamina_drc::fab::profiles()
+    }
+
+    /// Compare the smallest features of the board with fab profiles.
+    pub fn fab_compat(
+        &self,
+        p: FabCompat,
+    ) -> lamina_model::error::Result<Vec<lamina_drc::fab::FabResult>> {
+        let all = lamina_drc::fab::profiles();
+        let wanted: Vec<&lamina_drc::fab::FabProfile> = match &p.profiles {
+            None => all.iter().collect(),
+            Some(ids) => {
+                let mut v = Vec::new();
+                for id in ids {
+                    v.push(all.iter().find(|x| &x.id == id).ok_or_else(|| {
+                        lamina_model::Error::invalid(format!(
+                            "There is no fab profile `{id}`. The profiles are: {}.",
+                            all.iter()
+                                .map(|x| x.id.as_str())
+                                .collect::<Vec<_>>()
+                                .join(", ")
+                        ))
+                    })?);
+                }
+                v
+            }
+        };
+        let mins = self.board_minimums();
+        let layers = self.data.board.stackup.copper_layers;
+        Ok(wanted
+            .into_iter()
+            .filter_map(|f| lamina_drc::fab::compat(f, layers, &mins))
+            .collect())
+    }
+}
