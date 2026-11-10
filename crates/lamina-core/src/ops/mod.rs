@@ -21,6 +21,7 @@ pub mod parts;
 pub mod place;
 pub mod provider;
 pub mod render;
+pub mod review;
 pub mod route;
 pub mod stats;
 pub mod status;
@@ -54,6 +55,7 @@ pub use provider::{
     PartSearch, Providers, RestoreModels, SearchParts,
 };
 pub use render::{Render, RenderView, Rendered, parse_scene_layer};
+pub use review::{BoardDiff, Review, Reviewed, Verdict};
 pub use route::{
     AddHole, AddKeepout, AddText, AddVia, AddZone, Autoroute, DeleteItems, Ripup, RouteTrace,
 };

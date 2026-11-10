@@ -449,6 +449,16 @@ impl Lamina {
         self.with(|proj| Ok(proj.checks()))
     }
 
+    /// Give the verdict for the board: `ready`, `ready_with_warnings` or
+    /// `not_ready`, with the release check for each family, the fabs that
+    /// accept the board, the footprint evidence, the BOM, the data that an
+    /// import dropped, the accepted violations and the open notes. It writes
+    /// `output/review.md`. Call it before `export`.
+    #[tool(annotations(title = "Review"))]
+    async fn review(&self, Parameters(p): Parameters<Review>) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.review(p))
+    }
+
     /// Apply the fixes that the checks propose: a larger text, a wider
     /// track, a larger via pad, a text turned by 180 degrees. Each fix is
     /// applied only if it adds no error. Use `dry_run` to see the fixes first.

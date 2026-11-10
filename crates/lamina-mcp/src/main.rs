@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod doc_check;
+mod report;
 mod server;
 
 use std::path::PathBuf;
@@ -185,7 +186,21 @@ enum Cmd {
         /// Report only these rule ids (a list with commas).
         #[arg(long)]
         rules: Option<String>,
+        /// `json` (default), `text`, `sarif` or `junit`.
+        #[arg(long, default_value = "json")]
+        format: String,
     },
+    /// Give the verdict for a board and write `output/review.md`. The exit
+    /// code is 2 if the board is not ready.
+    Review {
+        dir: PathBuf,
+        /// Do not write the file.
+        #[arg(long)]
+        no_file: bool,
+    },
+    /// Compare two boards: parts, nets, rules and violations. `a` is the
+    /// board before the change. The exit code is 2 if the change adds an error.
+    Diff { a: PathBuf, b: PathBuf },
     /// Print the JSON schema of a file kind.
     Schema { kind: String },
 }
@@ -431,7 +446,11 @@ fn main() -> anyhow::Result<()> {
             release,
             fail_on,
             rules,
+            format,
         } => {
+            if !report::FORMATS.contains(&format.as_str()) {
+                anyhow::bail!("--format must be text, json, sarif or junit");
+            }
             if !["error", "warning", "never"].contains(&fail_on.as_str()) {
                 anyhow::bail!("--fail-on must be error, warning or never");
             }
@@ -445,10 +464,33 @@ fn main() -> anyhow::Result<()> {
                 let rules: Vec<&str> = rules.split(',').map(str::trim).collect();
                 v.retain(|x| rules.contains(&x.rule.as_str()));
             }
-            println!("{}", serde_json::to_string_pretty(&v)?);
+            let text = report::render(&v, &format, &dir.to_string_lossy())
+                .context("cannot write the report")?;
+            println!("{}", text.trim_end());
             let code = exit_code(&v, &fail_on);
             if code != 0 {
                 std::process::exit(code);
+            }
+            Ok(())
+        }
+        Cmd::Review { dir, no_file } => {
+            let p = server::read_project(&dir.to_string_lossy())?;
+            let r = p.review(lamina_core::Review { no_file })?;
+            println!("{}", serde_json::to_string_pretty(&r)?);
+            if r.verdict == lamina_core::Verdict::NotReady {
+                std::process::exit(2);
+            }
+            Ok(())
+        }
+        Cmd::Diff { a, b } => {
+            let before = server::read_project(&a.to_string_lossy())?;
+            let after = server::read_project(&b.to_string_lossy())?;
+            let d = lamina_core::ops::review::diff(&before.data, &after.data);
+            println!("{}", serde_json::to_string_pretty(&d)?);
+            if !d.violations_added.is_empty()
+                && lamina_core::ops::review::adds_error(&before.data, &after.data)
+            {
+                std::process::exit(2);
             }
             Ok(())
         }

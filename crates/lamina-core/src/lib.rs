@@ -20,3 +20,8 @@ pub use lamina_ports as ports;
 pub use lamina_ports::Ports;
 pub use ops::*;
 pub use project::{OpResult, Project, Touched, next_id};
+
+/// The summary of a rule and the reason for it.
+pub fn rule_info(id: &str) -> Option<(String, String)> {
+    lamina_drc::registry::get(id).map(|c| (c.summary.to_string(), c.why.to_string()))
+}

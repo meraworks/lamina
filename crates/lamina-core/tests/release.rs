@@ -202,3 +202,44 @@ fn apply_fixes_corrects_a_small_text_and_refuses_nothing_on_a_dry_run() {
             .is_empty()
     );
 }
+
+#[test]
+fn review_gives_not_ready_for_open_connections_and_writes_the_file() {
+    let (dir, p) = project();
+    let r = p.review(Review::default()).unwrap();
+    assert_eq!(r.verdict, Verdict::NotReady);
+    assert!(r.errors > 0);
+    assert!(r.first_errors.iter().any(|e| e.starts_with("unrouted")));
+    assert_eq!(r.fabs.len(), 2, "JLCPCB and PCBWay");
+    let text = std::fs::read_to_string(dir.path().join("output/review.md")).unwrap();
+    assert!(text.contains("**Verdict: NOT READY**"), "{text}");
+    assert!(text.contains("## Footprint evidence"));
+
+    let quiet = p.review(Review { no_file: true }).unwrap();
+    assert!(quiet.file.is_none());
+}
+
+#[test]
+fn diff_reports_moved_parts_and_new_violations() {
+    use lamina_core::ops::review::{adds_error, diff};
+    let (_dir, p) = project();
+    let a = p.data.clone();
+    assert!(diff(&a, &a).is_empty());
+    let mut b = a.clone();
+    // Put R2 on R1: the courtyards overlap.
+    let r1 = b.placement.placements["R1"];
+    *b.placement.placements.get_mut("R2").unwrap() = r1;
+    b.nets.nets.insert("B".into(), Net::default());
+    let d = diff(&a, &b);
+    assert_eq!(d.parts_moved, vec!["R2"]);
+    assert_eq!(d.nets_added, vec!["B"]);
+    assert!(
+        d.violations_added
+            .iter()
+            .any(|v| v.starts_with("courtyard_overlap")),
+        "{:?}",
+        d.violations_added
+    );
+    assert!(adds_error(&a, &b));
+    assert!(!adds_error(&b, &b));
+}
