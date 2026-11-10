@@ -340,6 +340,60 @@ fn mask_bridges(pads: &[MaskPad], min_web: f64) -> Vec<Violation> {
     out
 }
 
+/// A mask opening of a pad that shows a track or a via of another net.
+/// Solder can join the pad and that copper.
+fn mask_copper(pads: &[MaskPad], g: &BoardGeometry) -> Vec<Violation> {
+    let index = Index::new(pads.iter().map(|p| p.prim.bbox()));
+    let reach = pads.iter().map(|p| p.margin).fold(0.0, f64::max);
+    let last = g.layers.saturating_sub(1);
+    let mut seen = std::collections::BTreeSet::new();
+    let mut out = Vec::new();
+    for c in &g.copper {
+        let id = match &c.owner {
+            lamina_geom::Owner::Track { id, .. } | lamina_geom::Owner::Via { id } => id,
+            _ => continue,
+        };
+        let side = if c.layer == 0 {
+            Side::Top
+        } else if c.layer == last {
+            Side::Bottom
+        } else {
+            continue;
+        };
+        for j in index.near(&c.prim.bbox(), reach) {
+            let pad = &pads[j];
+            if pad.side != side || pad.margin <= 0.0 || pad.net == c.net {
+                continue;
+            }
+            let gap = pad.prim.distance(&c.prim);
+            // Copper that touches the pad is a short. A different check reports it.
+            if gap <= 1e-6 || gap + 1e-6 >= pad.margin {
+                continue;
+            }
+            if !seen.insert((pad.label.clone(), id.clone())) {
+                continue;
+            }
+            out.push(
+                Violation::warning(
+                    "mask_bridge",
+                    format!(
+                        "The mask opening of pad {} shows {id} ({}). The opening is {} mm larger than the pad, and the copper is {} mm away",
+                        pad.label,
+                        c.net.as_deref().unwrap_or("no net"),
+                        r3(pad.margin),
+                        r3(gap)
+                    ),
+                )
+                .at(pad.prim.anchor())
+                .on(Layer::Mask(side))
+                .items([pad.label.clone(), id.clone()])
+                .measured(gap, pad.margin),
+            );
+        }
+    }
+    out
+}
+
 fn collect(d: &ProjectData) -> (Vec<SilkItem>, Vec<MaskPad>) {
     let rules = &d.board.rules;
     let layers = d.board.stackup.copper_layers;
@@ -466,6 +520,7 @@ pub(crate) fn check(d: &ProjectData, g: &BoardGeometry, fills: &[ZoneFill]) -> V
     more.extend(text_size(d));
     more.extend(outside_and_holes(&silk, g, d.board.rules.silk_to_pad));
     more.extend(mask_bridges(&pads, d.board.rules.min_mask_web));
+    more.extend(mask_copper(&pads, g));
     more.extend(mask_zone_bridges(&pads, fills, d.board.rules.min_mask_web));
     let index = Index::new(pads.iter().map(|p| p.prim.bbox()));
     let reach = pads.iter().map(|p| p.need).fold(0.0, f64::max);

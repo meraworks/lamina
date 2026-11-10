@@ -769,6 +769,14 @@ pub const CHECKS: &[CheckInfo] = &[
         "The signal radiates and its impedance changes.",
         &[],
     ),
+    row(
+        "pin1_mark",
+        Family::Footprint,
+        W,
+        "A footprint has the same pads after a turn, and no silkscreen mark shows pad 1, or the mark is at the wrong pad.",
+        "A person puts the part on the board turned.",
+        &[],
+    ),
     fixed(
         "zone_outline",
         "The outline of a zone or keep-out is not a valid shape.",

@@ -222,3 +222,101 @@ fn tombstone_is_off_by_default_and_finds_a_solid_pour_on_one_pad() {
     d.routing.zones[0].pad_connection = PadConnection::Thermal;
     assert_eq!(count(&d, "tombstone"), 0, "thermal spokes are correct");
 }
+
+#[test]
+fn a_mask_opening_that_shows_a_track_of_another_net_is_found() {
+    let mut d = board();
+    d.nets.nets.insert(
+        "B".into(),
+        Net {
+            pads: vec!["R2.2".parse().unwrap()],
+            ..Default::default()
+        },
+    );
+    // The pad R1.1 has no net. A track of net B goes 0.1 mm from its edge.
+    let fp = &d.footprints["R_0603"];
+    let (w, h) = fp.pads[0].shape.size();
+    let at = d.placement.placements["R1"].transform(fp.pads[0].at);
+    let y = at.y + h.max(w) / 2.0 + 0.1 + 0.075;
+    d.board.rules.clearance = 0.05;
+    d.routing.tracks.push(Track {
+        id: "t1".into(),
+        net: "B".into(),
+        layer: Layer::TOP,
+        width: 0.15,
+        points: vec![Point::new(at.x - 3.0, y), Point::new(at.x + 0.2, y)],
+    });
+    d.board.rules.mask_margin = 0.05;
+    let hit = |d: &ProjectData| {
+        analyze(d)
+            .violations
+            .into_iter()
+            .filter(|v| v.rule == "mask_bridge" && v.items.contains(&"t1".to_string()))
+            .count()
+    };
+    assert_eq!(hit(&d), 0, "the opening ends before the track");
+    d.board.rules.mask_margin = 0.15;
+    assert_eq!(hit(&d), 1);
+    d.routing.tracks[0].layer = Layer::BOTTOM;
+    assert_eq!(hit(&d), 0, "the track is on the other side");
+}
+
+#[test]
+fn pin1_mark_finds_no_mark_and_a_mark_at_the_wrong_pad() {
+    use lamina_drc::footprints::pin1_mark;
+    let mut fp = Footprint::new(
+        "QUAD".to_string(),
+        Provenance::Manual {
+            note: "test".into(),
+        },
+    );
+    for (n, x, y) in [
+        ("1", -1.0, 1.0),
+        ("2", -1.0, -1.0),
+        ("3", 1.0, -1.0),
+        ("4", 1.0, 1.0),
+    ] {
+        fp.pads.push(Pad::smd(
+            n,
+            Point::new(x, y),
+            PadShape::Rect {
+                width: 0.6,
+                height: 0.6,
+            },
+        ));
+    }
+    let line = |a: (f64, f64), b: (f64, f64)| FpGraphic {
+        layer: FpLayer::Silk,
+        shape: Shape::Line {
+            a: Point::new(a.0, a.1),
+            b: Point::new(b.0, b.1),
+        },
+        width: 0.12,
+        filled: false,
+    };
+    fp.graphics.push(line((-1.8, 1.8), (1.8, 1.8)));
+    fp.graphics.push(line((-1.8, -1.8), (1.8, -1.8)));
+    let text = pin1_mark(&fp).expect("no mark");
+    assert!(text.contains("No mark shows where pad 1 is"), "{text}");
+
+    let dot = |x: f64, y: f64| FpGraphic {
+        layer: FpLayer::Silk,
+        shape: Shape::Circle {
+            center: Point::new(x, y),
+            radius: 0.1,
+        },
+        width: 0.0,
+        filled: true,
+    };
+    fp.graphics.push(dot(-2.1, 1.0));
+    assert_eq!(pin1_mark(&fp), None, "the dot is at pad 1");
+    fp.graphics.pop();
+    fp.graphics.push(dot(2.1, -1.0));
+    let text = pin1_mark(&fp).expect("wrong mark");
+    assert!(text.contains("nearer to pad 3 than to pad 1"), "{text}");
+
+    // Two pads: the check does not apply.
+    fp.pads.truncate(2);
+    fp.graphics.pop();
+    assert_eq!(pin1_mark(&fp), None);
+}
