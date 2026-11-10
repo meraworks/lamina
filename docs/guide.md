@@ -142,6 +142,109 @@ the drill files have only through holes. On the command line,
 `lamina check <board> --release` has exit code 2 if a violation is an error
 (`--fail-on warning` and `--fail-on never` change this), so CI can use it.
 
+### Checks from KiCad
+
+These checks have the names and the limits that follow: `via_count` (the
+`max_vias` of a net), `courtyard_missing`, `courtyard_open`, `weak_connection`
+(`min_connection`), `track_zero_length`, `track_angle` (`min_track_angle`, off by
+default), `zone_overlap`, `mask_missing`, `silk_on_hole`, `silk_outside_board`,
+`silk_line_width` (`min_silk_width`) and `text_variable`. `drill_size` and
+`annular_ring` also examine the holes of the board, `max_drill` and
+`min_slot_width`.
+
+### Verify a footprint
+
+A wrong footprint passes each geometry check, so Lamina keeps evidence for each
+footprint. `verify_footprint` compares a footprint with the numbers of the
+datasheet and stores the result in the footprint file. Give one of: `package` (the
+package dimensions), `pads` (the recommended land pattern), `leads` (the lead
+sizes of a through-hole part) or `accept` (a reason to trust the source).
+`audit_footprints` examines all footprints with no evidence against the standard
+packages. `compare_footprints` compares two footprints: the turn, the mirror, the
+move and each pad that differs.
+
+The rules are `footprint_mismatch` (the evidence is a fail), `footprint_stale`
+(the pads changed after the evidence), `footprint_changed` (the pads differ from
+the imported source), `footprint_symmetry` (a pad is 0.02 to 0.2 mm from its
+mirror position) and `footprint_unverified`. A footprint with no evidence is an
+error only for release. `status` gives the numbers in `footprint_evidence`.
+
+### Fabricators
+
+`board_minimums` gives the smallest features of the board with their items.
+`fab_profiles` lists the fabricator limits that Lamina has, each with its source
+page and the date of the check. `fab_compat` compares the board with each profile
+and gives the margin of each limit, the worst first. The fab checks are
+`hole_to_edge`, `drill_aspect` (`max_drill_aspect`), `mask_sliver`
+(`min_mask_web`) and `board_neck` (`min_route_width`).
+
+### Assembly and BOM
+
+- `fiducial_count`: a side with SMD parts has fewer fiducials than `min_fiducials`
+  (0 is off). A fiducial is a part with one pad and a reference that starts with
+  `FID`, or a part with the field `kind` set to `fiducial`.
+- `part_to_edge`: a part is nearer to the board edge than `part_to_edge` (0 is off).
+- `part_height`: a part is higher than the limit of a keep-out that it overlaps.
+  Set the limit in `height_limits`, a map from the keep-out id to a height in mm.
+- `paste_missing`, `paste_oversize`, `via_in_pad`.
+- `testpoint_access`: a test point is under a part, has no mask opening, is
+  smaller than `min_testpoint` or is nearer to the edge than `testpoint_to_edge`.
+- `bom_conflict`: one part number with two values or two footprints.
+- `bom_part_number`: a BOM line has no part number. It shows only for release.
+- `tombstone`: off by default. It compares the copper on the two pads of a small part.
+
+The BOM has the columns Manufacturer and MPN. A part with the field
+`exclude_from_bom` set to `yes` is not in the BOM and not in the CPL. The CPL
+position is the middle of the pads. The field `cpl_rotation` adds a correction in
+degrees for a part whose zero angle differs from that of the assembler.
+
+### Labels
+
+Four checks read what the silkscreen says. They guess, so they are warnings.
+`label_far`: a text names a part but is far from it (`label_max_distance`) or
+nearer to a different part. `label_pin`: the pin labels of a connector are in the
+reverse order of its pins, or a label is at the wrong pin. `polarity_mark`: a plus
+or minus mark is at the pad of the opposite polarity. `silk_under_part`: a text is
+below the body of a part.
+
+Some violations have a `fix`. `apply_fixes` applies the fixes: a larger text, a
+wider track, a larger via pad, a text turned by 180 degrees. It applies a fix only
+if the fix adds no error. Use `dry_run` to see the fixes first.
+
+### Electrical checks
+
+These checks need no schematic. They use net data.
+
+- `net_single_pad`: a net has one pad. `pad_no_net` (off by default): a part has
+  pads in no net.
+- `track_current`: set `current` (A) on a net. The check uses the IPC-2221 formula
+  with `max_temp_rise` and the copper weight of the stackup.
+- `voltage_clearance`: set `voltage` (V) on a net. A ground net has 0 V. The
+  spacing values come from a table of IPC-2221B that is data in the program. The
+  table was not compared with the standard: do not use this check as the only
+  check for a safety distance.
+- `decoupling_far`: a power pin of a part has no capacitor of its net within
+  `decoupling_max_distance`. The check needs pin names.
+- `return_path`: a track of a differential pair, of a net with a length limit, or
+  of a net class with `reference_plane` goes over a gap in the pour of the next
+  layer.
+
+### Review and CI
+
+`review` gives one verdict for the board (`ready`, `ready_with_warnings` or
+`not_ready`) with the evidence, and writes `output/review.md`. Call it before
+`export`. On the command line:
+
+```
+lamina review <board>
+lamina check <board> --release --format sarif
+lamina diff <board-before> <board-after>
+```
+
+`--format` accepts `text`, `json`, `sarif` and `junit`. `lamina review` has exit
+code 2 if the board is not ready. `lamina diff` lists the parts, nets, rules and
+violations that differ, and has exit code 2 if the second board adds an error.
+
 KiCad board import keeps the keep-out zones of a footprint (for example below an
 antenna) and the paste and mask openings that a footprint has as pads with no
 copper. KiCad board export includes filled zones, a project rules file, a `.pretty`

@@ -748,6 +748,9 @@ Warning | mask_bridge | top.mask | U5.2,U5.3 | The mask between pads U5.2 and U5
 Warning | mask_bridge | top.mask | U5.3,U5.4 | The mask between pads U5.3 and U5.4 is 0.15 mm wide, but the minimum is 0.2 mm | 32.237,34.750
 Warning | mask_bridge | top.mask | U5.5,U5.6 | The mask between pads U5.5 and U5.6 is 0.15 mm wide, but the minimum is 0.2 mm | 33.000,33.987
 Warning | mask_bridge | top.mask | U5.8,U5.9 | The mask between pads U5.8 and U5.9 is 0.15 mm wide, but the minimum is 0.2 mm | 34.763,34.250
+Warning | mask_sliver | top.mask | J1.A12,J1.SH | The mask between pads J1.A12 and J1.SH is 0.17 mm wide, but the minimum is 0.2 mm | 38.250,8.980
+Warning | mask_sliver | top.mask | J1.B1,J1.SH | The mask between pads J1.B1 and J1.SH is 0.17 mm wide, but the minimum is 0.2 mm | 38.250,8.980
+Warning | mask_sliver | top.mask | U5.6,U5.7 | The mask between pads U5.6 and U5.7 is 0.15 mm wide, but the minimum is 0.2 mm | 33.500,33.987
 Warning | silk_text_size | bottom.silk | x12 | The silkscreen text "v1" is 1.2 mm high, but the minimum is 1.5 mm | 25.500,32.400
 Warning | silk_text_size | top.silk | x1 | The silkscreen text "SERVO" is 1 mm high, but the minimum is 1.5 mm | 11.000,44.000
 Warning | silk_text_size | top.silk | x10 | The silkscreen text "PYRO2" is 1 mm high, but the minimum is 1.5 mm | 19.200,16.100

@@ -36,7 +36,12 @@ instance, then use `repeat_layout` to copy its layout to the other instances.
 
 Lamina applies each change and reports the new rule violations. To refuse a change \
 that adds an error, set `strict: true`. Lamina always refuses malformed input. \
-Start with `open` (create: true for a new project), then `status`.";
+Start with `open` (create: true for a new project), then `status`.
+
+Verify each new footprint against its datasheet with `verify_footprint`, or run \
+`audit_footprints`: `export` refuses a board that has a footprint with no evidence. \
+Before `export`, call `review`. It gives one verdict with the release check, the \
+fabricators that accept the board and the open items.";
 
 pub type Shared = Arc<Mutex<Option<Project>>>;
 
@@ -496,7 +501,7 @@ impl Lamina {
 
     /// For each footprint in use that has no evidence: compare it with the
     /// standard IPC-7351 package of its name, and keep the result. The
-    /// footprints with the result `no_source` need `verify_footprint`.
+    /// footprints with the result `no_source` or `differs` need `verify_footprint`.
     #[tool(annotations(title = "Audit footprints"))]
     async fn audit_footprints(&self) -> Result<CallToolResult, McpError> {
         self.with(|proj| proj.audit_footprints())

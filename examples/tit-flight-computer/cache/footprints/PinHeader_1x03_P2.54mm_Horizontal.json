@@ -442,5 +442,15 @@
     "library": "",
     "footprint": "PinHeader_1x03_P2.54mm_Horizontal",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "71c8741466f25c20",
+  "evidence": [
+    {
+      "pads_hash": "71c8741466f25c20",
+      "method": "preset",
+      "document": "IPC-7351 package PinHeader_1x03_P2.54mm_Horizontal",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

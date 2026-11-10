@@ -130,5 +130,15 @@
     "library": "",
     "footprint": "LED_0603_1608Metric",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "b21af4496d9470d5",
+  "evidence": [
+    {
+      "pads_hash": "b21af4496d9470d5",
+      "method": "preset",
+      "document": "IPC-7351 package LED_0603",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

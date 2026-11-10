@@ -280,5 +280,15 @@
     "library": "",
     "footprint": "SOT-23",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "099b3473801d6929",
+  "evidence": [
+    {
+      "pads_hash": "099b3473801d6929",
+      "method": "preset",
+      "document": "IPC-7351 package SOT-23",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

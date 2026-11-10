@@ -73,7 +73,8 @@ pub struct AuditRow {
     pub footprint: String,
     /// The parts that use the footprint.
     pub parts: Vec<String>,
-    /// `verified`, `mismatch`, `has_evidence` or `no_source`.
+    /// `verified`, `differs`, `has_evidence` or `no_source`. Only `verified`
+    /// stores evidence.
     pub result: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source: Option<String>,
@@ -300,22 +301,27 @@ impl Project {
             if let Some((name, want)) = preset_of(&id) {
                 let c = compare(fp, &want, &Tolerance::SOURCE);
                 row.source = Some(format!("IPC-7351 package {name}"));
-                row.result = if c.same { "verified" } else { "mismatch" }.into();
+                // The package pattern is not the datasheet. A difference is a
+                // reason to look at the datasheet, not a failed check, so only
+                // a pass is stored.
+                row.result = if c.same { "verified" } else { "differs" }.into();
                 row.findings = if c.same { Vec::new() } else { c.findings };
-                let hash = fp.pads_hash();
-                fp.evidence
-                    .retain(|e| !(e.pads_hash == hash && e.method == EvidenceMethod::Preset));
-                fp.evidence.push(Evidence {
-                    pads_hash: hash,
-                    method: EvidenceMethod::Preset,
-                    document: format!("IPC-7351 package {name}"),
-                    page: None,
-                    url: None,
-                    checked: lamina_model::time::today(),
-                    pass: c.same,
-                    findings: row.findings.clone(),
-                });
-                touched.footprints.insert(id.clone());
+                if c.same {
+                    let hash = fp.pads_hash();
+                    fp.evidence
+                        .retain(|e| !(e.pads_hash == hash && e.method == EvidenceMethod::Preset));
+                    fp.evidence.push(Evidence {
+                        pads_hash: hash,
+                        method: EvidenceMethod::Preset,
+                        document: format!("IPC-7351 package {name}"),
+                        page: None,
+                        url: None,
+                        checked: lamina_model::time::today(),
+                        pass: true,
+                        findings: Vec::new(),
+                    });
+                    touched.footprints.insert(id.clone());
+                }
             }
             rows.push(row);
         }

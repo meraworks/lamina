@@ -75,5 +75,15 @@
     "library": "",
     "footprint": "C_0603_1608Metric",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "0ec4c24befbe03b9",
+  "evidence": [
+    {
+      "pads_hash": "0ec4c24befbe03b9",
+      "method": "preset",
+      "document": "IPC-7351 package C_0603",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

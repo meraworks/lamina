@@ -199,5 +199,15 @@
     "library": "",
     "footprint": "PinHeader_1x05_P2.54mm_Vertical",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "653970f30167886e",
+  "evidence": [
+    {
+      "pads_hash": "653970f30167886e",
+      "method": "preset",
+      "document": "IPC-7351 package PinHeader_1x05_P2.54mm_Vertical",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }

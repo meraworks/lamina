@@ -75,5 +75,15 @@
     "library": "",
     "footprint": "C_0805_2012Metric",
     "path": "kicad_pcb"
-  }
+  },
+  "source_hash": "267d3ae27b1af7b5",
+  "evidence": [
+    {
+      "pads_hash": "267d3ae27b1af7b5",
+      "method": "preset",
+      "document": "IPC-7351 package C_0805",
+      "checked": "2026-11-10",
+      "pass": true
+    }
+  ]
 }
