@@ -157,264 +157,341 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
 
     let mut zones: Vec<&Zone> = d.routing.zones.iter().collect();
     zones.sort_by(|a, b| b.priority.cmp(&a.priority).then(a.id.cmp(&b.id)));
-    let mut done: Vec<(u8, Option<String>, MultiPolygon<f64>)> = Vec::new();
-    let mut out = Vec::new();
-
-    for z in zones {
-        // The model checks report an outline that is not valid.
-        if z.outline.check().is_err() {
-            continue;
-        }
-        let zone_class = class_of(&z.net);
-        for layer in &z.layers {
-            let Some(c) = layer.copper() else { continue };
-            let l = c.index(layers);
-            let limits = rules.resolve(z.net.as_deref(), zone_class.as_deref(), Some(*layer));
-            let zc = z
-                .clearance
-                .unwrap_or(limits.clearance)
-                .max(limits.clearance);
-            let min_w = z.min_width.unwrap_or(limits.min_track_width).max(0.05);
-            let clearance = |net: &Option<String>| {
-                rules
-                    .resolve(net.as_deref(), class_of(net).as_deref(), Some(*layer))
-                    .clearance
-            };
-            let region = mp(gpoly(&z.outline.flatten(TOL))).intersection(&board);
-            if region.unsigned_area() < 1e-6 {
+    // A pour is an obstacle only for the later pours of its layer. So each
+    // copper layer is one job, and the jobs run at the same time.
+    let used: std::collections::BTreeSet<u8> = zones
+        .iter()
+        .flat_map(|z| z.layers.iter())
+        .filter_map(|l| l.copper())
+        .map(|c| c.index(layers))
+        .collect();
+    let one_layer = |this: u8| -> Vec<ZoneFill> {
+        let mut done: Vec<(u8, Option<String>, MultiPolygon<f64>)> = Vec::new();
+        let mut out = Vec::new();
+        for z in &zones {
+            // The model checks report an outline that is not valid.
+            if z.outline.check().is_err() {
                 continue;
             }
-            let rb = bbox_of(&region);
-            let reach = rules
-                .custom
-                .iter()
-                .filter_map(|r| r.clearance)
-                .chain(rules.net_classes.values().filter_map(|c| c.clearance))
-                .fold(zc.max(z.thermal_gap).max(2.0), f64::max);
-            let mut obstacles = Vec::new();
-            // The gaps around the pads of the net of the zone. Thermal spokes
-            // go across them. Spokes do not go across other obstacles.
-            let mut gaps = Vec::new();
-            let mut thermal = Vec::new();
-            let mut anchors = Vec::new();
-            for it in g.copper.iter().filter(|i| i.layer == l) {
-                let b = it.prim.bbox();
-                if b.max.x < rb.min.x - reach
-                    || b.min.x > rb.max.x + reach
-                    || b.max.y < rb.min.y - reach
-                    || b.min.y > rb.max.y + reach
-                {
+            let zone_class = class_of(&z.net);
+            for layer in &z.layers {
+                let Some(c) = layer.copper() else { continue };
+                let l = c.index(layers);
+                if l != this {
                     continue;
                 }
-                let same = z.net.is_some() && it.net == z.net;
-                if same {
-                    anchors.push(it.prim.clone());
-                    if matches!(it.owner, Owner::Pad { .. }) {
-                        match z.pad_connection {
-                            PadConnection::Solid => {}
-                            PadConnection::Thermal => {
-                                gaps.push(inflate(&it.prim, z.thermal_gap));
-                                if region.intersection(&inflate(&it.prim, 0.0)).unsigned_area()
-                                    > 1e-6
-                                {
-                                    thermal.push((it.owner.label(), it.prim.clone()));
-                                }
-                            }
-                            PadConnection::None => obstacles.push(inflate(&it.prim, zc)),
-                        }
-                    }
-                } else {
-                    let cl = zc.max(clearance(&it.net));
-                    obstacles.push(inflate(&it.prim, cl));
-                }
-            }
-            for dr in &g.drills {
-                if l < dr.layers.0 || l > dr.layers.1 {
-                    continue;
-                }
-                if !dr.plated {
-                    let clearance = if matches!(dr.prim, Prim::Capsule { .. }) {
-                        zc.max(rules.copper_to_edge)
-                    } else {
-                        zc
-                    };
-                    obstacles.push(inflate(&dr.prim, clearance.max(rules.hole_to_copper)));
-                } else if !(z.net.is_some() && dr.net == z.net) {
-                    obstacles.push(inflate(&dr.prim, rules.hole_to_copper));
-                }
-            }
-            for k in &d.routing.keepouts {
-                if k.forbid.pours && k.layers.contains(layer) {
-                    obstacles.push(mp(gpoly(&k.outline.flatten(TOL))));
-                }
-            }
-            for (refdes, pl) in &d.placement.placements {
-                let Some(fp) = d
-                    .parts
-                    .parts
-                    .get(refdes)
-                    .and_then(|p| d.footprints.get(&p.footprint))
-                else {
-                    continue;
+                let limits = rules.resolve(z.net.as_deref(), zone_class.as_deref(), Some(*layer));
+                let zc = z
+                    .clearance
+                    .unwrap_or(limits.clearance)
+                    .max(limits.clearance);
+                let min_w = z.min_width.unwrap_or(limits.min_track_width).max(0.05);
+                let clearance = |net: &Option<String>| {
+                    rules
+                        .resolve(net.as_deref(), class_of(net).as_deref(), Some(*layer))
+                        .clearance
                 };
-                for (ls, pts, forbid) in crate::board::part_keepouts(fp, pl, layers) {
-                    if forbid.pours && ls.contains(&l) {
-                        obstacles.push(mp(gpoly(&pts)));
-                    }
+                let region = mp(gpoly(&z.outline.flatten(TOL))).intersection(&board);
+                if region.unsigned_area() < 1e-6 {
+                    continue;
                 }
-            }
-            for (dl, dnet, fill) in &done {
-                if *dl == l && (dnet != &z.net || z.net.is_none()) {
-                    obstacles.push(fill.buffer(zc.max(clearance(dnet))));
-                }
-            }
-
-            let hard = union_all(obstacles);
-            let blocked = if gaps.is_empty() {
-                hard.clone()
-            } else {
-                hard.union(&union_all(gaps))
-            };
-            let mut fill = region.difference(&blocked);
-            // Remove necks that are thinner than the minimum width.
-            fill = fill.buffer(-min_w / 2.0).buffer(min_w / 2.0);
-
-            let mut counts = vec![0u8; thermal.len()];
-            if !thermal.is_empty() {
-                // A spoke keeps clear of all that the pour keeps clear of:
-                // copper of other nets, holes, keep-outs and other pours.
-                let allowed = region.difference(&hard);
-                let spoke = z.thermal_spoke.max(min_w);
-                let mut spokes = Vec::new();
-                for (index, (_, p)) in thermal.iter().enumerate() {
-                    let b = p.bbox();
-                    let c = Point::new((b.min.x + b.max.x) / 2.0, (b.min.y + b.max.y) / 2.0);
-                    let hx = b.width() / 2.0 + z.thermal_gap + min_w;
-                    let hy = b.height() / 2.0 + z.thermal_gap + min_w;
-                    let s = spoke / 2.0;
-                    let pad = inflate(p, 0.0);
-                    let bounds = mp(gpoly(&[
-                        Point::new(c.x - hx, c.y - hy),
-                        Point::new(c.x + hx, c.y - hy),
-                        Point::new(c.x + hx, c.y + hy),
-                        Point::new(c.x - hx, c.y + hy),
-                    ]));
-                    let local_allowed = bounds.intersection(&allowed);
-                    let local_fill = bounds.intersection(&fill);
-                    let mut count: u8 = 0;
-                    for (x0, y0, x1, y1) in [
-                        (c.x, c.y - s, c.x + hx, c.y + s),
-                        (c.x - hx, c.y - s, c.x, c.y + s),
-                        (c.x - s, c.y, c.x + s, c.y + hy),
-                        (c.x - s, c.y - hy, c.x + s, c.y),
-                    ] {
-                        let arm = mp(gpoly(&[
-                            Point::new(x0, y0),
-                            Point::new(x1, y0),
-                            Point::new(x1, y1),
-                            Point::new(x0, y1),
-                        ]))
-                        .intersection(&local_allowed)
-                        // Remove the parts of the arm that are thinner than the
-                        // minimum width, as for the pour.
-                        .buffer(-0.45 * min_w)
-                        .buffer(0.45 * min_w);
-                        if arm.0.iter().any(|piece| {
-                            let piece = mp(piece.clone());
-                            piece.intersection(&pad).unsigned_area() > 1e-6
-                                && piece.intersection(&local_fill).unsigned_area() > 1e-6
-                        }) {
-                            count += 1;
-                        }
-                        spokes.push(arm);
-                    }
-                    counts[index] = count;
-                }
-                let spokes = union_all(spokes);
-                fill = fill.union(&spokes);
-            }
-
-            // Keep only the pieces that touch copper of the net of the zone.
-            let prims = to_prims(&fill);
-            let kept: Vec<Prim> = if z.net.is_some() {
-                prims
-                    .into_iter()
-                    .filter(|p| anchors.iter().any(|a| p.distance(a) <= 1e-6))
-                    .collect()
-            } else {
-                prims
-            };
-            for (index, (_, pad)) in thermal.iter().enumerate() {
-                for track in d
-                    .routing
-                    .tracks
+                let rb = bbox_of(&region);
+                let reach = rules
+                    .custom
                     .iter()
-                    .filter(|t| t.layer == *layer && Some(&t.net) == z.net.as_ref())
-                {
-                    for ends in track.points.windows(2) {
-                        let joins = (pad.contains(ends[0])
-                            && !pad.contains(ends[1])
-                            && kept.iter().any(|p| p.contains(ends[1])))
-                            || (pad.contains(ends[1])
-                                && !pad.contains(ends[0])
-                                && kept.iter().any(|p| p.contains(ends[0])));
-                        if joins {
-                            let count = &mut counts[index];
-                            *count = count.saturating_add(1);
+                    .filter_map(|r| r.clearance)
+                    .chain(rules.net_classes.values().filter_map(|c| c.clearance))
+                    .fold(zc.max(z.thermal_gap).max(2.0), f64::max);
+                let mut obstacles = Vec::new();
+                // The gaps around the pads of the net of the zone. Thermal spokes
+                // go across them. Spokes do not go across other obstacles.
+                let mut gaps = Vec::new();
+                let mut thermal = Vec::new();
+                let mut anchors = Vec::new();
+                for it in g.copper.iter().filter(|i| i.layer == l) {
+                    let b = it.prim.bbox();
+                    if b.max.x < rb.min.x - reach
+                        || b.min.x > rb.max.x + reach
+                        || b.max.y < rb.min.y - reach
+                        || b.min.y > rb.max.y + reach
+                    {
+                        continue;
+                    }
+                    let same = z.net.is_some() && it.net == z.net;
+                    if same {
+                        anchors.push(it.prim.clone());
+                        if matches!(it.owner, Owner::Pad { .. }) {
+                            match z.pad_connection {
+                                PadConnection::Solid => {}
+                                PadConnection::Thermal => {
+                                    gaps.push(inflate(&it.prim, z.thermal_gap));
+                                    if region.intersection(&inflate(&it.prim, 0.0)).unsigned_area()
+                                        > 1e-6
+                                    {
+                                        thermal.push((it.owner.label(), it.prim.clone()));
+                                    }
+                                }
+                                PadConnection::None => obstacles.push(inflate(&it.prim, zc)),
+                            }
+                        }
+                    } else {
+                        let cl = zc.max(clearance(&it.net));
+                        obstacles.push(inflate(&it.prim, cl));
+                    }
+                }
+                for dr in &g.drills {
+                    if l < dr.layers.0 || l > dr.layers.1 {
+                        continue;
+                    }
+                    if !dr.plated {
+                        let clearance = if matches!(dr.prim, Prim::Capsule { .. }) {
+                            zc.max(rules.copper_to_edge)
+                        } else {
+                            zc
+                        };
+                        obstacles.push(inflate(&dr.prim, clearance.max(rules.hole_to_copper)));
+                    } else if !(z.net.is_some() && dr.net == z.net) {
+                        obstacles.push(inflate(&dr.prim, rules.hole_to_copper));
+                    }
+                }
+                for k in &d.routing.keepouts {
+                    if k.forbid.pours && k.layers.contains(layer) {
+                        obstacles.push(mp(gpoly(&k.outline.flatten(TOL))));
+                    }
+                }
+                for (refdes, pl) in &d.placement.placements {
+                    let Some(fp) = d
+                        .parts
+                        .parts
+                        .get(refdes)
+                        .and_then(|p| d.footprints.get(&p.footprint))
+                    else {
+                        continue;
+                    };
+                    for (ls, pts, forbid) in crate::board::part_keepouts(fp, pl, layers) {
+                        if forbid.pours && ls.contains(&l) {
+                            obstacles.push(mp(gpoly(&pts)));
                         }
                     }
                 }
-            }
-            let kept_mp = MultiPolygon::new(
-                kept.iter()
-                    .filter_map(|p| match p {
-                        Prim::Poly { outer, holes } => Some(Polygon::new(
-                            ring(outer),
-                            holes.iter().map(|h| ring(h)).collect(),
-                        )),
-                        _ => None,
+                for (dl, dnet, fill) in &done {
+                    if *dl == l && (dnet != &z.net || z.net.is_none()) {
+                        obstacles.push(fill.buffer(zc.max(clearance(dnet))));
+                    }
+                }
+
+                let hard = union_all(obstacles);
+                let blocked = if gaps.is_empty() {
+                    hard.clone()
+                } else {
+                    hard.union(&union_all(gaps))
+                };
+                let mut fill = region.difference(&blocked);
+                // Remove necks that are thinner than the minimum width.
+                fill = fill.buffer(-min_w / 2.0).buffer(min_w / 2.0);
+
+                let mut counts = vec![0u8; thermal.len()];
+                if !thermal.is_empty() {
+                    // A spoke keeps clear of all that the pour keeps clear of:
+                    // copper of other nets, holes, keep-outs and other pours.
+                    let allowed = region.difference(&hard);
+                    let spoke = z.thermal_spoke.max(min_w);
+                    let mut spokes = Vec::new();
+                    // The area around each pad that its spokes can use.
+                    let window = |p: &Prim| {
+                        let b = p.bbox();
+                        let c = Point::new((b.min.x + b.max.x) / 2.0, (b.min.y + b.max.y) / 2.0);
+                        let hx = b.width() / 2.0 + z.thermal_gap + min_w;
+                        let hy = b.height() / 2.0 + z.thermal_gap + min_w;
+                        (c, hx, hy)
+                    };
+                    let window_poly = |(c, hx, hy): (Point, f64, f64)| {
+                        mp(gpoly(&[
+                            Point::new(c.x - hx, c.y - hy),
+                            Point::new(c.x + hx, c.y - hy),
+                            Point::new(c.x + hx, c.y + hy),
+                            Point::new(c.x - hx, c.y + hy),
+                        ]))
+                    };
+                    // Cut the pour and the allowed area one time, to the windows of
+                    // all the pads. Then each pad uses only the pieces near it. The
+                    // full pour has thousands of points, and a cut for each pad is slow.
+                    let windows = union_all(
+                        thermal
+                            .iter()
+                            .map(|(_, p)| window_poly(window(p)))
+                            .collect(),
+                    );
+                    let allowed_near = windows.intersection(&allowed);
+                    let fill_near = windows.intersection(&fill);
+                    let near = |m: &MultiPolygon<f64>, bounds: &MultiPolygon<f64>| {
+                        let want = bbox_of(bounds);
+                        MultiPolygon::new(
+                            m.0.iter()
+                                .filter(|piece| {
+                                    let b = bbox_of(&mp((*piece).clone()));
+                                    b.min.x <= want.max.x
+                                        && b.max.x >= want.min.x
+                                        && b.min.y <= want.max.y
+                                        && b.max.y >= want.min.y
+                                })
+                                .cloned()
+                                .collect(),
+                        )
+                        .intersection(bounds)
+                    };
+                    for (index, (_, p)) in thermal.iter().enumerate() {
+                        let (c, hx, hy) = window(p);
+                        let s = spoke / 2.0;
+                        let pad = inflate(p, 0.0);
+                        let bounds = window_poly((c, hx, hy));
+                        let local_allowed = near(&allowed_near, &bounds);
+                        let local_fill = near(&fill_near, &bounds);
+                        let mut count: u8 = 0;
+                        for (x0, y0, x1, y1) in [
+                            (c.x, c.y - s, c.x + hx, c.y + s),
+                            (c.x - hx, c.y - s, c.x, c.y + s),
+                            (c.x - s, c.y, c.x + s, c.y + hy),
+                            (c.x - s, c.y - hy, c.x + s, c.y),
+                        ] {
+                            let arm = mp(gpoly(&[
+                                Point::new(x0, y0),
+                                Point::new(x1, y0),
+                                Point::new(x1, y1),
+                                Point::new(x0, y1),
+                            ]))
+                            .intersection(&local_allowed)
+                            // Remove the parts of the arm that are thinner than the
+                            // minimum width, as for the pour.
+                            .buffer(-0.45 * min_w)
+                            .buffer(0.45 * min_w);
+                            if arm.0.iter().any(|piece| {
+                                let piece = mp(piece.clone());
+                                piece.intersection(&pad).unsigned_area() > 1e-6
+                                    && piece.intersection(&local_fill).unsigned_area() > 1e-6
+                            }) {
+                                count += 1;
+                            }
+                            spokes.push(arm);
+                        }
+                        counts[index] = count;
+                    }
+                    let spokes = union_all(spokes);
+                    fill = fill.union(&spokes);
+                }
+
+                // Keep only the pieces that touch copper of the net of the zone.
+                let prims = to_prims(&fill);
+                let kept: Vec<Prim> = if z.net.is_some() {
+                    prims
+                        .into_iter()
+                        .filter(|p| anchors.iter().any(|a| p.distance(a) <= 1e-6))
+                        .collect()
+                } else {
+                    prims
+                };
+                for (index, (_, pad)) in thermal.iter().enumerate() {
+                    for track in d
+                        .routing
+                        .tracks
+                        .iter()
+                        .filter(|t| t.layer == *layer && Some(&t.net) == z.net.as_ref())
+                    {
+                        for ends in track.points.windows(2) {
+                            let joins = (pad.contains(ends[0])
+                                && !pad.contains(ends[1])
+                                && kept.iter().any(|p| p.contains(ends[1])))
+                                || (pad.contains(ends[1])
+                                    && !pad.contains(ends[0])
+                                    && kept.iter().any(|p| p.contains(ends[0])));
+                            if joins {
+                                let count = &mut counts[index];
+                                *count = count.saturating_add(1);
+                            }
+                        }
+                    }
+                }
+                let kept_mp = MultiPolygon::new(
+                    kept.iter()
+                        .filter_map(|p| match p {
+                            Prim::Poly { outer, holes } => Some(Polygon::new(
+                                ring(outer),
+                                holes.iter().map(|h| ring(h)).collect(),
+                            )),
+                            _ => None,
+                        })
+                        .collect(),
+                );
+                done.push((l, z.net.clone(), kept_mp));
+                let pad_thermals: Vec<_> = thermal
+                    .iter()
+                    .zip(counts)
+                    .map(|((pad, prim), spokes)| PadThermal {
+                        pad: pad.clone(),
+                        at: prim.anchor(),
+                        spokes,
                     })
-                    .collect(),
-            );
-            done.push((l, z.net.clone(), kept_mp));
-            let pad_thermals: Vec<_> = thermal
+                    .collect();
+                let mut thermal_spokes = std::collections::BTreeMap::<String, u8>::new();
+                for pad in &pad_thermals {
+                    thermal_spokes
+                        .entry(pad.pad.clone())
+                        .and_modify(|n| *n = (*n).min(pad.spokes))
+                        .or_insert(pad.spokes);
+                }
+                out.push(ZoneFill {
+                    pad_thermals,
+                    thermal_spokes,
+                    zone: z.id.clone(),
+                    net: z.net.clone(),
+                    layer: *layer,
+                    polygons: kept
+                        .into_iter()
+                        .filter_map(|p| match p {
+                            Prim::Poly { outer, holes } => Some(FillPolygon {
+                                outer: outer.into_iter().map(round_pt).collect(),
+                                holes: holes
+                                    .into_iter()
+                                    .map(|h| h.into_iter().map(round_pt).collect())
+                                    .collect(),
+                            }),
+                            _ => None,
+                        })
+                        .collect(),
+                });
+            }
+        }
+        out
+    };
+    let mut out: Vec<ZoneFill> = if used.len() <= 1 {
+        used.iter().flat_map(|l| one_layer(*l)).collect()
+    } else {
+        std::thread::scope(|scope| {
+            let handles: Vec<_> = used
                 .iter()
-                .zip(counts)
-                .map(|((pad, prim), spokes)| PadThermal {
-                    pad: pad.clone(),
-                    at: prim.anchor(),
-                    spokes,
+                .map(|l| {
+                    let job = &one_layer;
+                    let l = *l;
+                    scope.spawn(move || job(l))
                 })
                 .collect();
-            let mut thermal_spokes = std::collections::BTreeMap::<String, u8>::new();
-            for pad in &pad_thermals {
-                thermal_spokes
-                    .entry(pad.pad.clone())
-                    .and_modify(|n| *n = (*n).min(pad.spokes))
-                    .or_insert(pad.spokes);
-            }
-            out.push(ZoneFill {
-                pad_thermals,
-                thermal_spokes,
-                zone: z.id.clone(),
-                net: z.net.clone(),
-                layer: *layer,
-                polygons: kept
-                    .into_iter()
-                    .filter_map(|p| match p {
-                        Prim::Poly { outer, holes } => Some(FillPolygon {
-                            outer: outer.into_iter().map(round_pt).collect(),
-                            holes: holes
-                                .into_iter()
-                                .map(|h| h.into_iter().map(round_pt).collect())
-                                .collect(),
-                        }),
-                        _ => None,
-                    })
-                    .collect(),
-            });
-        }
-    }
+            handles
+                .into_iter()
+                .flat_map(|h| h.join().expect("the pour of a layer"))
+                .collect()
+        })
+    };
+    // The order of the result does not change with the number of threads:
+    // the zones in their order, and for each zone its layers in their order.
+    let place = |f: &ZoneFill| {
+        let zi = zones.iter().position(|z| z.id == f.zone).unwrap_or(0);
+        let li = zones
+            .get(zi)
+            .and_then(|z| z.layers.iter().position(|l| *l == f.layer))
+            .unwrap_or(0);
+        (zi, li)
+    };
+    out.sort_by_key(place);
     out
 }
 
