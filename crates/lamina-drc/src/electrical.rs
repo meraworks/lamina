@@ -8,67 +8,10 @@ use lamina_geom::fill::ZoneFill;
 use lamina_geom::prim::ring_contains;
 use lamina_geom::{BoardGeometry, Index, Owner};
 use lamina_model::*;
-use serde::Deserialize;
 
 use crate::r3;
 
-#[derive(Debug, Clone, Copy, Deserialize)]
-struct Spacing {
-    internal: f64,
-    external_bare: f64,
-    external_coated: f64,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-struct SpacingRow {
-    up_to: f64,
-    #[serde(flatten)]
-    spacing: Spacing,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-struct SpacingTable {
-    rows: Vec<SpacingRow>,
-    above_500_per_volt: Spacing,
-}
-
-/// Where two conductors are, for the spacing table.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Surface {
-    /// An inner layer.
-    Internal,
-    /// An outer layer, and one of the two items has no solder mask (a pad).
-    ExternalBare,
-    /// An outer layer below solder mask.
-    ExternalCoated,
-}
-
-fn table() -> &'static SpacingTable {
-    static TABLE: std::sync::OnceLock<SpacingTable> = std::sync::OnceLock::new();
-    TABLE.get_or_init(|| {
-        serde_json::from_str(include_str!("profiles/ipc2221_spacing.json"))
-            .expect("the spacing table is valid JSON")
-    })
-}
-
-/// The minimum distance in mm between two conductors with `volts` between
-/// them (IPC-2221C, Table 6-1).
-pub fn voltage_spacing(volts: f64, surface: Surface) -> f64 {
-    let t = table();
-    let pick = |s: &Spacing| match surface {
-        Surface::Internal => s.internal,
-        Surface::ExternalBare => s.external_bare,
-        Surface::ExternalCoated => s.external_coated,
-    };
-    let v = volts.abs();
-    for row in &t.rows {
-        if v <= row.up_to {
-            return pick(&row.spacing);
-        }
-    }
-    let last = t.rows.last().expect("the table has rows");
-    pick(&last.spacing) + (v - last.up_to) * pick(&t.above_500_per_volt)
-}
+pub use lamina_model::voltage::{Surface, voltage_spacing};
 
 /// The track width in mm that carries `amps` with a temperature rise of
 /// `rise` degrees C (IPC-2221: I = k * dT^0.44 * A^0.725, A in square mil).
@@ -79,11 +22,8 @@ pub fn width_for_current(amps: f64, rise: f64, copper_oz: f64, outer: bool) -> f
     area / thickness_mil * 0.0254
 }
 
-/// The voltage of a net: its `voltage`, or 0 for a ground net.
 fn volts(d: &ProjectData, net: &str) -> Option<f64> {
-    let n = d.nets.nets.get(net)?;
-    n.voltage
-        .or_else(|| (pin_role(net) == PinRole::Ground).then_some(0.0))
+    d.nets.volts(net)
 }
 
 pub(crate) fn check(d: &ProjectData, g: &BoardGeometry, fills: &[ZoneFill]) -> Vec<Violation> {
@@ -199,16 +139,7 @@ fn voltage(d: &ProjectData, g: &BoardGeometry, v: &mut Vec<Violation>) {
     if !d.nets.nets.values().any(|n| n.voltage.is_some()) {
         return;
     }
-    let last = g.layers.saturating_sub(1);
-    let surface = |layer: u8, pad: bool| {
-        if layer != 0 && layer != last {
-            Surface::Internal
-        } else if pad {
-            Surface::ExternalBare
-        } else {
-            Surface::ExternalCoated
-        }
-    };
+    let surface = |layer: u8, pad: bool| Surface::of(layer, g.layers, pad);
     let boxes: Vec<Rect> = g.copper.iter().map(|c| c.prim.bbox()).collect();
     let index = Index::new(boxes.iter().copied());
     let reach = d
@@ -268,52 +199,6 @@ fn voltage(d: &ProjectData, g: &BoardGeometry, v: &mut Vec<Violation>) {
                 .items(pair)
                 .measured(dist, need),
             );
-        }
-    }
-    // A pour keeps only its own clearance. Report a pour that keeps less
-    // than the voltage needs from a net that has copper on its layers.
-    let mut on_layer: BTreeMap<u8, BTreeSet<&str>> = BTreeMap::new();
-    for c in &g.copper {
-        if let Some(n) = c.net.as_deref() {
-            on_layer.entry(c.layer).or_default().insert(n);
-        }
-    }
-    for z in &d.routing.zones {
-        let Some(zn) = z.net.as_deref() else { continue };
-        let Some(vz) = volts(d, zn) else { continue };
-        let class = d.nets.nets.get(zn).and_then(|n| n.class.as_deref());
-        let own = z.clearance.unwrap_or(d.board.rules.clearance_for(class));
-        for layer in &z.layers {
-            let Some(copper) = layer.copper() else {
-                continue;
-            };
-            let li = copper.index(g.layers);
-            for other in on_layer.get(&li).into_iter().flatten() {
-                if *other == zn {
-                    continue;
-                }
-                let Some(vo) = volts(d, other) else { continue };
-                let oclass = d.nets.nets.get(*other).and_then(|n| n.class.as_deref());
-                let keeps = own.max(d.board.rules.clearance_for(oclass));
-                let need = voltage_spacing((vz - vo).abs(), surface(li, true));
-                if keeps + 1e-6 < need {
-                    v.push(
-                        Violation::error(
-                            "voltage_clearance",
-                            format!(
-                                "The pour {} ({zn}) keeps {} mm from the net {other}, but {} V between them needs {} mm. Set the clearance of the zone",
-                                z.id,
-                                r3(keeps),
-                                r3((vz - vo).abs()),
-                                r3(need)
-                            ),
-                        )
-                        .on(*layer)
-                        .items([z.id.clone(), other.to_string()])
-                        .measured(keeps, need),
-                    );
-                }
-            }
         }
     }
 }

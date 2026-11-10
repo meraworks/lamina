@@ -170,9 +170,9 @@ The values are `clearance`, `min_track_width`, `max_track_width`,
 `min_track_angle`.
 
 `add_area` makes a rule area: an outline, and layers if the area is not for all
-layers. `delete_items` removes it. The checks use all the conditions. The pours
-and the autorouter use only `net`, `class` and `layer`: a rule with `kind`,
-`part` or `area` does not change what they do.
+layers. `delete_items` removes it. The checks and the pours use all the
+conditions. The autorouter has one set of limits for each net, so it uses only
+`net`, `class` and `layer`.
 
 KiCad board export writes the custom rules to a `.kicad_dru` file next to the
 board. A rule with `area` is not in that file, and a comment line says so.
@@ -250,7 +250,8 @@ These checks need no schematic. They use net data.
   pads in no net.
 - `track_current`: set `current` (A) on a net. The check uses the IPC-2221 formula
   with `max_temp_rise` and the copper weight of the stackup.
-- `voltage_clearance`: set `voltage` (V) on a net. A ground net has 0 V. The
+- `voltage_clearance`: set `voltage` (V) on a net. A ground net has 0 V. The pours
+  and the autorouter keep the distance that the voltage needs. The
   spacing values come from a table of IPC-2221C that is data in the program. The
   table agrees with one secondary source and was not compared with the standard:
   do not use this check as the only check for a safety distance.

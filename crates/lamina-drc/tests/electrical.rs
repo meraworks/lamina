@@ -282,3 +282,63 @@ fn a_fast_track_over_a_gap_in_the_plane_is_found() {
     d.routing.zones.push(zone("z1", 2.0, 36.0));
     assert!(hits(&d, "return_path").is_empty());
 }
+
+#[test]
+fn a_pour_keeps_the_voltage_distance() {
+    // A 200 V track through a ground pour. The clearance rule is smaller than
+    // the 0.8 mm that 200 V below solder mask needs.
+    let mut d = board();
+    net(&mut d, "HV", &["R1.1"]);
+    net(&mut d, "GND", &["R2.2"]);
+    track(
+        &mut d,
+        "t1",
+        "HV",
+        0.2,
+        vec![Point::new(5.0, 22.0), Point::new(35.0, 22.0)],
+    );
+    d.routing.zones.push(Zone {
+        id: "z1".into(),
+        net: Some("GND".into()),
+        layers: vec![Layer::TOP],
+        outline: Contour::rect(2.0, 16.0, 36.0, 12.0),
+        priority: 0,
+        clearance: None,
+        min_width: None,
+        pad_connection: PadConnection::Solid,
+        thermal_gap: 0.3,
+        thermal_spoke: 0.3,
+    });
+    d.routing.vias.push(Via {
+        id: "v1".into(),
+        net: "GND".into(),
+        at: Point::new(20.0, 26.0),
+        diameter: 0.6,
+        drill: 0.3,
+        from: None,
+        to: None,
+    });
+    let gap = |d: &ProjectData| {
+        let a = analyze(d);
+        let t = lamina_geom::Prim::Capsule {
+            a: Point::new(5.0, 22.0),
+            b: Point::new(35.0, 22.0),
+            r: 0.1,
+        };
+        a.fills
+            .iter()
+            .flat_map(|f| f.polygons.iter())
+            .map(|p| p.prim().distance(&t))
+            .fold(f64::INFINITY, f64::min)
+    };
+    let plain = gap(&d);
+    let rule = d.board.rules.clearance;
+    assert!(
+        plain >= rule - 0.001 && plain < rule + 0.1,
+        "the clearance rule: {plain}"
+    );
+    d.nets.nets.get_mut("HV").unwrap().voltage = Some(200.0);
+    let high = gap(&d);
+    assert!(high >= 0.8 - 0.001, "200 V needs 0.8 mm: {high}");
+    assert!(hits(&d, "voltage_clearance").is_empty());
+}

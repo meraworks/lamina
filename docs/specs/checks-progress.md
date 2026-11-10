@@ -148,29 +148,39 @@ Later items:
   width for a very small piece. The worst piece of the examples is at 6 % of
   the limit.
 
-The server has 84 tools. The workspace has 409 tests.
+- A third program (the Python library `pygerber`) read the same file and
+  gives the attributes of regions: 199 of the 301 regions have the pad, the
+  part and the net (for example `U6,8`, `U6`, `SPI_SCK`).
+- The voltage distance is in the pour and in the router: a pour keeps the
+  distance that the voltage between its net and a different net needs, and
+  the router uses the largest distance that the voltage of a net needs. The
+  table is in `lamina-model` (`voltage.rs`).
+- The pour resolves the custom rules for each obstacle with its type, its
+  part and its area, and for the zone with `kind: zone`.
+- A keep-out has `max_height`, and `add_keepout` sets it.
+- The export action of the viewer calls the same `export` operation, so it
+  has the same release gate.
+
+The server has 84 tools. The workspace has 411 tests.
 
 ## Differences from the plan
 
 - `tombstone` is off by default. On T.I.T and Yoink it gave 7 warnings, and all
   of them were pads on thermal spokes or on short wide tracks (decision D5).
-- `part_height` reads `Rules.height_limits` (keep-out id to height). The plan
-  put `max_height` in the keep-out.
 - `label_pin` and `polarity_mark` prefer a connector within 3.5 mm to a nearer
   part that is not a connector, and measure the distance to a pad along the pad
   row. A word matches the end of a net name only if it has 4 characters or
   fewer.
-- `voltage_clearance` is a check only. `Rules::resolve` does not use the table,
-  so a pour does not keep the voltage distance. The check reports a pour that
-  keeps less than the voltage needs from a net on its layer.
 - The voltage spacing table (`crates/lamina-drc/src/profiles/ipc2221_spacing.json`)
   has the values of IPC-2221C (2023), Table 6-1, columns B1, B2 and B4, as the
   source code of the `pcb-toolkit` crate gives them. The first version of the
   table came from memory of IPC-2221B and had smaller values for B2 and B4. The
   table was not compared with the standard itself, which is not free.
-- The pours and the autorouter resolve custom rules with `net`, `class` and
-  `layer` only. A rule with `kind`, `part` or `area` changes only the checks.
-- A custom rule with `area` is not in the `.kicad_dru` file.
+- The autorouter has one set of limits for each net, so it resolves custom
+  rules with `net`, `class` and `layer` only. The checks report a route that
+  breaks a rule with `kind`, `part` or `area`.
+- A custom rule with `area` is not in the `.kicad_dru` file: KiCad has no
+  area with that id.
 - `LossKind` comes from one function that reads the note text of an adapter
   (`Loss::from_note`). The adapters do not make each loss with its kind at the
   place where they drop the data.

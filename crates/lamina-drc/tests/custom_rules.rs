@@ -214,3 +214,72 @@ fn a_courtyard_clearance_for_one_part() {
     assert_eq!(v.len(), 1, "only the pair with R1: {v:?}");
     assert_eq!(v[0].items, vec!["R1", "R2"]);
 }
+
+#[test]
+fn a_pour_uses_a_rule_for_the_pads_of_one_part() {
+    use lamina_footprint::{Options, from_package};
+    let mut d = ProjectData::new("pour");
+    d.board.outline = Some(Contour::rect(0.0, 0.0, 30.0, 20.0));
+    let fp = from_package("R_0603", &Options::default(), None).unwrap();
+    d.footprints.insert(fp.id.clone(), fp);
+    for (r, x) in [("R1", 8.0), ("R2", 20.0)] {
+        d.parts.parts.insert(r.into(), Part::new("R_0603"));
+        d.placement
+            .placements
+            .insert(r.into(), Placement::at(x, 10.0));
+    }
+    d.nets.nets.insert(
+        "A".into(),
+        Net {
+            pads: vec!["R1.1".parse().unwrap(), "R2.1".parse().unwrap()],
+            ..Default::default()
+        },
+    );
+    d.nets.nets.insert(
+        "GND".into(),
+        Net {
+            pads: vec!["R1.2".parse().unwrap(), "R2.2".parse().unwrap()],
+            ..Default::default()
+        },
+    );
+    d.routing.zones.push(Zone {
+        id: "z1".into(),
+        net: Some("GND".into()),
+        layers: vec![Layer::TOP],
+        outline: Contour::rect(1.0, 1.0, 28.0, 18.0),
+        priority: 0,
+        clearance: None,
+        min_width: None,
+        pad_connection: PadConnection::Solid,
+        thermal_gap: 0.3,
+        thermal_spoke: 0.3,
+    });
+    d.board.rules.custom = vec![CustomRule {
+        name: "space at R1".into(),
+        when: RuleMatch {
+            kind: Some(RuleKind::Pad),
+            part: Some("R1".into()),
+            ..Default::default()
+        },
+        clearance: Some(0.6),
+        ..Default::default()
+    }];
+    let a = lamina_drc::analyze(&d);
+    // The distance from the pour to the pad of net A of each part.
+    let gap = |part: &str| {
+        let pad = a
+            .geometry
+            .copper
+            .iter()
+            .find(|c| c.owner.label() == format!("{part}.1"))
+            .unwrap();
+        a.fills
+            .iter()
+            .flat_map(|f| f.polygons.iter())
+            .map(|p| p.prim().distance(&pad.prim))
+            .fold(f64::INFINITY, f64::min)
+    };
+    assert!(gap("R1") >= 0.6 - 0.001, "{}", gap("R1"));
+    let rule = d.board.rules.clearance;
+    assert!(gap("R2") < rule + 0.1, "{}", gap("R2"));
+}

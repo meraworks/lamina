@@ -216,7 +216,22 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                 if l != this {
                     continue;
                 }
-                let limits = rules.resolve(z.net.as_deref(), zone_class.as_deref(), Some(*layer));
+                // The limits of the zone. A custom rule can select zones with `kind`.
+                let limits = rules.resolve_for(&Subject {
+                    net: z.net.as_deref(),
+                    class: zone_class.as_deref(),
+                    layer: Some(*layer),
+                    kind: Some(RuleKind::Zone),
+                    ..Default::default()
+                });
+                // The distance that the voltage between the zone and a net needs.
+                let volt = |other: &Option<String>, bare: bool| {
+                    d.nets.voltage_distance(
+                        z.net.as_deref(),
+                        other.as_deref(),
+                        lamina_model::voltage::Surface::of(l, layers, bare),
+                    )
+                };
                 let zc = z
                     .clearance
                     .unwrap_or(limits.clearance)
@@ -237,7 +252,11 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                     .iter()
                     .filter_map(|r| r.clearance)
                     .chain(rules.net_classes.values().filter_map(|c| c.clearance))
-                    .fold(zc.max(z.thermal_gap).max(2.0), f64::max);
+                    .fold(zc.max(z.thermal_gap).max(2.0), f64::max)
+                    .max(z.net.as_deref().map_or(0.0, |n| {
+                        d.nets
+                            .voltage_floor(n, lamina_model::voltage::Surface::ExternalBare)
+                    }));
                 let mut obstacles = Vec::new();
                 // The gaps around the pads of the net of the zone. Thermal spokes
                 // go across them. Spokes do not go across other obstacles.
@@ -271,7 +290,13 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                             }
                         }
                     } else {
-                        let cl = zc.max(clearance(&it.net));
+                        // The custom rules can select the item by its type, its part
+                        // and its area. The voltage can need more.
+                        let own =
+                            crate::board::item_limits(d, it, class_of(&it.net).as_deref(), *layer)
+                                .clearance;
+                        let bare = matches!(it.owner, Owner::Pad { .. });
+                        let cl = zc.max(own).max(volt(&it.net, bare));
                         obstacles.push(inflate(&it.prim, cl));
                     }
                 }
@@ -312,7 +337,7 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                 }
                 for (dl, dnet, fill) in &done {
                     if *dl == l && (dnet != &z.net || z.net.is_none()) {
-                        obstacles.push(fill.buffer(zc.max(clearance(dnet))));
+                        obstacles.push(fill.buffer(zc.max(clearance(dnet)).max(volt(dnet, false))));
                     }
                 }
 

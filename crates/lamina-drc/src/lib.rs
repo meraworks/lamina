@@ -75,36 +75,7 @@ pub fn fills(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
 }
 
 /// Run every check.
-/// The limits for a copper item: the custom rules can select its type, its
-/// part and the rule areas that it is in.
-pub(crate) fn item_limits(
-    d: &ProjectData,
-    item: &CopperItem,
-    class: Option<&str>,
-    layer: Layer,
-) -> RuleValues {
-    let (kind, part) = match &item.owner {
-        Owner::Pad { part, .. } => (Some(RuleKind::Pad), Some(part.as_str())),
-        Owner::Track { .. } => (Some(RuleKind::Track), None),
-        Owner::Via { .. } => (Some(RuleKind::Via), None),
-        Owner::Hole { .. } => (Some(RuleKind::Hole), None),
-        Owner::Zone { .. } => (Some(RuleKind::Zone), None),
-        _ => (None, None),
-    };
-    let areas = if d.routing.areas.is_empty() {
-        Vec::new()
-    } else {
-        d.routing.areas_at(item.prim.anchor(), Some(layer))
-    };
-    d.board.rules.resolve_for(&Subject {
-        net: item.net.as_deref(),
-        class,
-        layer: Some(layer),
-        kind,
-        part,
-        areas: &areas,
-    })
-}
+pub(crate) use lamina_geom::board::item_limits;
 
 pub fn analyze(d: &ProjectData) -> Analysis {
     let ctx = ctx::Ctx::new(d);

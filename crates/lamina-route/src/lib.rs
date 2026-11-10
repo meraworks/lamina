@@ -369,7 +369,12 @@ impl<'a> Ctx<'a> {
         let drill = nc.via_drill.unwrap_or(r.via_drill).max(min_drill);
         Profile {
             hw: w / 2.0,
-            cl: limits.iter().map(|v| v.clearance).fold(0.0, f64::max),
+            // The voltage of the net can need more than the clearance rule.
+            cl: limits.iter().map(|v| v.clearance).fold(0.0, f64::max).max(
+                self.d
+                    .nets
+                    .voltage_floor(net, lamina_model::voltage::Surface::ExternalBare),
+            ),
             via_r: nc
                 .via_diameter
                 .unwrap_or(r.via_diameter)
