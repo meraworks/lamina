@@ -143,6 +143,70 @@ impl Stackup {
     }
 }
 
+fn default_max_drill() -> f64 {
+    6.3
+}
+
+fn default_min_slot_width() -> f64 {
+    0.5
+}
+
+fn default_courtyard_clearance() -> f64 {
+    0.0
+}
+
+fn default_min_connection() -> f64 {
+    0.05
+}
+
+fn default_min_track_angle() -> f64 {
+    90.0
+}
+
+fn default_min_silk_width() -> f64 {
+    0.1
+}
+
+fn default_hole_to_edge() -> f64 {
+    0.3
+}
+
+fn default_max_drill_aspect() -> f64 {
+    8.0
+}
+
+fn default_min_route_width() -> f64 {
+    0.8
+}
+
+fn default_min_fiducials() -> u32 {
+    0
+}
+
+fn default_part_to_edge() -> f64 {
+    0.0
+}
+
+fn default_min_testpoint() -> f64 {
+    1.0
+}
+
+fn default_testpoint_to_edge() -> f64 {
+    0.0
+}
+
+fn default_label_max_distance() -> f64 {
+    5.0
+}
+
+fn default_max_temp_rise() -> f64 {
+    10.0
+}
+
+fn default_decoupling_max_distance() -> f64 {
+    3.0
+}
+
 fn default_hole_to_copper() -> f64 {
     0.2
 }
@@ -197,6 +261,57 @@ pub struct Rules {
     /// openings that touch only at their edges.
     #[serde(default)]
     pub min_mask_web: f64,
+    /// The largest drill that the fab has.
+    #[serde(default = "default_max_drill")]
+    pub max_drill: f64,
+    /// The minimum width of a slot.
+    #[serde(default = "default_min_slot_width")]
+    pub min_slot_width: f64,
+    /// The minimum distance between two courtyards.
+    #[serde(default = "default_courtyard_clearance")]
+    pub courtyard_clearance: f64,
+    /// The minimum width where two copper items of a net connect.
+    #[serde(default = "default_min_connection")]
+    pub min_connection: f64,
+    /// The minimum angle in degrees where two tracks of a net join.
+    #[serde(default = "default_min_track_angle")]
+    pub min_track_angle: f64,
+    /// The minimum width of a silkscreen line.
+    #[serde(default = "default_min_silk_width")]
+    pub min_silk_width: f64,
+    /// The minimum distance from a hole wall to the board edge.
+    #[serde(default = "default_hole_to_edge")]
+    pub hole_to_edge: f64,
+    /// The maximum of board thickness divided by the smallest plated drill.
+    #[serde(default = "default_max_drill_aspect")]
+    pub max_drill_aspect: f64,
+    /// The minimum width of a part of the board, or of a slot in it.
+    #[serde(default = "default_min_route_width")]
+    pub min_route_width: f64,
+    /// The minimum number of fiducials on a side with SMD parts. 0 is no check.
+    #[serde(default = "default_min_fiducials")]
+    pub min_fiducials: u32,
+    /// The minimum distance from a part body to the board edge. 0 is no check.
+    #[serde(default = "default_part_to_edge")]
+    pub part_to_edge: f64,
+    /// The minimum size of a test point pad.
+    #[serde(default = "default_min_testpoint")]
+    pub min_testpoint: f64,
+    /// The minimum distance from a test point to the board edge. 0 is no check.
+    #[serde(default = "default_testpoint_to_edge")]
+    pub testpoint_to_edge: f64,
+    /// The maximum distance from a label to the part that it names.
+    #[serde(default = "default_label_max_distance")]
+    pub label_max_distance: f64,
+    /// The permitted temperature rise of a track in degrees C, for the current check.
+    #[serde(default = "default_max_temp_rise")]
+    pub max_temp_rise: f64,
+    /// The maximum distance from a power pin to a capacitor of its net.
+    #[serde(default = "default_decoupling_max_distance")]
+    pub decoupling_max_distance: f64,
+    /// The maximum part height in mm for a keep-out, by keep-out id.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub height_limits: BTreeMap<String, f64>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub net_classes: BTreeMap<String, NetClass>,
 }
@@ -227,6 +342,23 @@ impl Default for Rules {
             silk_to_edge: default_silk_to_edge(),
             min_silk_text_height: default_silk_text_height(),
             min_mask_web: 0.0,
+            max_drill: default_max_drill(),
+            min_slot_width: default_min_slot_width(),
+            courtyard_clearance: default_courtyard_clearance(),
+            min_connection: default_min_connection(),
+            min_track_angle: default_min_track_angle(),
+            min_silk_width: default_min_silk_width(),
+            hole_to_edge: default_hole_to_edge(),
+            max_drill_aspect: default_max_drill_aspect(),
+            min_route_width: default_min_route_width(),
+            min_fiducials: default_min_fiducials(),
+            part_to_edge: default_part_to_edge(),
+            min_testpoint: default_min_testpoint(),
+            testpoint_to_edge: default_testpoint_to_edge(),
+            label_max_distance: default_label_max_distance(),
+            max_temp_rise: default_max_temp_rise(),
+            decoupling_max_distance: default_decoupling_max_distance(),
+            height_limits: BTreeMap::new(),
             net_classes: BTreeMap::new(),
         }
     }
@@ -474,6 +606,15 @@ pub struct Net {
     /// The smallest supplied limit among group members applies.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub max_skew: Option<f64>,
+    /// The maximum number of vias in the net.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_vias: Option<u32>,
+    /// The largest current in the net, in A. The current check uses it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub current: Option<f64>,
+    /// The voltage of the net against ground, in V. The voltage check uses it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub voltage: Option<f64>,
 }
 
 impl NetsFile {
@@ -750,6 +891,20 @@ pub struct Violation {
     /// The limit in mm that the measured value does not meet.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub required: Option<f64>,
+    /// Changes that remove the violation. `apply_fixes` can apply them.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub fix: Vec<Fix>,
+}
+
+/// A change that removes a violation.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(tag = "op", rename_all = "snake_case")]
+pub enum Fix {
+    MoveText { id: String, to: Point },
+    TurnText { id: String, by: f64 },
+    SetTextSize { id: String, size: f64 },
+    SetViaSize { id: String, diameter: f64, drill: f64 },
+    SetTrackWidth { id: String, width: f64 },
 }
 
 impl Violation {
@@ -763,7 +918,14 @@ impl Violation {
             items: Vec::new(),
             actual: None,
             required: None,
+            fix: Vec::new(),
         }
+    }
+
+    /// Add a change that removes the violation.
+    pub fn fix(mut self, f: Fix) -> Self {
+        self.fix.push(f);
+        self
     }
 
     /// Record the measured value and its limit.

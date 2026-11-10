@@ -29,9 +29,107 @@ pub struct Footprint {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub model: Option<ModelRef>,
     pub provenance: Provenance,
+    /// The hash of the pads when the footprint came into the project.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_hash: Option<String>,
+    /// The records of each check of this footprint against a datasheet or
+    /// a second source.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub evidence: Vec<Evidence>,
+}
+
+/// How a footprint was verified.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum EvidenceMethod {
+    /// Against the package dimensions of the datasheet.
+    Package,
+    /// Against the land pattern that the datasheet recommends.
+    LandPattern,
+    /// Against the footprint of a second source.
+    SecondSource,
+    /// Against the standard package of the same name.
+    Preset,
+    /// Accepted with a reason, with no comparison.
+    Accepted,
+}
+
+/// One record of a footprint check.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct Evidence {
+    /// The hash of the pads that were checked. If the pads change, the record is stale.
+    pub pads_hash: String,
+    pub method: EvidenceMethod,
+    /// The datasheet, the second source, or the reason for an acceptance.
+    pub document: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub page: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+    /// The date of the check (YYYY-MM-DD).
+    pub checked: String,
+    pub pass: bool,
+    /// The differences that the check found.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub findings: Vec<String>,
 }
 
 impl Footprint {
+    /// A hash of the pads and the keep-outs at 1 µm. It changes when the
+    /// copper or the holes of the footprint change.
+    pub fn pads_hash(&self) -> String {
+        let um = |v: f64| (v * 1000.0).round() as i64;
+        let mut lines: Vec<String> = self
+            .pads
+            .iter()
+            .map(|p| {
+                let (w, h) = p.shape.size();
+                let drill = match &p.kind {
+                    PadKind::Smd => "smd".to_string(),
+                    PadKind::Through { drill, plated } => match drill {
+                        Drill::Round { diameter } => format!("r{}:{plated}", um(*diameter)),
+                        Drill::Slot { width, height } => {
+                            format!("s{}x{}:{plated}", um(*width), um(*height))
+                        }
+                    },
+                };
+                format!(
+                    "{}|{}|{}|{}|{}|{}|{}",
+                    p.number,
+                    um(p.at.x),
+                    um(p.at.y),
+                    um(w),
+                    um(h),
+                    um(p.rotation),
+                    drill
+                )
+            })
+            .collect();
+        for k in &self.keepouts {
+            let pts: Vec<String> = k
+                .outline
+                .flatten(0.01)
+                .iter()
+                .map(|p| format!("{},{}", um(p.x), um(p.y)))
+                .collect();
+            lines.push(format!("k|{}", pts.join(";")));
+        }
+        lines.sort();
+        // FNV-1a, 64 bit: stable in all versions and on all computers.
+        let mut h: u64 = 0xcbf29ce484222325;
+        for b in lines.join("\n").bytes() {
+            h ^= b as u64;
+            h = h.wrapping_mul(0x100000001b3);
+        }
+        format!("{h:016x}")
+    }
+
+    /// The last record for the pads that the footprint has now.
+    pub fn current_evidence(&self) -> Option<&Evidence> {
+        let hash = self.pads_hash();
+        self.evidence.iter().rev().find(|e| e.pads_hash == hash)
+    }
+
     pub fn new(id: impl Into<String>, provenance: Provenance) -> Self {
         Footprint {
             schema: FOOTPRINT_SCHEMA,
@@ -44,6 +142,8 @@ impl Footprint {
             height: None,
             model: None,
             provenance,
+            source_hash: None,
+            evidence: Vec::new(),
         }
     }
 
