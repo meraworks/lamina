@@ -4,6 +4,7 @@ mod holes;
 mod lengths;
 pub mod model;
 mod pairs;
+mod parity;
 pub mod presets;
 pub mod registry;
 mod silk;
@@ -31,6 +32,8 @@ pub struct Ratsnest {
 pub struct Analysis {
     pub violations: Vec<Violation>,
     pub excluded: Vec<Violation>,
+    /// Violations of rules that are off in design and on for release.
+    pub release_only: Vec<Violation>,
     pub ratsnest: Vec<Ratsnest>,
     pub fills: Vec<ZoneFill>,
     pub geometry: BoardGeometry,
@@ -164,10 +167,14 @@ pub fn analyze(d: &ProjectData) -> Analysis {
     // Clearance and shorts between copper of different nets.
     let mut seen_pairs: BTreeSet<(String, String)> = BTreeSet::new();
     let mut dsu = Dsu::new(items.len());
+    // The same connections without the joins that only touch.
+    let mut strong = Dsu::new(items.len());
+    let mut weak: Vec<(usize, usize)> = Vec::new();
     let mut by_body: HashMap<String, usize> = HashMap::new();
     for (i, it) in items.iter().enumerate() {
         if let Some(&j) = by_body.get(&it.owner.body()) {
             dsu.union(i, j);
+            strong.union(i, j);
         } else {
             by_body.insert(it.owner.body(), i);
         }
@@ -182,7 +189,10 @@ pub fn analyze(d: &ProjectData) -> Analysis {
                 continue;
             }
             match by_pad.get(&(part.as_str(), pad.as_str())) {
-                Some(&j) => dsu.union(i, j),
+                Some(&j) => {
+                    dsu.union(i, j);
+                    strong.union(i, j);
+                }
                 None => {
                     by_pad.insert((part.as_str(), pad.as_str()), i);
                 }
@@ -241,6 +251,12 @@ pub fn analyze(d: &ProjectData) -> Analysis {
             };
             if dist <= 1e-6 {
                 dsu.union(i, j);
+                let plain = i < n_items && j < n_items;
+                if plain && same_net && parity::is_weak(&a.prim, &b.prim, rules.min_connection) {
+                    weak.push((i, j));
+                } else {
+                    strong.union(i, j);
+                }
             }
             if same_net || both_fill {
                 continue;
@@ -766,6 +782,21 @@ pub fn analyze(d: &ProjectData) -> Analysis {
 
     v.extend(silk::check(d, &g, &fills));
     v.extend(holes::hole_to_copper(d, &g));
+    v.extend(parity::check(d, &g));
+    // A join that only touches is a violation if nothing else connects the two sides.
+    for (i, j) in weak {
+        if strong.find(i) != strong.find(j) {
+            let (a, b) = (&items[i], &items[j]);
+            v.push(parity::weak_violation(
+                &a.owner,
+                &b.owner,
+                mid(&a.prim, &b.prim),
+                Layer::Copper(Copper::from_index(a.layer, layers)),
+                rules.min_connection,
+            ));
+            strong.union(i, j);
+        }
+    }
     let roots: Vec<usize> = (0..items.len()).map(|i| dsu.find(i)).collect();
     v.extend(dangling(d, items, n_items, &index, &fill_index, &roots));
 
@@ -822,18 +853,38 @@ pub fn analyze(d: &ProjectData) -> Analysis {
             );
         }
     }
+    let mut release_only = Vec::new();
     v.retain_mut(|violation| {
         match rules.severities.get(&violation.rule) {
             Some(RuleSeverity::Ignore) => return false,
             Some(RuleSeverity::Error) => violation.severity = Severity::Error,
             Some(RuleSeverity::Warning) => violation.severity = Severity::Warning,
-            None => {}
+            None => {
+                // A rule that is off by default. It can be on for release.
+                if let Some(c) = registry::get(&violation.rule) {
+                    if c.default == RuleSeverity::Ignore {
+                        match c.release {
+                            Some(RuleSeverity::Error) => {
+                                violation.severity = Severity::Error;
+                                release_only.push(violation.clone());
+                            }
+                            Some(RuleSeverity::Warning) => {
+                                violation.severity = Severity::Warning;
+                                release_only.push(violation.clone());
+                            }
+                            _ => {}
+                        }
+                        return false;
+                    }
+                }
+            }
         }
         true
     });
     Analysis {
         violations: v,
         excluded,
+        release_only,
         ratsnest,
         fills,
         geometry: g,

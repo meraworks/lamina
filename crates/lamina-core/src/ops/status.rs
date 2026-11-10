@@ -56,7 +56,8 @@ pub struct Status {
 impl Project {
     pub fn status(&self) -> Status {
         let d = &self.data;
-        let v = self.check();
+        let a = lamina_drc::analyze(d);
+        let v = a.violations.clone();
         let errors = v.iter().filter(|x| x.severity == Severity::Error).count();
         let mut by_rule = BTreeMap::new();
         for x in &v {
@@ -91,7 +92,7 @@ impl Project {
             open_notes: d.notes.notes.iter().filter(|n| !n.resolved).count(),
             errors,
             warnings: v.len() - errors,
-            release_errors: lamina_drc::release_view(&v, &d.board.rules)
+            release_errors: lamina_drc::release_view(&a, &d.board.rules)
                 .iter()
                 .filter(|x| x.severity == Severity::Error)
                 .count(),

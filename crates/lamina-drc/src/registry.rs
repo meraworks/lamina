@@ -16,6 +16,10 @@ pub enum Family {
     Mask,
     Silk,
     Import,
+    Assembly,
+    Footprint,
+    Labels,
+    Electrical,
 }
 
 /// What a check is, for the tools and for the severity rules.
@@ -40,6 +44,7 @@ pub struct CheckInfo {
 
 const E: RuleSeverity = RuleSeverity::Error;
 const W: RuleSeverity = RuleSeverity::Warning;
+const OFF: RuleSeverity = RuleSeverity::Ignore;
 
 const fn row(
     id: &'static str,
@@ -424,6 +429,103 @@ pub const CHECKS: &[CheckInfo] = &[
         "The fab cannot drill the hole.",
         &["min_via_drill"],
     ),
+    // KiCad parity.
+    row(
+        "via_count",
+        Family::Copper,
+        W,
+        "A net has more vias than its limit.",
+        "Each via changes the impedance of a fast signal.",
+        &[],
+    ),
+    row(
+        "courtyard_missing",
+        Family::Place,
+        W,
+        "A part has no courtyard drawing.",
+        "The overlap check uses a box around the pads, which can be too small.",
+        &[],
+    ),
+    row(
+        "courtyard_open",
+        Family::Place,
+        W,
+        "The courtyard of a part is not a closed loop.",
+        "The overlap check cannot use it.",
+        &[],
+    ),
+    row(
+        "weak_connection",
+        Family::Connectivity,
+        W,
+        "Two copper items of a net connect only where they touch.",
+        "The fab can etch the join open.",
+        &["min_connection"],
+    ),
+    row(
+        "track_zero_length",
+        Family::Copper,
+        W,
+        "A track has a segment of almost no length.",
+        "It is a rest of an edit and can hide a break.",
+        &[],
+    ),
+    row(
+        "track_angle",
+        Family::Copper,
+        OFF,
+        "A track has a corner below the minimum angle.",
+        "Etch fluid can stay in a sharp corner (acid trap).",
+        &["min_track_angle"],
+    ),
+    row(
+        "zone_overlap",
+        Family::Zones,
+        W,
+        "Two zones of different nets overlap with the same priority.",
+        "The id of the zone decides which pour wins, not the design.",
+        &[],
+    ),
+    row(
+        "mask_missing",
+        Family::Mask,
+        W,
+        "A pad gets solder paste but has no mask opening.",
+        "The mask covers the pad and it cannot be soldered.",
+        &[],
+    ),
+    row(
+        "silk_on_hole",
+        Family::Silk,
+        W,
+        "Silkscreen is on a drilled hole.",
+        "The ink goes into the hole or is cut off.",
+        &["silk_to_pad"],
+    ),
+    row(
+        "silk_outside_board",
+        Family::Silk,
+        W,
+        "Silkscreen is outside the board.",
+        "The fab does not print it.",
+        &[],
+    ),
+    row(
+        "silk_line_width",
+        Family::Silk,
+        W,
+        "A silkscreen line is thinner than the minimum.",
+        "The fab cannot print it.",
+        &["min_silk_width"],
+    ),
+    row(
+        "text_variable",
+        Family::Silk,
+        W,
+        "A text has a variable with no value.",
+        "The board shows the variable name.",
+        &[],
+    ),
     fixed(
         "zone_outline",
         "The outline of a zone or keep-out is not a valid shape.",
@@ -475,21 +577,23 @@ fn level(s: RuleSeverity) -> Option<Severity> {
     }
 }
 
-/// The violations as `export` sees them: some rules are errors for release.
-/// A severity that the user set wins.
-pub fn release_view(violations: &[Violation], rules: &Rules) -> Vec<Violation> {
-    violations
+/// The violations as `export` sees them: some rules are errors for release,
+/// and some rules are on only for release. A severity that the user set wins.
+pub fn release_view(a: &crate::Analysis, rules: &Rules) -> Vec<Violation> {
+    let mut out: Vec<Violation> = a
+        .violations
         .iter()
         .cloned()
         .map(|mut v| {
             if !rules.severities.contains_key(&v.rule) {
-                if let Some(s) = get(&v.rule).and_then(|c| c.release).and_then(level) {
-                    if s == Severity::Error {
-                        v.severity = Severity::Error;
-                    }
+                if let Some(Severity::Error) = get(&v.rule).and_then(|c| c.release).and_then(level)
+                {
+                    v.severity = Severity::Error;
                 }
             }
             v
         })
-        .collect()
+        .collect();
+    out.extend(a.release_only.iter().cloned());
+    out
 }

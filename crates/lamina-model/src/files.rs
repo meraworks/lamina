@@ -900,11 +900,27 @@ pub struct Violation {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "op", rename_all = "snake_case")]
 pub enum Fix {
-    MoveText { id: String, to: Point },
-    TurnText { id: String, by: f64 },
-    SetTextSize { id: String, size: f64 },
-    SetViaSize { id: String, diameter: f64, drill: f64 },
-    SetTrackWidth { id: String, width: f64 },
+    MoveText {
+        id: String,
+        to: Point,
+    },
+    TurnText {
+        id: String,
+        by: f64,
+    },
+    SetTextSize {
+        id: String,
+        size: f64,
+    },
+    SetViaSize {
+        id: String,
+        diameter: f64,
+        drill: f64,
+    },
+    SetTrackWidth {
+        id: String,
+        width: f64,
+    },
 }
 
 impl Violation {

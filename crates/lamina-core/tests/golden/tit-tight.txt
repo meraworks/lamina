@@ -547,7 +547,6 @@ Error | track_width | top | t331 | t331 is 0.25 mm wide, but the minimum width i
 Error | track_width | top | t332 | t332 is 0.25 mm wide, but the minimum width is 0.3 mm | 
 Error | track_width | top | t333 | t333 is 0.25 mm wide, but the minimum width is 0.3 mm | 
 Error | track_width | top | t334 | t334 is 0.25 mm wide, but the minimum width is 0.3 mm | 
-Error | track_width | top | t335 | t335 is 0.25 mm wide, but the minimum width is 0.3 mm | 
 Error | track_width | top | t336 | t336 is 0.25 mm wide, but the minimum width is 0.3 mm | 
 Error | track_width | top | t337 | t337 is 0.25 mm wide, but the minimum width is 0.3 mm | 
 Error | track_width | top | t338 | t338 is 0.25 mm wide, but the minimum width is 0.3 mm | 

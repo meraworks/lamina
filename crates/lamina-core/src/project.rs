@@ -223,7 +223,7 @@ impl Project {
     /// The violations as `export` sees them. Open connections, parts with
     /// no placement and import losses are errors for release.
     pub fn check_release(&self) -> Vec<Violation> {
-        lamina_drc::release_view(&self.check(), &self.data.board.rules)
+        lamina_drc::release_view(&lamina_drc::analyze(&self.data), &self.data.board.rules)
     }
 
     fn check_data(&self, d: &ProjectData) -> Vec<Violation> {

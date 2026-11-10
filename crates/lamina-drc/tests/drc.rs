@@ -698,7 +698,7 @@ fn release_view_makes_open_connections_errors() {
     };
     assert_eq!(open(&a.violations), Severity::Warning);
     assert_eq!(
-        open(&lamina_drc::release_view(&a.violations, &d.board.rules)),
+        open(&lamina_drc::release_view(&a, &d.board.rules)),
         Severity::Error
     );
     let mut d = d;
@@ -708,7 +708,7 @@ fn release_view_makes_open_connections_errors() {
         .insert("unrouted".into(), RuleSeverity::Warning);
     let a = analyze(&d);
     assert_eq!(
-        open(&lamina_drc::release_view(&a.violations, &d.board.rules)),
+        open(&lamina_drc::release_view(&a, &d.board.rules)),
         Severity::Warning
     );
 }

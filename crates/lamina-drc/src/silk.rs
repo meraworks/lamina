@@ -149,6 +149,72 @@ fn edge_clearance(silk: &[SilkItem], g: &BoardGeometry, need: f64) -> Vec<Violat
     out
 }
 
+/// Warn when silkscreen is outside the board, or on a drilled hole that has
+/// no pad copper around it (vias are below the mask, and pads have their own check).
+fn outside_and_holes(silk: &[SilkItem], g: &BoardGeometry, need: f64) -> Vec<Violation> {
+    let mut out = Vec::new();
+    let holes: Vec<&lamina_geom::DrillItem> = g
+        .drills
+        .iter()
+        .filter(|h| matches!(h.owner, lamina_geom::Owner::Hole { .. }) || !h.plated)
+        .collect();
+    let index = Index::new(holes.iter().map(|h| h.prim.bbox()));
+    for item in silk {
+        let layer = Layer::Silk(item.side);
+        if let Some(outline) = &g.outline {
+            let outside = item.prims.iter().find(|p| {
+                let a = p.anchor();
+                !lamina_geom::prim::ring_contains(outline, a)
+                    || g.cutouts
+                        .iter()
+                        .any(|c| lamina_geom::prim::ring_contains(c, a))
+            });
+            if let Some(p) = outside {
+                out.push(
+                    Violation::warning(
+                        "silk_outside_board",
+                        format!("{} is outside the board", item.name),
+                    )
+                    .at(p.anchor())
+                    .on(layer)
+                    .items([item.id.clone()]),
+                );
+            }
+        }
+        let mut seen = std::collections::BTreeSet::new();
+        for prim in &item.prims {
+            for j in index.near(&prim.bbox(), need) {
+                let hole = holes[j];
+                // The drawing of a part can be near the holes of that part.
+                if matches!(&hole.owner, lamina_geom::Owner::Pad { part, .. } if Some(part) == item.outline_of.as_ref() || *part == item.id)
+                {
+                    continue;
+                }
+                let dist = prim.distance(&hole.prim);
+                if dist + 1e-6 < need && seen.insert(hole.owner.label()) {
+                    out.push(
+                        Violation::warning(
+                            "silk_on_hole",
+                            format!(
+                                "{} is {} mm from the hole of {}, but the minimum is {} mm",
+                                item.name,
+                                r3(dist),
+                                hole.owner.label(),
+                                r3(need)
+                            ),
+                        )
+                        .at(hole.prim.anchor())
+                        .on(layer)
+                        .items([hole.owner.label(), item.id.clone()])
+                        .measured(dist, need),
+                    );
+                }
+            }
+        }
+    }
+    out
+}
+
 /// Warn when board silkscreen text is too small for the fab to print.
 fn text_size(d: &ProjectData) -> Vec<Violation> {
     let min = d.board.rules.min_silk_text_height;
@@ -371,6 +437,7 @@ pub(crate) fn check(d: &ProjectData, g: &BoardGeometry, fills: &[ZoneFill]) -> V
     let mut more = overlaps(&silk);
     more.extend(edge_clearance(&silk, g, d.board.rules.silk_to_edge));
     more.extend(text_size(d));
+    more.extend(outside_and_holes(&silk, g, d.board.rules.silk_to_pad));
     more.extend(mask_bridges(&pads, d.board.rules.min_mask_web));
     more.extend(mask_zone_bridges(&pads, fills, d.board.rules.min_mask_web));
     let index = Index::new(pads.iter().map(|p| p.prim.bbox()));
