@@ -36,6 +36,9 @@ An agent usually calls the tools in this order:
 
 The `notes` tool gives the agent the notes that you type in the viewer.
 
+`unplace` skips parts that are already off the board and lists them in
+`already_unplaced`. An unknown part reference fails without changing the board.
+
 A part from a provider carries the pin names of its datasheet. The viewer draws the pad
 number and the pin name on each pad when you zoom in, and the inspector shows them when
 you hover a pad. `check` warns when a ground pin is on a power net, a power pin is on a
@@ -302,7 +305,7 @@ The `fetch_library` and `library` tools do the same from an agent.
 
 The 3D views use the model files in `cache/models/`. When a file is not there, they use
 the copy in the library. `status` lists each footprint whose model file is missing from
-`cache/models/`, in its list of missing models. This happens when the folder was not committed or
+`cache/models/` in `missing_models`. This happens when the folder was not committed or
 was deleted. To get the files back:
 
 ```
