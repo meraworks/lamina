@@ -7,6 +7,7 @@ rust-version.workspace = true
 description = "Design rule checks and connectivity for Lamina"
 
 [dependencies]
+lamina-footprint.workspace = true
 lamina-model.workspace = true
 lamina-geom.workspace = true
 serde.workspace = true
@@ -14,7 +15,6 @@ schemars.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true
-lamina-footprint.workspace = true
 
 [lints]
 workspace = true

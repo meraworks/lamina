@@ -1,6 +1,7 @@
 //! Footprint generation: IPC-7351 packages and datasheet pad lists.
 
 pub mod build;
+pub mod compare;
 pub mod ipc;
 pub mod presets;
 

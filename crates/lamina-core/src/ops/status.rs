@@ -33,6 +33,8 @@ pub struct Status {
     pub release_errors: usize,
     /// The number of violations for each rule.
     pub by_rule: BTreeMap<String, usize>,
+    /// The footprints in use by the state of their evidence.
+    pub footprint_evidence: FootprintEvidence,
     /// The design source file, if the board is built from a source file.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source: Option<String>,
@@ -53,7 +55,40 @@ pub struct Status {
     pub groups: BTreeMap<String, Vec<String>>,
 }
 
+/// The footprints in use, by the state of their evidence.
+#[derive(Debug, Clone, Default, Serialize, JsonSchema)]
+pub struct FootprintEvidence {
+    pub verified: usize,
+    pub mismatch: usize,
+    pub stale: usize,
+    pub unverified: usize,
+}
+
 impl Project {
+    fn footprint_evidence(&self) -> FootprintEvidence {
+        use lamina_drc::footprints::{EvidenceState, evidence_state};
+        let used: std::collections::BTreeSet<&str> = self
+            .data
+            .parts
+            .parts
+            .values()
+            .map(|p| p.footprint.as_str())
+            .collect();
+        let mut e = FootprintEvidence::default();
+        for id in used {
+            let Some(fp) = self.data.footprints.get(id) else {
+                continue;
+            };
+            match evidence_state(fp) {
+                EvidenceState::Verified => e.verified += 1,
+                EvidenceState::Mismatch => e.mismatch += 1,
+                EvidenceState::Stale => e.stale += 1,
+                EvidenceState::Unverified => e.unverified += 1,
+            }
+        }
+        e
+    }
+
     pub fn status(&self) -> Status {
         let d = &self.data;
         let a = lamina_drc::analyze(d);
@@ -97,6 +132,7 @@ impl Project {
                 .filter(|x| x.severity == Severity::Error)
                 .count(),
             by_rule,
+            footprint_evidence: self.footprint_evidence(),
             source: self.source_file(),
             generated: self
                 .source_owned()

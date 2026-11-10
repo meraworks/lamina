@@ -719,6 +719,7 @@ Error | track_width | top | t7 | t7 is 0.25 mm wide, but the minimum width is 0.
 Error | track_width | top | t8 | t8 is 0.25 mm wide, but the minimum width is 0.3 mm | 
 Warning | courtyard_outside_board |  | J7 | The courtyard of J7 is partly outside the board | 45.750,6.475
 Warning | courtyard_outside_board |  | U1 | The courtyard of U1 is partly outside the board | 35.000,60.650
+Warning | footprint_symmetry |  | USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal | The footprint USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal (J1) is almost symmetric: these pads are off their mirror position: A1 (0.1 mm), A12 (0.1 mm), B1 (0.1 mm), B12 (0.1 mm) | 
 Warning | mask_bridge | top.mask | J1.A1,J1.A4 | The mask between pads J1.A1 and J1.A4 is 0.05 mm wide, but the minimum is 0.2 mm | 31.850,8.980
 Warning | mask_bridge | top.mask | J1.A1,J1.B9 | The mask between pads J1.A1 and J1.B9 is 0.05 mm wide, but the minimum is 0.2 mm | 31.850,8.980
 Warning | mask_bridge | top.mask | J1.A12,J1.A9 | The mask between pads J1.A9 and J1.A12 is 0.15 mm wide, but the minimum is 0.2 mm | 37.400,8.980

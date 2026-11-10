@@ -1,5 +1,5 @@
 # violations
-
+Warning | footprint_symmetry |  | USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal | The footprint USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal (J1) is almost symmetric: these pads are off their mirror position: A1 (0.1 mm), A12 (0.1 mm), B1 (0.1 mm), B12 (0.1 mm) | 
 # excluded
 Warning | courtyard_outside_board |  | J7 | The courtyard of J7 is partly outside the board | 45.750,6.475
 Warning | courtyard_outside_board |  | U1 | The courtyard of U1 is partly outside the board | 35.000,60.650

@@ -4,6 +4,8 @@ pub(crate) fn yes() -> bool {
 }
 
 pub mod board;
+pub mod evidence;
+pub use evidence::{Audit, AuditRow, CompareFootprints, Lead, Verified, VerifyFootprint};
 pub mod exclusions;
 pub use exclusions::{ExcludeViolation, IncludeViolation};
 pub mod format;

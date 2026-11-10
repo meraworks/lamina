@@ -257,11 +257,19 @@ impl Project {
     /// report. If `strict` is true, refuse the change if it adds an error.
     pub fn commit(
         &mut self,
-        new: ProjectData,
+        mut new: ProjectData,
         touched: Touched,
         strict: bool,
         summary: impl Into<String>,
     ) -> Result<OpResult> {
+        // The pads of a footprint when it comes into the project.
+        for id in &touched.footprints {
+            if let Some(fp) = new.footprints.get_mut(id) {
+                if fp.source_hash.is_none() {
+                    fp.source_hash = Some(fp.pads_hash());
+                }
+            }
+        }
         let before = self.current_violations();
         let after = self.check_data(&new);
         let after_keys: BTreeSet<String> = after.iter().map(|v| v.key()).collect();

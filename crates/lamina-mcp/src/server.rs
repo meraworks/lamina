@@ -422,6 +422,38 @@ impl Lamina {
         self.with(|proj| Ok(proj.checks()))
     }
 
+    /// Compare the pads of two footprints of the project: the same part
+    /// from two sources. The result gives the turn, the mirror and the move
+    /// that make them fit, and each pad that differs.
+    #[tool(annotations(title = "Compare footprints", read_only_hint = true))]
+    async fn compare_footprints(
+        &self,
+        Parameters(p): Parameters<CompareFootprints>,
+    ) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.compare_footprints(p))
+    }
+
+    /// Check a footprint against the datasheet and keep the result in the
+    /// footprint file. Give one of: `package` (the package dimensions),
+    /// `pads` (the recommended land pattern), `leads` (the lead sizes of a
+    /// through-hole part) or `accept` (a reason to trust it). `export`
+    /// refuses a board that has a footprint with no evidence.
+    #[tool(annotations(title = "Verify footprint"))]
+    async fn verify_footprint(
+        &self,
+        Parameters(p): Parameters<VerifyFootprint>,
+    ) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.verify_footprint(p))
+    }
+
+    /// For each footprint in use that has no evidence: compare it with the
+    /// standard IPC-7351 package of its name, and keep the result. The
+    /// footprints with the result `no_source` need `verify_footprint`.
+    #[tool(annotations(title = "Audit footprints"))]
+    async fn audit_footprints(&self) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.audit_footprints())
+    }
+
     /// Accept a DRC violation by rule and item IDs from check. A reason is required.
     #[tool(annotations(title = "Exclude violation"))]
     async fn exclude_violation(
