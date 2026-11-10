@@ -65,6 +65,10 @@ pub struct Reviewed {
     pub first_errors: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub file: Option<String>,
+    /// The images next to the file: the top side, the bottom side, and the
+    /// layers with a marker for each violation.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub images: Vec<String>,
 }
 
 impl Project {
@@ -162,6 +166,7 @@ impl Project {
                 .map(|x| format!("{}: {}", x.rule, x.message))
                 .collect(),
             file: None,
+            images: Vec::new(),
         };
         if !p.no_file {
             let dir = self.root().join("output");
@@ -169,6 +174,39 @@ impl Project {
                 path: dir.clone(),
                 source: e,
             })?;
+            // The images, if the program has a renderer.
+            if self.ports.renderer.is_some() {
+                use crate::ops::{Render, RenderView};
+                let views = [
+                    ("review-top.png", RenderView::Top, None),
+                    ("review-bottom.png", RenderView::Bottom, None),
+                    (
+                        "review-checks.png",
+                        RenderView::Layers,
+                        Some(vec![
+                            "top".to_string(),
+                            "bottom".to_string(),
+                            "outline".to_string(),
+                            "drc".to_string(),
+                        ]),
+                    ),
+                ];
+                for (name, view, layers) in views {
+                    let image = self.render(Render {
+                        view,
+                        layers,
+                        width: Some(1200),
+                        height: Some(900),
+                        name: Some(name.trim_end_matches(".png").to_string()),
+                        ..Default::default()
+                    });
+                    if let Ok(image) = image {
+                        if std::fs::write(dir.join(name), &image.png).is_ok() {
+                            r.images.push(format!("output/{name}"));
+                        }
+                    }
+                }
+            }
             let path = dir.join("review.md");
             std::fs::write(&path, markdown(&d.board.name, &r, &v)).map_err(|e| Error::Io {
                 path: path.clone(),
@@ -195,6 +233,17 @@ pub fn markdown(name: &str, r: &Reviewed, v: &[Violation]) -> String {
         "The release check has {} error(s) and {} warning(s).\n",
         r.errors, r.warnings
     );
+    if !r.images.is_empty() {
+        for image in &r.images {
+            let file = image.trim_start_matches("output/");
+            let title = match file {
+                "review-top.png" => "The top side",
+                "review-bottom.png" => "The bottom side",
+                _ => "The layers, with a marker for each violation",
+            };
+            let _ = writeln!(s, "![{title}]({file})\n");
+        }
+    }
     let _ = writeln!(s, "## Release check\n");
     if r.families.is_empty() {
         let _ = writeln!(s, "No violations.\n");

@@ -680,3 +680,24 @@ fn a_vendor_model_comes_back_from_the_provenance_alone() {
     assert!(p.status().missing_models.is_empty());
     assert_same(&before, &p);
 }
+
+#[test]
+fn review_adds_images_if_the_program_has_a_renderer() {
+    let t = tempfile::tempdir().unwrap();
+    let mem = MemProvider::new();
+    let p = board(t.path(), &mem);
+    let r = p.review(Review::default()).unwrap();
+    assert_eq!(
+        r.images,
+        vec![
+            "output/review-top.png",
+            "output/review-bottom.png",
+            "output/review-checks.png"
+        ]
+    );
+    let dir = p.root().join("output");
+    assert!(dir.join("review-top.png").is_file());
+    let text = std::fs::read_to_string(dir.join("review.md")).unwrap();
+    assert!(text.contains("![The top side](review-top.png)"), "{text}");
+    assert!(text.contains("](review-checks.png)"));
+}
