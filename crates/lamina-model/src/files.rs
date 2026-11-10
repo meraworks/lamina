@@ -143,6 +143,10 @@ impl Stackup {
     }
 }
 
+fn default_hole_to_copper() -> f64 {
+    0.2
+}
+
 fn default_silk_to_edge() -> f64 {
     0.15
 }
@@ -179,6 +183,10 @@ pub struct Rules {
     pub paste_margin: f64,
     pub silk_width: f64,
     pub silk_to_pad: f64,
+    /// The minimum distance from a hole wall to copper of another net, and
+    /// from a non-plated hole to all copper.
+    #[serde(default = "default_hole_to_copper")]
+    pub hole_to_copper: f64,
     /// The minimum distance from silkscreen to the board edge.
     #[serde(default = "default_silk_to_edge")]
     pub silk_to_edge: f64,
@@ -215,6 +223,7 @@ impl Default for Rules {
             paste_margin: 0.0,
             silk_width: 0.15,
             silk_to_pad: 0.15,
+            hole_to_copper: default_hole_to_copper(),
             silk_to_edge: default_silk_to_edge(),
             min_silk_text_height: default_silk_text_height(),
             min_mask_web: 0.0,
@@ -735,6 +744,12 @@ pub struct Violation {
     /// The ids of the related items (refdes, pad refs, track ids).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub items: Vec<String>,
+    /// The measured value in mm, for a rule that compares a value with a limit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub actual: Option<f64>,
+    /// The limit in mm that the measured value does not meet.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub required: Option<f64>,
 }
 
 impl Violation {
@@ -746,7 +761,17 @@ impl Violation {
             at: None,
             layer: None,
             items: Vec::new(),
+            actual: None,
+            required: None,
         }
+    }
+
+    /// Record the measured value and its limit.
+    pub fn measured(mut self, actual: f64, required: f64) -> Self {
+        let r = |v: f64| (v * 1e4).round() / 1e4;
+        self.actual = Some(r(actual));
+        self.required = Some(r(required));
+        self
     }
 
     pub fn warning(rule: &str, message: impl Into<String>) -> Self {
