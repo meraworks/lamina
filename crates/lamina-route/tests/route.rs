@@ -272,3 +272,50 @@ fn a_track_width_in_the_options_is_used() {
         out.tracks
     );
 }
+
+#[test]
+fn routes_honor_rules_for_item_types_parts_and_areas() {
+    let mut d = board();
+    d.routing.areas.push(RuleArea {
+        id: "all".into(),
+        layers: vec![],
+        outline: Contour::rect(0.0, 0.0, 30.0, 20.0),
+    });
+    d.board.rules.custom = vec![
+        // Tracks in the area are 0.35 mm or wider.
+        CustomRule {
+            name: "wide in the area".into(),
+            when: RuleMatch {
+                kind: Some(RuleKind::Track),
+                area: Some("all".into()),
+                ..Default::default()
+            },
+            min_track_width: Some(0.35),
+            ..Default::default()
+        },
+        // Other nets keep 0.5 mm from the pads of U1.
+        CustomRule {
+            name: "space at U1".into(),
+            when: RuleMatch {
+                kind: Some(RuleKind::Pad),
+                part: Some("U1".into()),
+                ..Default::default()
+            },
+            clearance: Some(0.5),
+            ..Default::default()
+        },
+    ];
+    let out = autoroute(&d, &RouteOptions::default()).unwrap();
+    assert!(!out.tracks.is_empty());
+    assert!(out.tracks.iter().all(|t| t.width >= 0.35 - 1e-9));
+    d.routing.tracks.extend(out.tracks);
+    d.routing.vias.extend(out.vias);
+    // The checks use the same rules: a route that the router made has no
+    // clearance or width error.
+    let errors: Vec<_> = lamina_drc::analyze(&d)
+        .violations
+        .into_iter()
+        .filter(|v| v.rule == "clearance" || v.rule == "track_width")
+        .collect();
+    assert!(errors.is_empty(), "{errors:#?}");
+}

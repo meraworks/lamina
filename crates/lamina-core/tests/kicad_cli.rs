@@ -67,8 +67,25 @@ fn board() -> ProjectData {
     // Two tracks of different nets, 0.05 mm apart: `clearance`.
     track("t1", "SIG", 0.2, (5.0, 15.0), (15.0, 15.0));
     track("t2", "OTHER", 0.2, (5.0, 15.25), (15.0, 15.25));
+    // Two tracks 0.3 mm apart in a rule area that needs 0.5 mm: `clearance`.
+    track("t4", "SIG", 0.2, (20.0, 10.0), (36.0, 10.0));
+    track("t5", "OTHER", 0.2, (20.0, 10.5), (36.0, 10.5));
     // A track that is too narrow: `track_width`.
     track("t3", "SIG", 0.08, (20.0, 20.0), (30.0, 20.0));
+    d.routing.areas.push(RuleArea {
+        id: "wide".into(),
+        layers: vec![],
+        outline: Contour::rect(18.0, 8.0, 20.0, 5.0),
+    });
+    d.board.rules.custom.push(CustomRule {
+        name: "space in the area".into(),
+        when: RuleMatch {
+            area: Some("wide".into()),
+            ..Default::default()
+        },
+        clearance: Some(0.5),
+        ..Default::default()
+    });
     let mut via = |id: &str, net: &str, x: f64| {
         d.routing.vias.push(Via {
             id: id.into(),
@@ -116,6 +133,7 @@ fn kicad_and_lamina_agree_on_a_board_with_known_violations() {
         lamina["annular_width"], 1,
         "the custom rule permits the GND via"
     );
+    assert_eq!(lamina["clearance"], 2, "one pair in the rule area");
 
     let dir = tempfile::tempdir().unwrap();
     let pcb = dir.path().join("cli.kicad_pcb");

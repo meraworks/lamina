@@ -345,19 +345,41 @@ impl<'a> Ctx<'a> {
         let r = &self.d.board.rules;
         let class = self.class_of(Some(net));
         let nc = r.class(class);
-        // A profile spans layers; use the strongest matching limit on any layer.
-        let limits: Vec<_> = (0..self.geo.layers)
-            .map(|i| {
-                r.resolve(
-                    Some(net),
-                    class,
-                    Some(Layer::Copper(Copper::from_index(i, self.geo.layers))),
-                )
-            })
-            .collect();
+        // A profile spans layers and all of the board; use the strongest
+        // matching limit on any layer and in any rule area. The tracks use
+        // the rules for tracks, and the vias use the rules for vias.
+        let mut places: Vec<Vec<&str>> = vec![Vec::new()];
+        for a in &self.d.routing.areas {
+            places.push(vec![a.id.as_str()]);
+        }
+        let resolve = |kind: RuleKind| -> Vec<RuleValues> {
+            let mut out = Vec::new();
+            for i in 0..self.geo.layers {
+                for areas in &places {
+                    out.push(r.resolve_for(&Subject {
+                        net: Some(net),
+                        class,
+                        layer: Some(Layer::Copper(Copper::from_index(i, self.geo.layers))),
+                        kind: Some(kind),
+                        part: None,
+                        areas,
+                    }));
+                }
+            }
+            out
+        };
+        let via_limits = resolve(RuleKind::Via);
+        let limits = resolve(RuleKind::Track);
         let min_width = limits.iter().map(|v| v.min_track_width).fold(0.0, f64::max);
-        let min_drill = limits.iter().map(|v| v.min_via_drill).fold(0.0, f64::max);
-        let min_ring = limits
+        let max_width = limits
+            .iter()
+            .filter_map(|v| v.max_track_width)
+            .fold(f64::INFINITY, f64::min);
+        let min_drill = via_limits
+            .iter()
+            .map(|v| v.min_via_drill)
+            .fold(0.0, f64::max);
+        let min_ring = via_limits
             .iter()
             .map(|v| v.min_annular_ring)
             .fold(0.0, f64::max);
@@ -365,16 +387,21 @@ impl<'a> Ctx<'a> {
         if narrow {
             w = w.min(min_width);
         }
-        w = w.max(min_width);
+        w = w.min(max_width).max(min_width);
         let drill = nc.via_drill.unwrap_or(r.via_drill).max(min_drill);
         Profile {
             hw: w / 2.0,
             // The voltage of the net can need more than the clearance rule.
-            cl: limits.iter().map(|v| v.clearance).fold(0.0, f64::max).max(
-                self.d
-                    .nets
-                    .voltage_floor(net, lamina_model::voltage::Surface::ExternalBare),
-            ),
+            cl: limits
+                .iter()
+                .chain(&via_limits)
+                .map(|v| v.clearance)
+                .fold(0.0, f64::max)
+                .max(
+                    self.d
+                        .nets
+                        .voltage_floor(net, lamina_model::voltage::Surface::ExternalBare),
+                ),
             via_r: nc
                 .via_diameter
                 .unwrap_or(r.via_diameter)
@@ -413,14 +440,16 @@ impl<'a> Ctx<'a> {
                 .and_then(|n| self.net_ids.get(n))
                 .copied()
                 .unwrap_or(HARD);
+            // The custom rules can select the obstacle by its type, its
+            // part and its area.
             let cl = p.cl.max(
-                rules
-                    .resolve(
-                        it.net.as_deref(),
-                        self.class_of(it.net.as_deref()),
-                        Some(Layer::Copper(Copper::from_index(it.layer, self.geo.layers))),
-                    )
-                    .clearance,
+                lamina_geom::board::item_limits(
+                    self.d,
+                    it,
+                    self.class_of(it.net.as_deref()),
+                    Layer::Copper(Copper::from_index(it.layer, self.geo.layers)),
+                )
+                .clearance,
             );
             cells.clear();
             g.cover(&it.prim, it.layer as usize, cl + p.hw + margin, &mut cells);

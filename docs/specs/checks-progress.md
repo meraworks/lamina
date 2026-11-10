@@ -161,7 +161,15 @@ Later items:
 - The export action of the viewer calls the same `export` operation, so it
   has the same release gate.
 
-The server has 84 tools. The workspace has 411 tests.
+- The autorouter uses the custom rules for item types, parts and areas: an
+  obstacle gets the clearance of its type, part and area, and a net gets the
+  strongest track and via limit of all layers and areas.
+- A rule area goes to KiCad as a rule area with its name, and a rule with
+  `area` is in the `.kicad_dru` file (`A.intersectsArea`). KiCad 10 applies
+  it: the comparison test has one clearance violation in an area, and the two
+  programs report it. The import reads the area back.
+
+The server has 84 tools. The workspace has 413 tests.
 
 ## Differences from the plan
 
@@ -176,11 +184,6 @@ The server has 84 tools. The workspace has 411 tests.
   source code of the `pcb-toolkit` crate gives them. The first version of the
   table came from memory of IPC-2221B and had smaller values for B2 and B4. The
   table was not compared with the standard itself, which is not free.
-- The autorouter has one set of limits for each net, so it resolves custom
-  rules with `net`, `class` and `layer` only. The checks report a route that
-  breaks a rule with `kind`, `part` or `area`.
-- A custom rule with `area` is not in the `.kicad_dru` file: KiCad has no
-  area with that id.
 - `LossKind` comes from one function that reads the note text of an adapter
   (`Loss::from_note`). The adapters do not make each loss with its kind at the
   place where they drop the data.

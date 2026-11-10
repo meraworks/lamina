@@ -312,6 +312,24 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
         };
         if let Some(k) = zone.child("keepout") {
             let allowed = |what: &str| k.child_text(what) != Some("not_allowed");
+            // A rule area that forbids nothing and has a name is an area
+            // for custom rules.
+            let name = zone.child_text("name").unwrap_or("").trim();
+            let free = ["tracks", "vias", "pads", "copperpour", "footprints"]
+                .iter()
+                .all(|w| allowed(w));
+            let id_ok = !name.is_empty()
+                && name
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-');
+            if free && id_ok && !d.routing.areas.iter().any(|a| a.id == name) {
+                d.routing.areas.push(RuleArea {
+                    id: name.to_string(),
+                    layers: ls,
+                    outline,
+                });
+                continue;
+            }
             kid += 1;
             d.routing.keepouts.push(Keepout {
                 id: format!("k{kid}"),
@@ -838,6 +856,41 @@ pub fn export_board_with(d: &ProjectData, model_dir: Option<&std::path::Path>) -
                         .child(n("thermal_bridge_width").num(0.5)),
                 )
                 .child(polygon_node(&k.outline)),
+        );
+    }
+    // A rule area is a KiCad rule area that forbids nothing. A custom rule
+    // selects it by its name.
+    for a in &d.routing.areas {
+        let layers = if a.layers.is_empty() {
+            Layer::all_copper(d.board.stackup.copper_layers)
+        } else {
+            a.layers.clone()
+        };
+        root = root.child(
+            n("zone")
+                .child(n("net").num(0.0))
+                .child(n("net_name").str(""))
+                .child(layers_node(&layers))
+                .child(n("uuid").str(uuid(&format!("area:{}", a.id))))
+                .child(n("name").str(&a.id))
+                .child(n("hatch").sym("edge").num(0.5))
+                .child(n("connect_pads").child(n("clearance").num(0.0)))
+                .child(n("min_thickness").num(0.25))
+                .child(n("filled_areas_thickness").sym("no"))
+                .child(
+                    n("keepout")
+                        .child(n("tracks").sym("allowed"))
+                        .child(n("vias").sym("allowed"))
+                        .child(n("pads").sym("allowed"))
+                        .child(n("copperpour").sym("allowed"))
+                        .child(n("footprints").sym("allowed")),
+                )
+                .child(
+                    n("fill")
+                        .child(n("thermal_gap").num(0.5))
+                        .child(n("thermal_bridge_width").num(0.5)),
+                )
+                .child(polygon_node(&a.outline)),
         );
     }
     // The keep-outs of the footprints, at their board positions.

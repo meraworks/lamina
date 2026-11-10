@@ -242,14 +242,8 @@ pub fn export_rules(d: &ProjectData) -> Option<String> {
             when.push(format!("A.memberOfFootprint('{}')", quote(part)));
         }
         if let Some(area) = &rule.when.area {
-            // KiCad has no rule areas with these ids. A rule without the
-            // area condition is for all of the board, which is wrong.
-            out.push_str(&format!(
-                "\n# The rule \"{}\" is for the area \"{}\". It is not in this file.\n",
-                quote(&rule.name),
-                quote(area)
-            ));
-            continue;
+            // The board file has a rule area with this name.
+            when.push(format!("A.intersectsArea('{}')", quote(area)));
         }
         let layer = rule
             .when
@@ -379,9 +373,8 @@ mod tests {
         assert!(text.contains(
             "(rule \"usb\"\n  (condition \"A.Type == 'Track' && A.memberOfFootprint('J*')\")\n  (constraint track_width (max 0.3mm))\n  (constraint hole_clearance (min 0.25mm)))"
         ), "{text}");
-        assert!(!text.contains("(rule \"fine\""), "{text}");
         assert!(
-            text.contains("# The rule \"fine\" is for the area \"a1\""),
+            text.contains("(condition \"A.intersectsArea('a1')\")"),
             "{text}"
         );
         // The board minimum does not hide the custom rule.

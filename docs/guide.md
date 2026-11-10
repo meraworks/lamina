@@ -170,12 +170,13 @@ The values are `clearance`, `min_track_width`, `max_track_width`,
 `min_track_angle`.
 
 `add_area` makes a rule area: an outline, and layers if the area is not for all
-layers. `delete_items` removes it. The checks and the pours use all the
-conditions. The autorouter has one set of limits for each net, so it uses only
-`net`, `class` and `layer`.
+layers. `delete_items` removes it. The checks, the pours and the autorouter use
+all the conditions. The autorouter has one track width and one via size for each
+net, so it takes the strongest limit that a rule for a layer or an area gives.
 
 KiCad board export writes the custom rules to a `.kicad_dru` file next to the
-board. A rule with `area` is not in that file, and a comment line says so.
+board. A rule area becomes a KiCad rule area with the same name, and a rule with
+`area` selects it. KiCad board import reads such an area back.
 
 ### Verify a footprint
 

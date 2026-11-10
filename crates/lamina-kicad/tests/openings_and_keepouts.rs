@@ -166,3 +166,22 @@ fn zone_parts_that_lamina_does_not_have_give_notes() {
     assert!(has("1 more outline(s) of the zone z1"), "{:?}", b.notes);
     assert!(has("1 text box(es)"), "{:?}", b.notes);
 }
+
+#[test]
+fn a_rule_area_goes_to_kicad_and_comes_back() {
+    use lamina_model::{Contour, Layer, ProjectData, RuleArea};
+    let mut d = ProjectData::new("areas");
+    d.board.outline = Some(Contour::rect(0.0, 0.0, 30.0, 20.0));
+    d.routing.areas.push(RuleArea {
+        id: "fine".into(),
+        layers: vec![Layer::TOP],
+        outline: Contour::rect(5.0, 5.0, 10.0, 8.0),
+    });
+    let text = lamina_kicad::export_board(&d);
+    assert!(text.contains("(name \"fine\")"), "the area has its name");
+    let back = lamina_kicad::import_board(&text, "areas").unwrap().data;
+    assert!(back.routing.keepouts.is_empty(), "it is not a keep-out");
+    assert_eq!(back.routing.areas.len(), 1);
+    assert_eq!(back.routing.areas[0].id, "fine");
+    assert_eq!(back.routing.areas[0].layers, vec![Layer::TOP]);
+}
