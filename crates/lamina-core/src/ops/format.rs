@@ -182,7 +182,12 @@ impl Project {
             .duration_since(std::time::UNIX_EPOCH)
             .map(|t| t.as_secs())
             .unwrap_or(0);
-        for text in notes.iter().filter(|n| is_fab_loss(n)) {
+        for text in imported
+            .losses
+            .iter()
+            .filter(|l| l.kind.changes_fab())
+            .map(|l| &l.what)
+        {
             if d.notes
                 .notes
                 .iter()
@@ -437,25 +442,4 @@ impl Project {
         }
         Ok(res)
     }
-}
-
-/// True for an import note about dropped data that changes the copper, the
-/// holes, the mask or the paste. Dropped texts and drawings on other layers
-/// do not count.
-fn is_fab_loss(note: &str) -> bool {
-    let n = note.to_lowercase();
-    n.contains("skipped")
-        && [
-            "pad",
-            "zone",
-            "footprint",
-            "via",
-            "track",
-            "edge",
-            "records",
-        ]
-        .iter()
-        .any(|w| n.contains(w))
-        && !n.contains("text on")
-        && !n.contains("graphics on")
 }

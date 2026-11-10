@@ -114,6 +114,7 @@ impl BoardFormat for KicadFormat {
             data,
             models,
             extras: BTreeMap::new(),
+            losses: lamina_ports::format::Loss::from_notes(&notes),
             notes,
         })
     }
