@@ -484,12 +484,19 @@ fn pin_aliases_are_refused_when_a_part_has_too_many() {
 }
 
 #[test]
-fn references_longer_than_their_field_are_still_refused() {
+fn references_longer_than_their_field_get_an_alias() {
     let mut d = usb_c_project();
     let pl = d.placement.placements.remove("J1").unwrap();
     let part = d.parts.parts.remove("J1").unwrap();
     d.placement.placements.insert("JLONG01".into(), pl);
     d.parts.parts.insert("JLONG01".into(), part);
-    let err = lamina_export::ipc356::write(&d, "usbc").unwrap_err();
-    assert!(err.contains("exceeds 6 characters"), "{err}");
+    let out = lamina_export::ipc356::write(&d, "usbc").unwrap();
+    let text = String::from_utf8(out.contents).unwrap();
+    assert!(text.contains("C  REF   Z00001 JLONG01"), "{text}");
+    assert!(text.contains("C  PIN   Z00001-P001 A1B12"), "{text}");
+    assert!(
+        !text
+            .lines()
+            .any(|l| l.starts_with('3') && l.contains("JLONG0"))
+    );
 }

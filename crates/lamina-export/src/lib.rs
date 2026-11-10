@@ -89,12 +89,28 @@ pub fn gerbers(s: &Scene2D, name: &str) -> Vec<Output> {
     out
 }
 
-/// Make the Excellon drill files: plated and non-plated.
+/// Make the Excellon drill files: one for the plated holes that go through
+/// the board, one for each span of blind or buried holes, and one for the
+/// non-plated holes.
 pub fn drills(g: &lamina_geom::BoardGeometry, name: &str) -> Vec<Output> {
+    let last = g.layers.max(2) - 1;
+    // `None` is the non-plated file. A span is the first and the last layer.
+    let mut groups: BTreeMap<Option<(u8, u8)>, Vec<&lamina_geom::DrillItem>> = BTreeMap::new();
+    groups.entry(Some((0, last))).or_default();
+    groups.entry(None).or_default();
+    for d in &g.drills {
+        let key = if d.plated {
+            let (a, b) = (d.layers.0.min(d.layers.1), d.layers.0.max(d.layers.1));
+            Some((a.min(last), b.min(last)))
+        } else {
+            None
+        };
+        groups.entry(key).or_default().push(d);
+    }
     let mut out = Vec::new();
-    for plated in [true, false] {
+    for (span, items) in groups {
         let mut tools: BTreeMap<i64, Vec<&Prim>> = BTreeMap::new();
-        for d in g.drills.iter().filter(|d| d.plated == plated) {
+        for d in items {
             let dia = match &d.prim {
                 Prim::Circle { r, .. } | Prim::Capsule { r, .. } => 2.0 * r,
                 Prim::Poly { .. } => continue,
@@ -104,15 +120,32 @@ pub fn drills(g: &lamina_geom::BoardGeometry, name: &str) -> Vec<Output> {
                 .or_default()
                 .push(&d.prim);
         }
+        let (function, file) = match span {
+            None => (
+                format!("NonPlated,1,{},NPTH", last + 1),
+                format!("{name}-NPTH.DRL"),
+            ),
+            Some((0, b)) if b == last => (
+                format!("Plated,1,{},PTH", last + 1),
+                format!("{name}-PTH.DRL"),
+            ),
+            Some((a, b)) => (
+                format!(
+                    "Plated,{},{},{}",
+                    a + 1,
+                    b + 1,
+                    if a == 0 || b == last {
+                        "Blind"
+                    } else {
+                        "Buried"
+                    }
+                ),
+                format!("{name}-L{}-L{}.DRL", a + 1, b + 1),
+            ),
+        };
         let mut s = String::new();
         s.push_str("M48\n");
-        let _ = writeln!(
-            s,
-            "; #@! TF.FileFunction,{},1,{},{}",
-            if plated { "Plated" } else { "NonPlated" },
-            g.layers.max(2),
-            if plated { "PTH" } else { "NPTH" }
-        );
+        let _ = writeln!(s, "; #@! TF.FileFunction,{function}");
         s.push_str("FMAT,2\nMETRIC\n");
         for (k, (d, _)) in tools.iter().enumerate() {
             let _ = writeln!(s, "T{}C{:.3}", k + 1, *d as f64 / 1000.0);
@@ -133,12 +166,74 @@ pub fn drills(g: &lamina_geom::BoardGeometry, name: &str) -> Vec<Output> {
             }
         }
         s.push_str("T0\nM30\n");
-        out.push(Output {
-            name: format!("{name}-{}.DRL", if plated { "PTH" } else { "NPTH" }),
-            contents: s.into_bytes(),
-        });
+        // The order of the files: through holes, the spans, non-plated holes.
+        let rank = match span {
+            Some((0, b)) if b == last => 0,
+            Some(_) => 1,
+            None => 2,
+        };
+        out.push((
+            rank,
+            Output {
+                name: file,
+                contents: s.into_bytes(),
+            },
+        ));
     }
-    out
+    out.sort_by_key(|(rank, _)| *rank);
+    out.into_iter().map(|(_, o)| o).collect()
+}
+
+/// The Gerber job file: the board data and the list of the artwork files.
+pub fn job(d: &ProjectData, artwork: &[Output], name: &str) -> Output {
+    let size = d
+        .board
+        .outline
+        .as_ref()
+        .and_then(|o| Rect::from_points(o.flatten(0.05)))
+        .map(|r| (r.max.x - r.min.x, r.max.y - r.min.y))
+        .unwrap_or((0.0, 0.0));
+    let round = |v: f64| (v * 1000.0).round() / 1000.0;
+    let mut files = Vec::new();
+    for o in artwork {
+        let text = String::from_utf8_lossy(&o.contents);
+        let attr = |key: &str| {
+            text.lines()
+                .take(12)
+                .find_map(|l| l.strip_prefix(&format!("%TF.{key},")))
+                .map(|v| v.trim_end_matches("*%").to_string())
+        };
+        if let Some(function) = attr("FileFunction") {
+            files.push(serde_json::json!({
+                "Path": o.name,
+                "FileFunction": function,
+                "FilePolarity": attr("FilePolarity").unwrap_or_else(|| "Positive".into()),
+            }));
+        }
+    }
+    let job = serde_json::json!({
+        "Header": {
+            "GenerationSoftware": {
+                "Vendor": "Lamina",
+                "Application": "lamina",
+                "Version": env!("CARGO_PKG_VERSION"),
+            },
+        },
+        "GeneralSpecs": {
+            "ProjectId": { "Name": d.board.name, "GUID": "", "Revision": "" },
+            "Size": { "X": round(size.0), "Y": round(size.1) },
+            "LayerNumber": d.board.stackup.copper_layers,
+            "BoardThickness": round(d.board.stackup.thickness),
+            "Finish": d.board.stackup.finish,
+        },
+        "FilesAttributes": files,
+    });
+    Output {
+        name: format!("{name}.gbrjob"),
+        contents: serde_json::to_string_pretty(&job)
+            .unwrap_or_default()
+            .into_bytes(),
+    }
 }
 
 fn csv(s: &str) -> String {

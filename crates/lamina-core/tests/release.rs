@@ -33,6 +33,7 @@ fn export(p: &Project, force: bool) -> String {
         dir: None,
         force,
         fabricator: None,
+        paste_for_dnp: false,
     })
     .unwrap_err()
     .to_string()
@@ -48,23 +49,6 @@ fn export_refuses_open_connections_unless_forced() {
     // With force, the gate passes. The test project has no fabricator.
     let e = export(&p, true);
     assert!(e.contains("fabricator"), "{e}");
-}
-
-#[test]
-fn export_refuses_blind_vias_also_with_force() {
-    let (_t, mut p) = project();
-    p.data.board.stackup.copper_layers = 4;
-    p.data.routing.vias.push(Via {
-        id: "v1".into(),
-        net: "A".into(),
-        at: Point::new(15.0, 15.0),
-        diameter: 0.6,
-        drill: 0.3,
-        from: Some(Layer::TOP),
-        to: Some("in1".parse().unwrap()),
-    });
-    let e = export(&p, true);
-    assert!(e.contains("blind or buried vias: v1"), "{e}");
 }
 
 #[test]

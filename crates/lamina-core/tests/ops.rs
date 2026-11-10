@@ -1190,6 +1190,7 @@ fn export_through_a_fabricator_port() {
             dir: None,
             force: true,
             fabricator: Some("fake".into()),
+            paste_for_dnp: false,
         })
         .unwrap();
     assert_eq!(r.files.len(), 2);
@@ -1203,6 +1204,7 @@ fn export_through_a_fabricator_port() {
             dir: None,
             force: true,
             fabricator: Some("none".into()),
+            paste_for_dnp: false,
         })
         .unwrap_err();
     assert!(e.to_string().contains("no fabricator"));

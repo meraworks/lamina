@@ -37,6 +37,10 @@ impl Fabricator for GerberFabricator {
         Ok(vec![crate::ipc356::write(data, name)?])
     }
 
+    fn job(&self, data: &ProjectData, artwork: &[Output], name: &str) -> Option<Output> {
+        Some(crate::job(data, artwork, name))
+    }
+
     fn archive(&self, artwork: &[Output], name: &str) -> Result<Option<Output>, String> {
         crate::archive(artwork, name).map(Some)
     }

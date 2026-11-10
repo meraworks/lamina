@@ -189,6 +189,7 @@ impl App {
                     dir: None,
                     force,
                     fabricator: None,
+                    paste_for_dnp: false,
                 })
             });
             match r {

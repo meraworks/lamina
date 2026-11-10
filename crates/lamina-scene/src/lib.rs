@@ -269,7 +269,25 @@ fn mp_geoms(m: &geo::MultiPolygon<f64>) -> Vec<Geom> {
 }
 
 /// Build the 2D scene. The analysis gives the fills, the ratsnest and the DRC markers.
+/// Options for the 2D scene.
+#[derive(Debug, Clone, Copy)]
+pub struct Options {
+    /// Make paste openings also for the parts that are not placed (DNP).
+    pub paste_for_dnp: bool,
+}
+
+/// The 2D scene as the viewer shows it: with paste for all parts.
 pub fn build_2d(d: &ProjectData, a: &Analysis) -> Scene2D {
+    build_2d_with(
+        d,
+        a,
+        &Options {
+            paste_for_dnp: true,
+        },
+    )
+}
+
+pub fn build_2d_with(d: &ProjectData, a: &Analysis, options: &Options) -> Scene2D {
     let layers_n = d.board.stackup.copper_layers;
     let rules = &d.board.rules;
     let mut layers: Vec<LayerDraw> = Vec::new();
@@ -315,6 +333,7 @@ pub fn build_2d(d: &ProjectData, a: &Analysis) -> Scene2D {
             continue;
         };
         let side = pl.side;
+        let paste = options.paste_for_dnp || !part.dnp;
         for (pad, _, prim, _) in lamina_geom::placed_pads(fp, pl, layers_n) {
             let sides: Vec<Side> = if pad.is_smd() {
                 vec![side]
@@ -329,7 +348,7 @@ pub fn build_2d(d: &ProjectData, a: &Analysis) -> Scene2D {
                     }
                 }
             }
-            if pad.is_smd() && pad.paste {
+            if paste && pad.is_smd() && pad.paste {
                 let m = pad.paste_margin.unwrap_or(rules.paste_margin);
                 for gm in mp_geoms(&inflate(&prim, m)) {
                     push(&mut layers, SceneLayer::Paste(side), gm);
@@ -338,6 +357,9 @@ pub fn build_2d(d: &ProjectData, a: &Analysis) -> Scene2D {
         }
         let tf = |p: Point| pl.transform(p);
         for gr in &fp.graphics {
+            if !paste && gr.layer == FpLayer::Paste {
+                continue;
+            }
             if let Some(l) = fp_side_layer(gr.layer, side) {
                 push(
                     &mut layers,

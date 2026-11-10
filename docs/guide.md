@@ -137,8 +137,12 @@ with no net can touch.
 `check` with `release: true` shows the board as `export` sees it: `unrouted` and
 `unplaced` are errors. `export` refuses a board with release errors if `force` is
 not true, and `status` gives their number in `release_errors`. A severity that
-you set for a rule wins. `export` always refuses blind and buried vias, because
-the drill files have only through holes. On the command line,
+you set for a rule wins. `export` writes one drill file for the holes that go
+through the board, one for each span of blind or buried vias (for example
+`-L1-L2.DRL`), one for the non-plated holes, and a `.gbrjob` job file. Parts that
+are not placed (DNP) get no paste; `paste_for_dnp: true` changes that. In the
+IPC-D-356 netlist, a reference longer than 6 characters gets an alias (`Z00001`)
+and a `C  REF` comment line. On the command line,
 `lamina check <board> --release` has exit code 2 if a violation is an error
 (`--fail-on warning` and `--fail-on never` change this), so CI can use it.
 

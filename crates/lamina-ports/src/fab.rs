@@ -33,6 +33,12 @@ pub trait Fabricator: Send + Sync {
     }
     /// The assembly files: BOM and placement. The strings are warnings.
     fn assembly(&self, data: &ProjectData, name: &str) -> (Vec<Output>, Vec<String>);
+    /// A job file that lists the artwork files and the board data. It goes
+    /// into the archive. The default is no job file.
+    fn job(&self, data: &ProjectData, artwork: &[Output], name: &str) -> Option<Output> {
+        let _ = (data, artwork, name);
+        None
+    }
     /// One archive of the artwork files, for the board house. A fabricator
     /// that has no archive gives `None`, which is the default.
     fn archive(&self, artwork: &[Output], name: &str) -> Result<Option<Output>, String> {

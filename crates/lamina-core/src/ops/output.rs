@@ -18,6 +18,10 @@ pub struct Export {
     /// The fabricator id (see `fabricators`). The default is the first one.
     #[serde(default)]
     pub fabricator: Option<String>,
+    /// Make paste openings also for the parts that are not placed (DNP).
+    /// The default is no paste for them.
+    #[serde(default)]
+    pub paste_for_dnp: bool,
 }
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
@@ -57,30 +61,6 @@ impl Project {
         // The fabrication files have one drill file for plated holes, so a
         // via that does not go through the board cannot be made. `force`
         // does not change this, because the files would be wrong.
-        let layers = self.data.board.stackup.copper_layers;
-        let partial: Vec<&str> = self
-            .data
-            .routing
-            .vias
-            .iter()
-            .filter(|v| {
-                let index = |l: Option<Layer>, default: u8| {
-                    l.and_then(|l| l.copper())
-                        .map(|c| c.index(layers))
-                        .unwrap_or(default)
-                };
-                let (a, b) = (index(v.from, 0), index(v.to, layers.saturating_sub(1)));
-                a.min(b) != 0 || a.max(b) != layers.saturating_sub(1)
-            })
-            .map(|v| v.id.as_str())
-            .collect();
-        if !partial.is_empty() {
-            return Err(Error::Refused(format!(
-                "The fabrication output cannot make blind or buried vias: {}. \
-                 Change them to through vias.",
-                partial.join(", ")
-            )));
-        }
         let errors: Vec<Violation> = self
             .check_release()
             .into_iter()
@@ -107,7 +87,14 @@ impl Project {
                 .map(|f| f.as_ref())
                 .ok_or_else(|| Error::invalid(Ports::missing("fabricator")))?,
         };
-        let (a, s2, _) = lamina_scene::build(&self.data, self.root());
+        let a = lamina_drc::analyze(&self.data);
+        let s2 = lamina_scene::build_2d_with(
+            &self.data,
+            &a,
+            &lamina_scene::Options {
+                paste_for_dnp: p.paste_for_dnp,
+            },
+        );
         let name: String = self
             .data
             .board
@@ -123,6 +110,7 @@ impl Project {
             .collect();
         let mut artwork = fab.artwork(&s2, &a.geometry, &name);
         artwork.extend(fab.netlist(&self.data, &name).map_err(Error::Invalid)?);
+        artwork.extend(fab.job(&self.data, &artwork, &name));
         let (asm, mut warnings) = fab.assembly(&self.data, &name);
         let archive = fab.archive(&artwork, &name).map_err(Error::Invalid)?;
         let rel = p.dir.unwrap_or_else(|| "output".into());

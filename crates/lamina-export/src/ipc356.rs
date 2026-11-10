@@ -185,6 +185,27 @@ pub fn write(d: &ProjectData, name: &str) -> Result<Output, String> {
     let pad_nets = d.nets.pad_map();
     let mut records = Vec::new();
     let mut pin_comments = Vec::new();
+    // The reference field has 6 characters. A longer reference gets an
+    // alias `Z00001`, `Z00002` and so on, in sorted order.
+    let taken: BTreeSet<String> = d
+        .placement
+        .placements
+        .keys()
+        .map(|r| ascii(r).to_ascii_uppercase())
+        .collect();
+    let mut free = (1..=99999)
+        .map(|i| format!("Z{i:05}"))
+        .filter(|a| !taken.contains(a));
+    let mut ref_aliases: BTreeMap<String, String> = BTreeMap::new();
+    for r in d.placement.placements.keys() {
+        if ascii(r).len() > 6 {
+            let alias = free
+                .next()
+                .ok_or("IPC-D-356 has no more aliases for long references.")?;
+            ref_aliases.insert(r.clone(), alias);
+        }
+    }
+    let short = |r: &String| ref_aliases.get(r).cloned().unwrap_or_else(|| r.clone());
     for (reference, pl) in &d.placement.placements {
         let Some(fp) = d
             .parts
@@ -198,7 +219,7 @@ pub fn write(d: &ProjectData, name: &str) -> Result<Output, String> {
             .map_err(|e| format!("{reference}: {e}"))?;
         for (name, alias) in &pins {
             if ascii(name) != *alias {
-                pin_comments.push((reference.clone(), alias.clone(), name.clone()));
+                pin_comments.push((short(reference), alias.clone(), name.clone()));
             }
         }
         for pad in &fp.pads {
@@ -227,7 +248,7 @@ pub fn write(d: &ProjectData, name: &str) -> Result<Output, String> {
                         pad: pad.number.clone(),
                     })
                     .cloned(),
-                reference: reference.clone(),
+                reference: short(reference),
                 pin: pins[&pad.number].clone(),
                 code,
                 at: pl.transform(pad.at),
@@ -331,6 +352,11 @@ pub fn write(d: &ProjectData, name: &str) -> Result<Output, String> {
     for (name, alias) in &aliases {
         let display: String = ascii(name).chars().take(58).collect();
         line(&mut out, &format!("P  NNAME{alias} {display}"))?;
+    }
+    for (reference, alias) in &ref_aliases {
+        let head = format!("C  REF   {alias} ");
+        let display: String = ascii(reference).chars().take(80 - head.len()).collect();
+        line(&mut out, &format!("{head}{display}"))?;
     }
     for (reference, alias, name) in &pin_comments {
         let head = format!("C  PIN   {}-{alias} ", field(reference, 6)?.trim_end());

@@ -15,6 +15,7 @@ fn fabrication_export_includes_electrical_netlist() {
             dir: None,
             force: false,
             fabricator: None,
+            paste_for_dnp: false,
         })
         .unwrap();
     let netlist = result
@@ -101,6 +102,7 @@ fn fabrication_export_aliases_long_pad_names() {
             dir: None,
             force: true,
             fabricator: None,
+            paste_for_dnp: false,
         })
         .unwrap();
     let netlist = result.files.iter().find(|f| f.ends_with(".d356")).unwrap();
