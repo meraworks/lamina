@@ -20,33 +20,6 @@
   },
   "rules": {
     "min_thermal_spokes": 2,
-    "exclusions": [
-      {
-        "rule": "starved_thermal",
-        "items": ["J5.4", "z1"],
-        "reason": "Through-hole GND pad. The bottom zone z2 connects it with the full number of spokes."
-      },
-      {
-        "rule": "starved_thermal",
-        "items": ["J7.2", "z1"],
-        "reason": "Through-hole GND pad. The bottom zone z2 connects it with the full number of spokes."
-      },
-      {
-        "rule": "starved_thermal",
-        "items": ["J8.2", "z1"],
-        "reason": "Through-hole GND pad. The bottom zone z2 connects it with the full number of spokes."
-      },
-      {
-        "rule": "starved_thermal",
-        "items": ["U1.3", "z1"],
-        "reason": "Through-hole GND pad. The bottom zone z2 connects it with the full number of spokes."
-      },
-      {
-        "rule": "starved_thermal",
-        "items": ["U2.3", "z1"],
-        "reason": "Through-hole GND pad. The bottom zone z2 connects it with the full number of spokes."
-      }
-    ],
     "clearance": 0.3,
     "track_width": 0.4,
     "min_track_width": 0.2,

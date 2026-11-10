@@ -1,11 +1,7 @@
 # violations
 
 # excluded
-Warning | starved_thermal | top | J5.4,z1 | Pad J5.4 has 0 spoke(s) to zone z1, but the minimum is 2 | 38.460,3.960
-Warning | starved_thermal | top | J7.2,z1 | Pad J7.2 has 1 spoke(s) to zone z1, but the minimum is 2 | 33.500,38.500
-Warning | starved_thermal | top | J8.2,z1 | Pad J8.2 has 1 spoke(s) to zone z1, but the minimum is 2 | 56.500,38.500
-Warning | starved_thermal | top | U1.3,z1 | Pad U1.3 has 1 spoke(s) to zone z1, but the minimum is 2 | 8.000,25.920
-Warning | starved_thermal | top | U2.3,z1 | Pad U2.3 has 1 spoke(s) to zone z1, but the minimum is 2 | 31.000,25.920
+
 # ratsnest
 
 # islands

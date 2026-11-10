@@ -116,7 +116,9 @@ longer match. The viewer has the same actions in Checks and an Exclusions filter
 `npth_inside_courtyard` warns when a non-plated hole overlaps another part's
 courtyard on either side. `starved_thermal` reports a pad with fewer connections
 to a thermal zone than `min_thermal_spokes` (default 2). It counts surviving pour
-arms and same-net tracks from the pad into the fill. It checks Lamina's fill;
+arms and same-net tracks from the pad into the fill. A pad with pours on more
+than one layer or in more than one zone is good if all its spokes together reach
+the minimum, or if a solid pour of its net covers it. It checks Lamina's fill;
 another program that fills the zones again can report different counts.
 
 `checks` lists all checks: what each one reports, why, its severity on this board

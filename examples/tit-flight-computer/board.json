@@ -23,11 +23,6 @@
     "min_thermal_spokes": 1,
     "exclusions": [
       {
-        "rule": "starved_thermal",
-        "items": ["U1.41", "z1"],
-        "reason": "The via pads are inside the 3.9 mm ground pad of the module. The solid zone z3 connects this pad to GND."
-      },
-      {
         "rule": "courtyard_outside_board",
         "items": ["U1"],
         "reason": "Only the corners of the antenna keep-out area of the ESP32-S3-WROOM-1 are outside the round edge. The module body is on the board."

@@ -149,3 +149,36 @@ fn connectivity_gives_the_islands_and_ratsnest_of_analyze() {
         assert_eq!(a.fills, c.fills, "{board}");
     }
 }
+
+#[test]
+fn each_golden_line_has_a_triage_line() {
+    let dir = root().join("crates/lamina-core/tests/golden");
+    let triage = std::fs::read_to_string(dir.join("triage.txt")).unwrap();
+    let mut known = std::collections::BTreeSet::new();
+    for line in triage
+        .lines()
+        .filter(|l| !l.starts_with('#') && !l.trim().is_empty())
+    {
+        let f: Vec<&str> = line.split(" | ").collect();
+        assert!(f.len() == 5, "a triage line has 5 fields: {line}");
+        assert!(f[3] == "true" || f[3] == "false", "{line}");
+        assert!(!f[4].trim().is_empty(), "{line}");
+        known.insert(format!("{} | {} | {}", f[0], f[1], f[2]));
+    }
+    for board in ["tit", "yoink"] {
+        let text = std::fs::read_to_string(dir.join(format!("{board}.txt"))).unwrap();
+        let mut section = "";
+        for line in text.lines() {
+            if let Some(name) = line.strip_prefix("# ") {
+                section = name;
+                continue;
+            }
+            if !(section == "violations" || section == "excluded") || line.trim().is_empty() {
+                continue;
+            }
+            let f: Vec<&str> = line.split(" | ").collect();
+            let key = format!("{board} | {} | {}", f[1], f[3]);
+            assert!(known.contains(&key), "Add a line to triage.txt for: {key}");
+        }
+    }
+}

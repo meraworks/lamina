@@ -108,36 +108,8 @@ Warning | silk_to_edge | top.silk | C1 | The silkscreen drawing of C1 is 0.36 mm
 Warning | silk_to_edge | top.silk | C1 | The silkscreen drawing of C1 is 0.4 mm from the board edge, but the minimum is 0.5 mm | 85.540,37.000
 Warning | silk_to_edge | top.silk | C1 | The silkscreen drawing of C1 is 0.44 mm from the board edge, but the minimum is 0.5 mm | 85.500,37.000
 Warning | silk_to_edge | top.silk | C1 | The silkscreen drawing of C1 is 0.48 mm from the board edge, but the minimum is 0.5 mm | 85.460,37.000
-Warning | starved_thermal | bottom | C6.2,z2 | Pad C6.2 has 2 spoke(s) to zone z2, but the minimum is 4 | 14.500,18.500
-Warning | starved_thermal | bottom | C7.2,z2 | Pad C7.2 has 3 spoke(s) to zone z2, but the minimum is 4 | 37.500,18.500
-Warning | starved_thermal | bottom | J10.2,z2 | Pad J10.2 has 2 spoke(s) to zone z2, but the minimum is 4 | 83.500,25.460
-Warning | starved_thermal | bottom | J10.4,z2 | Pad J10.4 has 3 spoke(s) to zone z2, but the minimum is 4 | 83.500,20.380
-Warning | starved_thermal | bottom | J11.2,z2 | Pad J11.2 has 3 spoke(s) to zone z2, but the minimum is 4 | 3.000,17.460
-Warning | starved_thermal | bottom | J5.3,z2 | Pad J5.3 has 3 spoke(s) to zone z2, but the minimum is 4 | 38.460,6.500
 Warning | starved_thermal | bottom | J5.4,z2 | Pad J5.4 has 2 spoke(s) to zone z2, but the minimum is 4 | 38.460,3.960
-Warning | starved_thermal | bottom | J6.2,z2 | Pad J6.2 has 3 spoke(s) to zone z2, but the minimum is 4 | 10.500,38.500
-Warning | starved_thermal | bottom | J7.2,z2 | Pad J7.2 has 3 spoke(s) to zone z2, but the minimum is 4 | 33.500,38.500
-Warning | starved_thermal | bottom | J8.2,z2 | Pad J8.2 has 3 spoke(s) to zone z2, but the minimum is 4 | 56.500,38.500
-Warning | starved_thermal | bottom | R2.2,z2 | Pad R2.2 has 3 spoke(s) to zone z2, but the minimum is 4 | 60.160,10.000
-Warning | starved_thermal | bottom | U1.3,z2 | Pad U1.3 has 3 spoke(s) to zone z2, but the minimum is 4 | 8.000,25.920
-Warning | starved_thermal | bottom | U2.3,z2 | Pad U2.3 has 3 spoke(s) to zone z2, but the minimum is 4 | 31.000,25.920
-Warning | starved_thermal | bottom | U3.3,z2 | Pad U3.3 has 3 spoke(s) to zone z2, but the minimum is 4 | 54.000,25.920
-Warning | starved_thermal | top | C10.2,z1 | Pad C10.2 has 2 spoke(s) to zone z1, but the minimum is 4 | 26.000,13.500
-Warning | starved_thermal | top | C7.2,z1 | Pad C7.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 37.500,18.500
-Warning | starved_thermal | top | C8.2,z1 | Pad C8.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 60.500,18.500
-Warning | starved_thermal | top | D1.1,z1 | Pad D1.1 has 3 spoke(s) to zone z1, but the minimum is 4 | 14.500,9.500
-Warning | starved_thermal | top | J10.2,z1 | Pad J10.2 has 2 spoke(s) to zone z1, but the minimum is 4 | 83.500,25.460
-Warning | starved_thermal | top | J10.4,z1 | Pad J10.4 has 3 spoke(s) to zone z1, but the minimum is 4 | 83.500,20.380
-Warning | starved_thermal | top | J11.1,z1 | Pad J11.1 has 3 spoke(s) to zone z1, but the minimum is 4 | 3.000,20.000
-Warning | starved_thermal | top | J11.2,z1 | Pad J11.2 has 2 spoke(s) to zone z1, but the minimum is 4 | 3.000,17.460
-Warning | starved_thermal | top | J5.3,z1 | Pad J5.3 has 2 spoke(s) to zone z1, but the minimum is 4 | 38.460,6.500
 Warning | starved_thermal | top | J5.4,z1 | Pad J5.4 has 0 spoke(s) to zone z1, but the minimum is 4 | 38.460,3.960
-Warning | starved_thermal | top | J6.2,z1 | Pad J6.2 has 2 spoke(s) to zone z1, but the minimum is 4 | 10.500,38.500
-Warning | starved_thermal | top | J7.2,z1 | Pad J7.2 has 1 spoke(s) to zone z1, but the minimum is 4 | 33.500,38.500
-Warning | starved_thermal | top | J8.2,z1 | Pad J8.2 has 1 spoke(s) to zone z1, but the minimum is 4 | 56.500,38.500
-Warning | starved_thermal | top | U1.3,z1 | Pad U1.3 has 1 spoke(s) to zone z1, but the minimum is 4 | 8.000,25.920
-Warning | starved_thermal | top | U2.3,z1 | Pad U2.3 has 1 spoke(s) to zone z1, but the minimum is 4 | 31.000,25.920
-Warning | starved_thermal | top | U3.3,z1 | Pad U3.3 has 2 spoke(s) to zone z1, but the minimum is 4 | 54.000,25.920
 # excluded
 
 # ratsnest
