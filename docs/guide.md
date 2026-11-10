@@ -156,6 +156,24 @@ default), `zone_overlap`, `mask_missing`, `silk_on_hole`, `silk_outside_board`,
 `annular_ring` also examine the holes of the board, `max_drill` and
 `min_slot_width`.
 
+### Custom rules
+
+A custom rule in `custom` gives different limits to some items. Its `when` part
+selects the items: `net` (with `*` and `?`), `class`, `layer`, `kind` (`track`,
+`via`, `pad`, `zone` or `hole`), `part` (a reference, with `*` and `?`) and `area`
+(the id of a rule area). All the conditions must be true, and a later rule wins.
+The values are `clearance`, `min_track_width`, `max_track_width`,
+`min_via_drill`, `min_annular_ring`, `hole_to_copper`, `courtyard_clearance` and
+`min_track_angle`.
+
+`add_area` makes a rule area: an outline, and layers if the area is not for all
+layers. `delete_items` removes it. The checks use all the conditions. The pours
+and the autorouter use only `net`, `class` and `layer`: a rule with `kind`,
+`part` or `area` does not change what they do.
+
+KiCad board export writes the custom rules to a `.kicad_dru` file next to the
+board. A rule with `area` is not in that file, and a comment line says so.
+
 ### Verify a footprint
 
 A wrong footprint passes each geometry check, so Lamina keeps evidence for each

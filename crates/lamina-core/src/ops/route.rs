@@ -73,6 +73,18 @@ pub struct AddKeepout {
     pub strict: bool,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+pub struct AddArea {
+    /// The id of the area, for `when.area` of a custom rule. With no value,
+    /// Lamina makes an id (`a1`, `a2`).
+    #[serde(default)]
+    pub id: Option<String>,
+    /// The layers of the area. With no value, the area is on all layers.
+    #[serde(default)]
+    pub layers: Vec<Layer>,
+    pub outline: Contour,
+}
+
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 pub struct Ripup {
     /// Remove the tracks and vias of this net.
@@ -96,7 +108,7 @@ pub struct Ripup {
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct DeleteItems {
-    /// The ids of tracks, vias, zones, keep-outs, texts, graphics or holes.
+    /// The ids of tracks, vias, zones, keep-outs, rule areas, texts, graphics or holes.
     pub ids: Vec<String>,
     #[serde(default)]
     pub strict: bool,
@@ -156,6 +168,7 @@ impl Project {
             .chain(r.vias.iter().map(|v| v.id.clone()))
             .chain(r.zones.iter().map(|z| z.id.clone()))
             .chain(r.keepouts.iter().map(|k| k.id.clone()))
+            .chain(r.areas.iter().map(|k| k.id.clone()))
             .chain(r.texts.iter().map(|k| k.id.clone()))
             .chain(r.graphics.iter().map(|k| k.id.clone()))
             .chain(self.data.board.holes.iter().map(|h| h.id.clone()))
@@ -372,6 +385,45 @@ impl Project {
         )
     }
 
+    /// Add an area that custom rules can select with `when.area`.
+    pub fn add_area(&mut self, p: AddArea) -> Result<OpResult> {
+        p.outline.check().map_err(Error::Invalid)?;
+        let id = match p.id {
+            Some(id) => {
+                let ok = !id.is_empty()
+                    && id
+                        .chars()
+                        .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-');
+                if !ok {
+                    return Err(Error::invalid(
+                        "The id of an area has letters, digits, `_` and `-` only.",
+                    ));
+                }
+                if self.all_ids().contains(&id) {
+                    return Err(Error::invalid(format!("The id {id} is in use.")));
+                }
+                id
+            }
+            None => self.new_id("a"),
+        };
+        let layers = self.data.board.stackup.copper_layers;
+        for l in &p.layers {
+            check_copper(*l, layers)?;
+        }
+        let mut d = self.data.clone();
+        d.routing.areas.push(RuleArea {
+            id: id.clone(),
+            layers: p.layers,
+            outline: p.outline,
+        });
+        self.commit(
+            d,
+            Touched::file(FileKind::Routing),
+            false,
+            format!("{id}: rule area added"),
+        )
+    }
+
     pub fn ripup(&mut self, p: Ripup) -> Result<OpResult> {
         if !p.all && p.net.is_none() && p.ids.is_none() && p.region.is_none() {
             return Err(Error::invalid("Give net, ids or region, or set all: true."));
@@ -420,18 +472,21 @@ impl Project {
                 + r.vias.len()
                 + r.zones.len()
                 + r.keepouts.len()
+                + r.areas.len()
                 + r.texts.len()
                 + r.graphics.len();
             r.tracks.retain(|x| &x.id != id);
             r.vias.retain(|x| &x.id != id);
             r.zones.retain(|x| &x.id != id);
             r.keepouts.retain(|x| &x.id != id);
+            r.areas.retain(|x| &x.id != id);
             r.texts.retain(|x| &x.id != id);
             r.graphics.retain(|x| &x.id != id);
             let m = r.tracks.len()
                 + r.vias.len()
                 + r.zones.len()
                 + r.keepouts.len()
+                + r.areas.len()
                 + r.texts.len()
                 + r.graphics.len();
             let h = d.board.holes.len();

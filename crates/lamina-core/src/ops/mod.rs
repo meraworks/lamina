@@ -57,7 +57,8 @@ pub use provider::{
 pub use render::{Render, RenderView, Rendered, parse_scene_layer};
 pub use review::{BoardDiff, Review, Reviewed, Verdict};
 pub use route::{
-    AddHole, AddKeepout, AddText, AddVia, AddZone, Autoroute, DeleteItems, Ripup, RouteTrace,
+    AddArea, AddHole, AddKeepout, AddText, AddVia, AddZone, Autoroute, DeleteItems, Ripup,
+    RouteTrace,
 };
 pub use status::Status;
 pub use text::{natural, today};

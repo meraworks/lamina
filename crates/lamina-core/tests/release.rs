@@ -248,3 +248,30 @@ fn a_model_error_has_a_position_and_stops_the_autorouter() {
     assert!(e.contains("Correct these errors first"), "{e}");
     assert!(e.contains("unknown net NOPE"), "{e}");
 }
+
+#[test]
+fn a_custom_rule_needs_an_area_that_exists() {
+    let (_dir, mut p) = project();
+    let rule = serde_json::json!({"rules": {"custom": [
+        {"name": "fine", "when": {"area": "fine"}, "clearance": 0.1}
+    ]}});
+    let e = p
+        .set_rules(serde_json::from_value(rule.clone()).unwrap())
+        .unwrap_err()
+        .to_string();
+    assert!(e.contains("the area `fine` does not exist"), "{e}");
+    p.add_area(AddArea {
+        id: Some("fine".into()),
+        layers: vec![],
+        outline: Contour::rect(0.0, 0.0, 10.0, 10.0),
+    })
+    .unwrap();
+    p.set_rules(serde_json::from_value(rule).unwrap()).unwrap();
+    assert_eq!(p.data.routing.areas.len(), 1);
+    p.delete_items(DeleteItems {
+        ids: vec!["fine".into()],
+        strict: false,
+    })
+    .unwrap();
+    assert!(p.data.routing.areas.is_empty());
+}

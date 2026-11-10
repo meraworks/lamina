@@ -217,6 +217,10 @@ impl Project {
                 ("min_track_width", rule.min_track_width),
                 ("min_via_drill", rule.min_via_drill),
                 ("min_annular_ring", rule.min_annular_ring),
+                ("hole_to_copper", rule.hole_to_copper),
+                ("courtyard_clearance", rule.courtyard_clearance),
+                ("max_track_width", rule.max_track_width),
+                ("min_track_angle", rule.min_track_angle),
             ] {
                 if value.is_some_and(|v| !v.is_finite() || v <= 0.0) {
                     return Err(Error::invalid(format!(
@@ -224,6 +228,26 @@ impl Project {
                         rule.name
                     )));
                 }
+            }
+        }
+        for rule in &rules.custom {
+            if let Some(area) = &rule.when.area {
+                if !d.routing.areas.iter().any(|a| &a.id == area) {
+                    return Err(Error::invalid(format!(
+                        "Custom rule `{}`: the area `{area}` does not exist. Make it with `add_area`.",
+                        rule.name
+                    )));
+                }
+            }
+            if rule
+                .max_track_width
+                .zip(rule.min_track_width)
+                .is_some_and(|(max, min)| max < min)
+            {
+                return Err(Error::invalid(format!(
+                    "Custom rule `{}`: max_track_width must not be below min_track_width.",
+                    rule.name
+                )));
             }
         }
         lamina_drc::registry::check_rules(&rules).map_err(Error::invalid)?;

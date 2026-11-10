@@ -149,8 +149,13 @@ fn via_count(d: &ProjectData, v: &mut Vec<Violation>) {
 }
 
 fn courtyards(d: &ProjectData, _layers: u8, v: &mut Vec<Violation>) {
-    let need = d.board.rules.courtyard_clearance;
-    let mut cys: Vec<(&String, Side, Vec<Point>)> = Vec::new();
+    let rules = &d.board.rules;
+    let mut cys: Vec<(&String, Side, Vec<Point>, f64)> = Vec::new();
+    let any_need = rules.courtyard_clearance > 0.0
+        || rules
+            .custom
+            .iter()
+            .any(|c| c.courtyard_clearance.is_some_and(|v| v > 0.0));
     for (refdes, pl) in &d.placement.placements {
         let Some(fp) = d
             .parts
@@ -193,9 +198,23 @@ fn courtyards(d: &ProjectData, _layers: u8, v: &mut Vec<Violation>) {
                 );
             }
         }
-        if need > 0.0 {
+        // A custom rule can give a clearance for the courtyard of a part.
+        let areas = if d.routing.areas.is_empty() {
+            Vec::new()
+        } else {
+            d.routing.areas_at(Point::new(pl.x, pl.y), None)
+        };
+        let need = rules
+            .resolve_for(&Subject {
+                part: Some(refdes.as_str()),
+                areas: &areas,
+                ..Default::default()
+            })
+            .courtyard_clearance;
+        // A part with no limit is also in the list: its neighbor can have one.
+        if any_need {
             if let Some(c) = lamina_geom::courtyard(fp, pl) {
-                cys.push((refdes, pl.side, c));
+                cys.push((refdes, pl.side, c, need));
             }
         }
     }
@@ -209,6 +228,7 @@ fn courtyards(d: &ProjectData, _layers: u8, v: &mut Vec<Violation>) {
                 holes: vec![],
             };
             let dist = poly(&cys[i].2).distance(&poly(&cys[j].2));
+            let need = cys[i].3.max(cys[j].3);
             if dist + 1e-6 < need {
                 v.push(
                     Violation::error(
@@ -231,8 +251,23 @@ fn courtyards(d: &ProjectData, _layers: u8, v: &mut Vec<Violation>) {
 }
 
 fn tracks(d: &ProjectData, v: &mut Vec<Violation>) {
-    let min_angle = d.board.rules.min_track_angle;
     for t in &d.routing.tracks {
+        let areas = match t.points.first() {
+            Some(p) if !d.routing.areas.is_empty() => d.routing.areas_at(*p, Some(t.layer)),
+            _ => Vec::new(),
+        };
+        let min_angle = d
+            .board
+            .rules
+            .resolve_for(&Subject {
+                net: Some(&t.net),
+                class: d.nets.nets.get(&t.net).and_then(|n| n.class.as_deref()),
+                layer: Some(t.layer),
+                kind: Some(RuleKind::Track),
+                part: None,
+                areas: &areas,
+            })
+            .min_track_angle;
         if t.points.windows(2).any(|w| w[0].dist(w[1]) < 0.01) {
             v.push(
                 Violation::warning(

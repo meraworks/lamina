@@ -225,6 +225,32 @@ pub fn export_rules(d: &ProjectData) -> Option<String> {
         if let Some(class) = &rule.when.class {
             when.push(format!("A.NetClass == '{}'", quote(class)));
         }
+        if let Some(kind) = rule.when.kind {
+            let name = match kind {
+                RuleKind::Track => "Track",
+                RuleKind::Via => "Via",
+                RuleKind::Pad => "Pad",
+                RuleKind::Zone => "Zone",
+                // KiCad has no hole item: a hole is a part of a pad or a via.
+                RuleKind::Hole => "",
+            };
+            if !name.is_empty() {
+                when.push(format!("A.Type == '{name}'"));
+            }
+        }
+        if let Some(part) = &rule.when.part {
+            when.push(format!("A.memberOfFootprint('{}')", quote(part)));
+        }
+        if let Some(area) = &rule.when.area {
+            // KiCad has no rule areas with these ids. A rule without the
+            // area condition is for all of the board, which is wrong.
+            out.push_str(&format!(
+                "\n# The rule \"{}\" is for the area \"{}\". It is not in this file.\n",
+                quote(&rule.name),
+                quote(area)
+            ));
+            continue;
+        }
         let layer = rule
             .when
             .layer
@@ -255,6 +281,18 @@ pub fn export_rules(d: &ProjectData) -> Option<String> {
         }
         if let Some(v) = rule.min_annular_ring {
             general.push(format!("(constraint annular_width (min {}))", mm(v)));
+        }
+        if let Some(v) = rule.max_track_width {
+            general.push(format!("(constraint track_width (max {}))", mm(v)));
+        }
+        if let Some(v) = rule.hole_to_copper {
+            general.push(format!("(constraint hole_clearance (min {}))", mm(v)));
+        }
+        if let Some(v) = rule.courtyard_clearance {
+            general.push(format!("(constraint courtyard_clearance (min {}))", mm(v)));
+        }
+        if let Some(v) = rule.min_track_angle {
+            general.push(format!("(constraint track_angle (min {}deg))", v));
         }
         write("", None, &general);
         // The via drill limit is only for vias.
@@ -317,6 +355,35 @@ mod tests {
             "(rule \"board limits\"\n  (constraint track_width (min 0.15mm))\n  (constraint annular_width (min 0.15mm)))"
         ), "{text}");
         assert!(text.find("board limits").unwrap() < text.find("via-ring").unwrap());
+        d.board.rules.custom.push(CustomRule {
+            name: "usb".into(),
+            when: RuleMatch {
+                kind: Some(RuleKind::Track),
+                part: Some("J*".into()),
+                ..Default::default()
+            },
+            max_track_width: Some(0.3),
+            hole_to_copper: Some(0.25),
+            ..Default::default()
+        });
+        d.board.rules.custom.push(CustomRule {
+            name: "fine".into(),
+            when: RuleMatch {
+                area: Some("a1".into()),
+                ..Default::default()
+            },
+            clearance: Some(0.1),
+            ..Default::default()
+        });
+        let text = export_rules(&d).unwrap();
+        assert!(text.contains(
+            "(rule \"usb\"\n  (condition \"A.Type == 'Track' && A.memberOfFootprint('J*')\")\n  (constraint track_width (max 0.3mm))\n  (constraint hole_clearance (min 0.25mm)))"
+        ), "{text}");
+        assert!(!text.contains("(rule \"fine\""), "{text}");
+        assert!(
+            text.contains("# The rule \"fine\" is for the area \"a1\""),
+            "{text}"
+        );
         // The board minimum does not hide the custom rule.
         let value: Value = serde_json::from_str(&export_project(&d, "rules")).unwrap();
         assert_eq!(

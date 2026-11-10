@@ -17,15 +17,46 @@ fn part_of(o: &Owner) -> Option<&str> {
 /// The copper of the part that has the hole does not count: the footprint
 /// puts it there.
 pub(crate) fn hole_to_copper(d: &ProjectData, g: &BoardGeometry) -> Vec<Violation> {
-    let need = d.board.rules.hole_to_copper;
     let mut out = Vec::new();
-    if need <= 0.0 || g.drills.is_empty() {
+    if g.drills.is_empty() {
+        return out;
+    }
+    let rules = &d.board.rules;
+    // The largest limit that a rule can give, for the search.
+    let reach = rules
+        .custom
+        .iter()
+        .filter_map(|c| c.hole_to_copper)
+        .fold(rules.hole_to_copper, f64::max);
+    if reach <= 0.0 {
         return out;
     }
     let boxes: Vec<Rect> = g.copper.iter().map(|c| c.prim.bbox()).collect();
     let index = Index::new(boxes.iter().copied());
     let mut seen = std::collections::BTreeSet::new();
     for hole in &g.drills {
+        let areas = if d.routing.areas.is_empty() {
+            Vec::new()
+        } else {
+            d.routing.areas_at(hole.prim.anchor(), None)
+        };
+        let need = rules
+            .resolve_for(&Subject {
+                net: hole.net.as_deref(),
+                class: hole
+                    .net
+                    .as_ref()
+                    .and_then(|n| d.nets.nets.get(n))
+                    .and_then(|n| n.class.as_deref()),
+                layer: None,
+                kind: Some(RuleKind::Hole),
+                part: part_of(&hole.owner),
+                areas: &areas,
+            })
+            .hole_to_copper;
+        if need <= 0.0 {
+            continue;
+        }
         for j in index.near(&hole.prim.bbox(), need) {
             let c = &g.copper[j];
             if c.layer < hole.layers.0 || c.layer > hole.layers.1 {

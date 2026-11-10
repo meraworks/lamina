@@ -94,6 +94,37 @@ pub fn fills(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
 }
 
 /// Run every check.
+/// The limits for a copper item: the custom rules can select its type, its
+/// part and the rule areas that it is in.
+pub(crate) fn item_limits(
+    d: &ProjectData,
+    item: &CopperItem,
+    class: Option<&str>,
+    layer: Layer,
+) -> RuleValues {
+    let (kind, part) = match &item.owner {
+        Owner::Pad { part, .. } => (Some(RuleKind::Pad), Some(part.as_str())),
+        Owner::Track { .. } => (Some(RuleKind::Track), None),
+        Owner::Via { .. } => (Some(RuleKind::Via), None),
+        Owner::Hole { .. } => (Some(RuleKind::Hole), None),
+        Owner::Zone { .. } => (Some(RuleKind::Zone), None),
+        _ => (None, None),
+    };
+    let areas = if d.routing.areas.is_empty() {
+        Vec::new()
+    } else {
+        d.routing.areas_at(item.prim.anchor(), Some(layer))
+    };
+    d.board.rules.resolve_for(&Subject {
+        net: item.net.as_deref(),
+        class,
+        layer: Some(layer),
+        kind,
+        part,
+        areas: &areas,
+    })
+}
+
 pub fn analyze(d: &ProjectData) -> Analysis {
     let mut g = lamina_geom::build(d);
     let fills = fills(d, &g);
@@ -275,14 +306,9 @@ pub fn analyze(d: &ProjectData) -> Analysis {
                 continue;
             }
             let layer = Layer::Copper(Copper::from_index(a.layer, layers));
-            let need = rules
-                .resolve(a.net.as_deref(), class_of(&a.net).as_deref(), Some(layer))
+            let need = item_limits(d, a, class_of(&a.net).as_deref(), layer)
                 .clearance
-                .max(
-                    rules
-                        .resolve(b.net.as_deref(), class_of(&b.net).as_deref(), Some(layer))
-                        .clearance,
-                );
+                .max(item_limits(d, b, class_of(&b.net).as_deref(), layer).clearance);
             if dist + 1e-6 < need {
                 let mut pair = [a.owner.label(), b.owner.label()];
                 pair.sort();
@@ -435,11 +461,38 @@ pub fn analyze(d: &ProjectData) -> Analysis {
 
     // Track widths.
     for t in &d.routing.tracks {
-        let limits = rules.resolve(
-            Some(&t.net),
-            d.nets.nets.get(&t.net).and_then(|n| n.class.as_deref()),
-            Some(t.layer),
-        );
+        let areas = match t.points.first() {
+            Some(p) if !d.routing.areas.is_empty() => d.routing.areas_at(*p, Some(t.layer)),
+            _ => Vec::new(),
+        };
+        let limits = rules.resolve_for(&Subject {
+            net: Some(&t.net),
+            class: d.nets.nets.get(&t.net).and_then(|n| n.class.as_deref()),
+            layer: Some(t.layer),
+            kind: Some(RuleKind::Track),
+            part: None,
+            areas: &areas,
+        });
+        if let Some(max) = limits.max_track_width.filter(|m| t.width > m + 1e-9) {
+            v.push(
+                Violation::error(
+                    "track_width",
+                    format!(
+                        "{} is {} mm wide, but the maximum width is {} mm",
+                        t.id,
+                        r3(t.width),
+                        r3(max)
+                    ),
+                )
+                .items([t.id.clone()])
+                .on(t.layer)
+                .measured(t.width, max)
+                .fix(Fix::SetTrackWidth {
+                    id: t.id.clone(),
+                    width: max,
+                }),
+            );
+        }
         if t.width + 1e-9 < limits.min_track_width {
             v.push(
                 Violation::error(
@@ -484,11 +537,16 @@ pub fn analyze(d: &ProjectData) -> Analysis {
         let mut min_drill: f64 = 0.0;
         let mut min_ring: f64 = 0.0;
         for index in from.min(to)..=from.max(to) {
-            let limits = rules.resolve(
-                Some(&via.net),
+            let l = Layer::Copper(Copper::from_index(index, layers));
+            let areas = d.routing.areas_at(via.at, Some(l));
+            let limits = rules.resolve_for(&Subject {
+                net: Some(&via.net),
                 class,
-                Some(Layer::Copper(Copper::from_index(index, layers))),
-            );
+                layer: Some(l),
+                kind: Some(RuleKind::Via),
+                part: None,
+                areas: &areas,
+            });
             min_drill = min_drill.max(limits.min_via_drill);
             min_ring = min_ring.max(limits.min_annular_ring);
         }
@@ -569,12 +627,17 @@ pub fn analyze(d: &ProjectData) -> Analysis {
                         .and_then(|n| n.class.as_deref());
                     let min_ring = (0..layers)
                         .map(|index| {
+                            let l = Layer::Copper(Copper::from_index(index, layers));
+                            let areas = d.routing.areas_at(pl.transform(pad.at), Some(l));
                             rules
-                                .resolve(
+                                .resolve_for(&Subject {
                                     net,
                                     class,
-                                    Some(Layer::Copper(Copper::from_index(index, layers))),
-                                )
+                                    layer: Some(l),
+                                    kind: Some(RuleKind::Pad),
+                                    part: Some(refdes.as_str()),
+                                    areas: &areas,
+                                })
                                 .min_annular_ring
                         })
                         .fold(0.0, f64::max);

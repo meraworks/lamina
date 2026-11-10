@@ -881,6 +881,17 @@ impl Lamina {
         self.with(|proj| proj.add_keepout(p))
     }
 
+    /// Add a rule area: a part of the board that a custom rule selects with
+    /// `when.area`. Use it for limits that are different in one region, for
+    /// example a smaller clearance below a fine-pitch part.
+    #[tool(annotations(title = "Add rule area"))]
+    async fn add_area(
+        &self,
+        Parameters(p): Parameters<AddArea>,
+    ) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.add_area(p))
+    }
+
     /// Add a mounting hole to the board. If you give pad_diameter, the hole is
     /// plated.
     #[tool(annotations(title = "Add hole"))]
