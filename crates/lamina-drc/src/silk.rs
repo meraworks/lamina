@@ -236,6 +236,11 @@ fn text_size(d: &ProjectData) -> Vec<Violation> {
             .at(t.at)
             .on(t.layer)
             .items([t.id.clone()])
+            .measured(t.size, min)
+            .fix(Fix::SetTextSize {
+                id: t.id.clone(),
+                size: min,
+            })
         })
         .collect();
     for (refdes, pl) in &d.placement.placements {

@@ -449,6 +449,17 @@ impl Lamina {
         self.with(|proj| Ok(proj.checks()))
     }
 
+    /// Apply the fixes that the checks propose: a larger text, a wider
+    /// track, a larger via pad, a text turned by 180 degrees. Each fix is
+    /// applied only if it adds no error. Use `dry_run` to see the fixes first.
+    #[tool(annotations(title = "Apply fixes"))]
+    async fn apply_fixes(
+        &self,
+        Parameters(p): Parameters<ApplyFixes>,
+    ) -> Result<CallToolResult, McpError> {
+        self.with(|proj| proj.apply_fixes(p))
+    }
+
     /// Compare the pads of two footprints of the project: the same part
     /// from two sources. The result gives the turn, the mirror and the move
     /// that make them fit, and each pad that differs.

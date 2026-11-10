@@ -422,7 +422,12 @@ pub fn analyze(d: &ProjectData) -> Analysis {
                     ),
                 )
                 .items([t.id.clone()])
-                .on(t.layer),
+                .on(t.layer)
+                .measured(t.width, limits.min_track_width)
+                .fix(Fix::SetTrackWidth {
+                    id: t.id.clone(),
+                    width: limits.min_track_width,
+                }),
             );
         }
         if t.points.len() < 2 {
@@ -485,7 +490,13 @@ pub fn analyze(d: &ProjectData) -> Analysis {
                     ),
                 )
                 .at(via.at)
-                .items([via.id.clone()]),
+                .items([via.id.clone()])
+                .measured(ring, min_ring)
+                .fix(Fix::SetViaSize {
+                    id: via.id.clone(),
+                    diameter: via.drill + 2.0 * min_ring,
+                    drill: via.drill,
+                }),
             );
         }
     }

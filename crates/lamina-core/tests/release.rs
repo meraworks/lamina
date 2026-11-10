@@ -149,3 +149,56 @@ fn model_rules_accept_a_severity_but_data_errors_do_not() {
     assert!(p.set_rules(bad).is_err());
     assert!(p.checks().iter().any(|c| c.id == "hole_to_copper"));
 }
+
+#[test]
+fn apply_fixes_corrects_a_small_text_and_refuses_nothing_on_a_dry_run() {
+    use lamina_core::ops::ApplyFixes;
+    let dir = tempfile::tempdir().unwrap();
+    let src =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/yoink-main-board");
+    for f in [
+        "board.json",
+        "parts.json",
+        "nets.json",
+        "placement.json",
+        "routing.json",
+    ] {
+        std::fs::copy(src.join(f), dir.path().join(f)).unwrap();
+    }
+    let fp = dir.path().join("cache/footprints");
+    std::fs::create_dir_all(&fp).unwrap();
+    for e in std::fs::read_dir(src.join("cache/footprints")).unwrap() {
+        let e = e.unwrap();
+        std::fs::copy(e.path(), fp.join(e.file_name())).unwrap();
+    }
+    let mut p = lamina_core::Project::open_with(dir.path(), Ports::default()).unwrap();
+    let mut d = p.data.clone();
+    let min = d.board.rules.min_silk_text_height;
+    d.routing.texts[0].size = min / 2.0;
+    let id = d.routing.texts[0].id.clone();
+    p.apply(d, "small text").unwrap();
+
+    let dry = p
+        .apply_fixes(ApplyFixes {
+            dry_run: true,
+            ..Default::default()
+        })
+        .unwrap();
+    assert_eq!(dry.applied.len(), 1, "{:?}", dry.refused);
+    assert!(dry.result.is_none());
+    assert!(
+        p.data.routing.texts[0].size < min,
+        "a dry run changes nothing"
+    );
+
+    let done = p.apply_fixes(ApplyFixes::default()).unwrap();
+    assert_eq!(done.applied.len(), 1);
+    assert_eq!(done.applied[0].items, vec![id]);
+    assert!((p.data.routing.texts[0].size - min).abs() < 1e-9);
+    assert!(
+        p.apply_fixes(ApplyFixes::default())
+            .unwrap()
+            .applied
+            .is_empty()
+    );
+}

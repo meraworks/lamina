@@ -226,7 +226,7 @@ impl Project {
         lamina_drc::release_view(&lamina_drc::analyze(&self.data), &self.data.board.rules)
     }
 
-    fn check_data(&self, d: &ProjectData) -> Vec<Violation> {
+    pub(crate) fn check_data(&self, d: &ProjectData) -> Vec<Violation> {
         let mut v = lamina_drc::check(d);
         for c in &self.checkers {
             v.extend(c(d));
