@@ -2613,7 +2613,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-build"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "jrsonnet-evaluator",
  "jrsonnet-gcmodule",
@@ -2629,7 +2629,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-core"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "lamina-drc",
  "lamina-export",
@@ -2653,7 +2653,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-drc"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "lamina-footprint",
  "lamina-geom",
@@ -2665,7 +2665,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-export"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "geo",
  "lamina-drc",
@@ -2681,7 +2681,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-footprint"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "lamina-model",
  "schemars",
@@ -2691,7 +2691,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-geom"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "geo",
  "lamina-model",
@@ -2701,7 +2701,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-kicad"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "lamina-geom",
  "lamina-model",
@@ -2715,7 +2715,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-mcp"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -2734,7 +2734,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-model"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "proptest",
  "schemars",
@@ -2746,7 +2746,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-parts"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "lamina-model",
  "lamina-ports",
@@ -2758,7 +2758,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-ports"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "lamina-geom",
  "lamina-model",
@@ -2769,7 +2769,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-render"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "bytemuck",
  "earcutr",
@@ -2787,7 +2787,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-route"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "lamina-drc",
  "lamina-footprint",
@@ -2799,7 +2799,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-scene"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "geo",
  "lamina-drc",
@@ -2810,7 +2810,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-specctra"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "lamina-geom",
  "lamina-kicad",
@@ -2822,7 +2822,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-step"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "earcutr",
  "lamina-ports",
@@ -2830,7 +2830,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-viewer"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "eframe",
  "egui_kittest",
@@ -2852,7 +2852,7 @@ dependencies = [
 
 [[package]]
 name = "lamina-wiring"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "lamina-build",
  "lamina-core",
