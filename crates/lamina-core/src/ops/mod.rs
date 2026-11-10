@@ -43,7 +43,7 @@ pub use parts::{
 };
 pub use place::{
     Align, Axis, Distribute, FlipPart, Measure, Measurement, MoveParts, Place, PlaceMany,
-    RotatePart, Target, Unplace,
+    RotatePart, Target, Unplace, Unplaced,
 };
 pub use provider::{
     FetchLibrary, Fetched, ImportPart, ImportParts, LibraryInfo, MissingModel, ModelsRestored,
