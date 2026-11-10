@@ -650,6 +650,7 @@ mod tests {
                 track_width: Some(0.5),
                 via_diameter: Some(0.8),
                 via_drill: Some(0.4),
+                reference_plane: false,
             },
         );
         d.routing.tracks.push(Track {

@@ -1728,6 +1728,7 @@ mod tests {
                 track_width: Some(0.5),
                 via_diameter: None,
                 via_drill: None,
+                reference_plane: false,
             },
         );
         d.nets.nets.get_mut("GND").unwrap().class = Some("Power".into());

@@ -61,6 +61,7 @@ pub fn apply_project(d: &mut ProjectData, pro: &str) -> Result<Vec<String>, Stri
             track_width: num(c, "track_width").map(r6),
             via_diameter: num(c, "via_diameter").map(r6),
             via_drill: num(c, "via_drill").map(r6),
+            reference_plane: false,
         };
         if name == "Default" {
             if let Some(x) = class.clearance {

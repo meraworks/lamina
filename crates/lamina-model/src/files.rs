@@ -423,6 +423,10 @@ pub struct NetClass {
     pub via_diameter: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub via_drill: Option<f64>,
+    /// The tracks of this class need copper below them on the next layer.
+    /// The return path check uses it.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub reference_plane: bool,
 }
 
 // ---------------------------------------------------------------- parts.json
