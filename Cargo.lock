@@ -2660,6 +2660,7 @@ dependencies = [
  "lamina-model",
  "schemars",
  "serde",
+ "serde_json",
 ]
 
 [[package]]

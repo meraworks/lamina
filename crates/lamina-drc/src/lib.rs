@@ -1,8 +1,11 @@
 //! Design rule checks, connectivity and fab presets.
 
+mod holes;
 mod lengths;
+pub mod model;
 mod pairs;
 pub mod presets;
+pub mod registry;
 mod silk;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -13,40 +16,7 @@ use lamina_geom::{BoardGeometry, CopperItem, Index, Owner};
 use lamina_model::*;
 use serde::Serialize;
 
-/// Geometric and connectivity checks that accept severity overrides.
-pub const RULE_NAMES: &[&str] = &[
-    "annular_ring",
-    "clearance",
-    "copper_outside_board",
-    "copper_to_edge",
-    "courtyard_outside_board",
-    "courtyard_overlap",
-    "drill_size",
-    "diff_pair_gap",
-    "diff_pair_uncoupled",
-    "hole_to_hole",
-    "isolated_copper",
-    "keepout",
-    "length_out_of_range",
-    "mask_bridge",
-    "npth_inside_courtyard",
-    "short",
-    "short_nets",
-    "skew_out_of_range",
-    "silk_overlap",
-    "silk_text_size",
-    "silk_to_edge",
-    "silk_to_pad",
-    "stale_exclusion",
-    "starved_thermal",
-    "track_dangling",
-    "track_points",
-    "track_width",
-    "unplaced",
-    "unrouted",
-    "via_dangling",
-    "via_drill",
-];
+pub use registry::{CHECKS, CheckInfo, Family, RULE_NAMES, release_view};
 
 /// A missing connection, drawn as a ratsnest line.
 #[derive(Debug, Clone, PartialEq, Serialize, schemars::JsonSchema)]
@@ -126,7 +96,8 @@ pub fn analyze(d: &ProjectData) -> Analysis {
             .and_then(|n| d.nets.nets.get(n))
             .and_then(|n| n.class.clone())
     };
-    let mut v: Vec<Violation> = lengths::check(d);
+    let mut v: Vec<Violation> = model::validate(d);
+    v.extend(lengths::check(d));
     v.extend(pairs::check(d));
     for fill in &fills {
         for thermal in &fill.pad_thermals {
@@ -789,6 +760,7 @@ pub fn analyze(d: &ProjectData) -> Analysis {
     }
 
     v.extend(silk::check(d, &g, &fills));
+    v.extend(holes::hole_to_copper(d, &g));
     let roots: Vec<usize> = (0..items.len()).map(|i| dsu.find(i)).collect();
     v.extend(dangling(d, items, n_items, &index, &fill_index, &roots));
 

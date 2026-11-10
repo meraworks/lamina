@@ -13,6 +13,7 @@ serde.workspace = true
 schemars.workspace = true
 
 [dev-dependencies]
+serde_json.workspace = true
 lamina-footprint.workspace = true
 
 [lints]

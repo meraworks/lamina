@@ -220,9 +220,14 @@ impl Project {
         self.check_data(&self.data)
     }
 
+    /// The violations as `export` sees them. Open connections, parts with
+    /// no placement and import losses are errors for release.
+    pub fn check_release(&self) -> Vec<Violation> {
+        lamina_drc::release_view(&self.check(), &self.data.board.rules)
+    }
+
     fn check_data(&self, d: &ProjectData) -> Vec<Violation> {
-        let mut v = crate::validate::validate(d);
-        v.extend(lamina_drc::check(d));
+        let mut v = lamina_drc::check(d);
         for c in &self.checkers {
             v.extend(c(d));
         }
@@ -259,11 +264,22 @@ impl Project {
     ) -> Result<OpResult> {
         let before = self.current_violations();
         let after = self.check_data(&new);
-        let before_keys: BTreeSet<String> = before.iter().map(|v| v.key()).collect();
         let after_keys: BTreeSet<String> = after.iter().map(|v| v.key()).collect();
+        // Two violations can have one key (the two free ends of a track).
+        // Count them, so that the second one is also new.
+        let mut left: std::collections::BTreeMap<String, usize> = Default::default();
+        for v in &before {
+            *left.entry(v.key()).or_default() += 1;
+        }
         let new_violations: Vec<Violation> = after
             .iter()
-            .filter(|v| !before_keys.contains(&v.key()))
+            .filter(|v| match left.get_mut(&v.key()) {
+                Some(n) if *n > 0 => {
+                    *n -= 1;
+                    false
+                }
+                _ => true,
+            })
             .cloned()
             .collect();
         if strict {

@@ -595,3 +595,183 @@ fn zone_without_a_pad_connection_warns() {
     track(&mut d, "A", vec![pad, Point::new(4.0, 4.0)]);
     assert!(only(&analyze(&d), "isolated_copper").is_empty());
 }
+
+#[test]
+fn registry_ids_are_unique_and_old_ids_stay() {
+    let mut ids: Vec<&str> = lamina_drc::RULE_NAMES.to_vec();
+    let n = ids.len();
+    ids.sort();
+    ids.dedup();
+    assert_eq!(ids.len(), n, "a rule id is in the registry two times");
+    for old in [
+        "annular_ring",
+        "clearance",
+        "copper_outside_board",
+        "copper_to_edge",
+        "courtyard_outside_board",
+        "courtyard_overlap",
+        "drill_size",
+        "diff_pair_gap",
+        "diff_pair_uncoupled",
+        "hole_to_hole",
+        "isolated_copper",
+        "keepout",
+        "length_out_of_range",
+        "mask_bridge",
+        "npth_inside_courtyard",
+        "short",
+        "short_nets",
+        "skew_out_of_range",
+        "silk_overlap",
+        "silk_text_size",
+        "silk_to_edge",
+        "silk_to_pad",
+        "stale_exclusion",
+        "starved_thermal",
+        "track_dangling",
+        "track_points",
+        "track_width",
+        "unplaced",
+        "unrouted",
+        "via_dangling",
+        "via_drill",
+        "pin_role",
+        "unknown_net",
+    ] {
+        assert!(ids.contains(&old), "{old} is not in the registry");
+    }
+}
+
+#[test]
+fn registry_fields_are_rules_fields() {
+    let rules = serde_json::to_value(Rules::default()).unwrap();
+    for c in lamina_drc::CHECKS {
+        for f in c.fields {
+            assert!(
+                rules.get(f).is_some(),
+                "{}: `{f}` is not a rule field",
+                c.id
+            );
+        }
+    }
+}
+
+#[test]
+fn bad_data_gives_violations_and_does_not_panic() {
+    let mut d = board();
+    d.board.outline = Some(Contour::rect(0.0, 0.0, f64::NAN, 20.0));
+    d.routing.zones.push(Zone {
+        id: "z1".into(),
+        net: Some("A".into()),
+        layers: vec![Layer::TOP],
+        // A bow tie: the outline crosses itself.
+        outline: Contour {
+            vertices: vec![
+                Vertex::line(1.0, 1.0),
+                Vertex::line(9.0, 9.0),
+                Vertex::line(9.0, 1.0),
+                Vertex::line(1.0, 9.0),
+            ],
+        },
+        priority: 0,
+        clearance: None,
+        min_width: None,
+        pad_connection: PadConnection::Thermal,
+        thermal_gap: 0.3,
+        thermal_spoke: 0.3,
+    });
+    let a = analyze(&d);
+    let r = rules(&a);
+    assert!(r.contains(&"bad_outline"), "{r:?}");
+    assert!(r.contains(&"zone_outline"), "{r:?}");
+}
+
+#[test]
+fn release_view_makes_open_connections_errors() {
+    let d = board();
+    let a = analyze(&d);
+    let open = |v: &[Violation]| {
+        v.iter()
+            .find(|v| v.rule == "unrouted")
+            .map(|v| v.severity)
+            .unwrap()
+    };
+    assert_eq!(open(&a.violations), Severity::Warning);
+    assert_eq!(
+        open(&lamina_drc::release_view(&a.violations, &d.board.rules)),
+        Severity::Error
+    );
+    let mut d = d;
+    d.board
+        .rules
+        .severities
+        .insert("unrouted".into(), RuleSeverity::Warning);
+    let a = analyze(&d);
+    assert_eq!(
+        open(&lamina_drc::release_view(&a.violations, &d.board.rules)),
+        Severity::Warning
+    );
+}
+
+fn hole(d: &mut ProjectData, at: Point, plated: bool) {
+    d.board.holes.push(Hole {
+        id: "h1".into(),
+        at,
+        drill: Drill::Round { diameter: 1.0 },
+        plated,
+        pad_diameter: plated.then_some(1.6),
+        net: plated.then(|| "A".to_string()),
+        rotation: 0.0,
+    });
+}
+
+#[test]
+fn track_through_a_non_plated_hole_is_an_error() {
+    let mut d = board();
+    hole(&mut d, Point::new(15.0, 5.0), false);
+    track(
+        &mut d,
+        "A",
+        vec![Point::new(12.0, 5.0), Point::new(18.0, 5.0)],
+    );
+    let a = analyze(&d);
+    let v = only(&a, "hole_to_copper");
+    assert_eq!(v.len(), 1, "{:?}", a.violations);
+    assert_eq!(v[0].severity, Severity::Error);
+    assert_eq!(v[0].required, Some(0.2));
+    assert_eq!(v[0].actual, Some(0.0));
+}
+
+#[test]
+fn track_at_the_hole_limit_is_quiet_and_just_inside_is_not() {
+    // Hole radius 0.5, track half width 0.125, limit 0.2: centre distance 0.825.
+    let mut d = board();
+    hole(&mut d, Point::new(15.0, 5.0), false);
+    track(
+        &mut d,
+        "A",
+        vec![Point::new(12.0, 5.825), Point::new(18.0, 5.825)],
+    );
+    assert!(only(&analyze(&d), "hole_to_copper").is_empty());
+    d.routing.tracks[0].points = vec![Point::new(12.0, 5.82), Point::new(18.0, 5.82)];
+    assert_eq!(only(&analyze(&d), "hole_to_copper").len(), 1);
+}
+
+#[test]
+fn copper_of_the_net_of_a_plated_hole_can_touch_it() {
+    let mut d = board();
+    hole(&mut d, Point::new(15.0, 5.0), true);
+    track(
+        &mut d,
+        "A",
+        vec![Point::new(12.0, 5.0), Point::new(15.0, 5.0)],
+    );
+    assert!(only(&analyze(&d), "hole_to_copper").is_empty());
+    // A track of another net at the hole is a violation.
+    track(
+        &mut d,
+        "B",
+        vec![Point::new(15.0, 5.6), Point::new(15.0, 8.0)],
+    );
+    assert_eq!(only(&analyze(&d), "hole_to_copper").len(), 1);
+}

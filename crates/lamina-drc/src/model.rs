@@ -1,5 +1,5 @@
-//! Model checks that run after each change. DRC adds geometric checks to
-//! these checks.
+//! Model checks: data that is not valid or does not agree. They run before
+//! the geometric checks.
 
 use std::collections::BTreeMap;
 
@@ -106,6 +106,24 @@ pub fn validate(d: &ProjectData) -> Vec<Violation> {
     }
 
     pin_roles(d, &mut v);
+
+    for (id, outline) in d
+        .routing
+        .zones
+        .iter()
+        .map(|z| (&z.id, &z.outline))
+        .chain(d.routing.keepouts.iter().map(|k| (&k.id, &k.outline)))
+    {
+        if let Err(e) = outline_ok(outline) {
+            v.push(
+                Violation::error(
+                    "zone_outline",
+                    format!("The outline of {id} is not valid: {e}"),
+                )
+                .items([id.clone()]),
+            );
+        }
+    }
 
     let net_exists = |n: &str| d.nets.nets.contains_key(n);
     for t in &d.routing.tracks {
@@ -224,4 +242,27 @@ fn pin_roles(d: &ProjectData, v: &mut Vec<Violation>) {
             v.push(Violation::warning("pin_role", msg).items([p.to_string(), net.clone()]));
         }
     }
+}
+
+/// Check that an outline is a shape that the polygon code can use.
+pub fn outline_ok(c: &Contour) -> Result<(), String> {
+    c.check()?;
+    let pts = c.flatten(0.02);
+    if pts.len() < 3 {
+        return Err("The outline has fewer than 3 points.".into());
+    }
+    let n = pts.len();
+    for i in 0..n {
+        let (a, b) = (pts[i], pts[(i + 1) % n]);
+        for j in (i + 2)..n {
+            if i == 0 && j == n - 1 {
+                continue;
+            }
+            let (p, q) = (pts[j], pts[(j + 1) % n]);
+            if lamina_geom::prim::segments_intersect(a, b, p, q) {
+                return Err("The outline crosses itself.".into());
+            }
+        }
+    }
+    Ok(())
 }

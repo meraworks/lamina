@@ -161,6 +161,10 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
     let mut out = Vec::new();
 
     for z in zones {
+        // The model checks report an outline that is not valid.
+        if z.outline.check().is_err() {
+            continue;
+        }
         let zone_class = class_of(&z.net);
         for layer in &z.layers {
             let Some(c) = layer.copper() else { continue };
@@ -222,13 +226,18 @@ pub fn fill_zones(d: &ProjectData, g: &BoardGeometry) -> Vec<ZoneFill> {
                 }
             }
             for dr in &g.drills {
+                if l < dr.layers.0 || l > dr.layers.1 {
+                    continue;
+                }
                 if !dr.plated {
                     let clearance = if matches!(dr.prim, Prim::Capsule { .. }) {
                         zc.max(rules.copper_to_edge)
                     } else {
                         zc
                     };
-                    obstacles.push(inflate(&dr.prim, clearance));
+                    obstacles.push(inflate(&dr.prim, clearance.max(rules.hole_to_copper)));
+                } else if !(z.net.is_some() && dr.net == z.net) {
+                    obstacles.push(inflate(&dr.prim, rules.hole_to_copper));
                 }
             }
             for k in &d.routing.keepouts {

@@ -1,0 +1,871 @@
+# violations
+Error | annular_ring |  | J1.SH | The annular ring of J1.SH is 0.2 mm, but the minimum is 0.3 mm | 30.680,4.225
+Error | annular_ring |  | J1.SH | The annular ring of J1.SH is 0.2 mm, but the minimum is 0.3 mm | 30.680,8.405
+Error | annular_ring |  | J1.SH | The annular ring of J1.SH is 0.2 mm, but the minimum is 0.3 mm | 39.320,4.225
+Error | annular_ring |  | J1.SH | The annular ring of J1.SH is 0.2 mm, but the minimum is 0.3 mm | 39.320,8.405
+Error | annular_ring |  | U1.41 | The annular ring of U1.41 is 0.15 mm, but the minimum is 0.3 mm | 32.100,50.540
+Error | annular_ring |  | U1.41 | The annular ring of U1.41 is 0.15 mm, but the minimum is 0.3 mm | 32.100,51.940
+Error | annular_ring |  | U1.41 | The annular ring of U1.41 is 0.15 mm, but the minimum is 0.3 mm | 32.800,49.840
+Error | annular_ring |  | U1.41 | The annular ring of U1.41 is 0.15 mm, but the minimum is 0.3 mm | 32.800,51.240
+Error | annular_ring |  | U1.41 | The annular ring of U1.41 is 0.15 mm, but the minimum is 0.3 mm | 32.800,52.640
+Error | annular_ring |  | U1.41 | The annular ring of U1.41 is 0.15 mm, but the minimum is 0.3 mm | 33.500,50.540
+Error | annular_ring |  | U1.41 | The annular ring of U1.41 is 0.15 mm, but the minimum is 0.3 mm | 33.500,51.940
+Error | annular_ring |  | U1.41 | The annular ring of U1.41 is 0.15 mm, but the minimum is 0.3 mm | 34.200,49.840
+Error | annular_ring |  | U1.41 | The annular ring of U1.41 is 0.15 mm, but the minimum is 0.3 mm | 34.200,51.240
+Error | annular_ring |  | U1.41 | The annular ring of U1.41 is 0.15 mm, but the minimum is 0.3 mm | 34.200,52.640
+Error | annular_ring |  | U1.41 | The annular ring of U1.41 is 0.15 mm, but the minimum is 0.3 mm | 34.900,50.540
+Error | annular_ring |  | U1.41 | The annular ring of U1.41 is 0.15 mm, but the minimum is 0.3 mm | 34.900,51.940
+Error | annular_ring |  | v1 | The annular ring of v1 is 0.15 mm, but the minimum is 0.3 mm | 25.029,47.001
+Error | annular_ring |  | v10 | The annular ring of v10 is 0.15 mm, but the minimum is 0.3 mm | 35.952,33.242
+Error | annular_ring |  | v11 | The annular ring of v11 is 0.15 mm, but the minimum is 0.3 mm | 20.746,36.563
+Error | annular_ring |  | v12 | The annular ring of v12 is 0.15 mm, but the minimum is 0.3 mm | 20.136,53.243
+Error | annular_ring |  | v13 | The annular ring of v13 is 0.15 mm, but the minimum is 0.3 mm | 26.549,30.212
+Error | annular_ring |  | v14 | The annular ring of v14 is 0.15 mm, but the minimum is 0.3 mm | 23.363,34.212
+Error | annular_ring |  | v15 | The annular ring of v15 is 0.15 mm, but the minimum is 0.3 mm | 20.698,30.878
+Error | annular_ring |  | v16 | The annular ring of v16 is 0.15 mm, but the minimum is 0.3 mm | 32.855,18.417
+Error | annular_ring |  | v17 | The annular ring of v17 is 0.15 mm, but the minimum is 0.3 mm | 32.600,10.280
+Error | annular_ring |  | v18 | The annular ring of v18 is 0.15 mm, but the minimum is 0.3 mm | 37.438,13.000
+Error | annular_ring |  | v19 | The annular ring of v19 is 0.15 mm, but the minimum is 0.3 mm | 37.400,10.280
+Error | annular_ring |  | v2 | The annular ring of v2 is 0.15 mm, but the minimum is 0.3 mm | 36.850,25.676
+Error | annular_ring |  | v20 | The annular ring of v20 is 0.15 mm, but the minimum is 0.3 mm | 20.142,39.596
+Error | annular_ring |  | v21 | The annular ring of v21 is 0.15 mm, but the minimum is 0.3 mm | 35.721,17.375
+Error | annular_ring |  | v22 | The annular ring of v22 is 0.15 mm, but the minimum is 0.3 mm | 35.402,11.094
+Error | annular_ring |  | v23 | The annular ring of v23 is 0.15 mm, but the minimum is 0.3 mm | 16.766,26.650
+Error | annular_ring |  | v24 | The annular ring of v24 is 0.2 mm, but the minimum is 0.3 mm | 28.274,16.100
+Error | annular_ring |  | v25 | The annular ring of v25 is 0.15 mm, but the minimum is 0.3 mm | 32.972,31.149
+Error | annular_ring |  | v26 | The annular ring of v26 is 0.15 mm, but the minimum is 0.3 mm | 37.039,31.149
+Error | annular_ring |  | v27 | The annular ring of v27 is 0.15 mm, but the minimum is 0.3 mm | 41.210,37.966
+Error | annular_ring |  | v28 | The annular ring of v28 is 0.15 mm, but the minimum is 0.3 mm | 32.202,36.788
+Error | annular_ring |  | v29 | The annular ring of v29 is 0.15 mm, but the minimum is 0.3 mm | 44.027,34.375
+Error | annular_ring |  | v3 | The annular ring of v3 is 0.15 mm, but the minimum is 0.3 mm | 45.000,45.826
+Error | annular_ring |  | v30 | The annular ring of v30 is 0.15 mm, but the minimum is 0.3 mm | 43.986,37.374
+Error | annular_ring |  | v31 | The annular ring of v31 is 0.15 mm, but the minimum is 0.3 mm | 33.073,37.374
+Error | annular_ring |  | v32 | The annular ring of v32 is 0.15 mm, but the minimum is 0.3 mm | 44.522,36.318
+Error | annular_ring |  | v33 | The annular ring of v33 is 0.15 mm, but the minimum is 0.3 mm | 34.336,39.297
+Error | annular_ring |  | v34 | The annular ring of v34 is 0.15 mm, but the minimum is 0.3 mm | 19.479,25.674
+Error | annular_ring |  | v35 | The annular ring of v35 is 0.15 mm, but the minimum is 0.3 mm | 16.139,39.007
+Error | annular_ring |  | v36 | The annular ring of v36 is 0.15 mm, but the minimum is 0.3 mm | 24.125,23.053
+Error | annular_ring |  | v37 | The annular ring of v37 is 0.15 mm, but the minimum is 0.3 mm | 18.262,35.805
+Error | annular_ring |  | v38 | The annular ring of v38 is 0.15 mm, but the minimum is 0.3 mm | 35.562,34.688
+Error | annular_ring |  | v39 | The annular ring of v39 is 0.15 mm, but the minimum is 0.3 mm | 31.267,42.441
+Error | annular_ring |  | v4 | The annular ring of v4 is 0.15 mm, but the minimum is 0.3 mm | 45.000,40.575
+Error | annular_ring |  | v40 | The annular ring of v40 is 0.15 mm, but the minimum is 0.3 mm | 19.665,32.654
+Error | annular_ring |  | v41 | The annular ring of v41 is 0.15 mm, but the minimum is 0.3 mm | 28.277,42.445
+Error | annular_ring |  | v42 | The annular ring of v42 is 0.15 mm, but the minimum is 0.3 mm | 34.272,18.594
+Error | annular_ring |  | v43 | The annular ring of v43 is 0.15 mm, but the minimum is 0.3 mm | 18.545,40.309
+Error | annular_ring |  | v44 | The annular ring of v44 is 0.15 mm, but the minimum is 0.3 mm | 18.433,39.540
+Error | annular_ring |  | v45 | The annular ring of v45 is 0.15 mm, but the minimum is 0.3 mm | 15.574,40.305
+Error | annular_ring |  | v46 | The annular ring of v46 is 0.15 mm, but the minimum is 0.3 mm | 54.432,41.188
+Error | annular_ring |  | v47 | The annular ring of v47 is 0.15 mm, but the minimum is 0.3 mm | 39.389,45.826
+Error | annular_ring |  | v48 | The annular ring of v48 is 0.15 mm, but the minimum is 0.3 mm | 20.273,48.770
+Error | annular_ring |  | v49 | The annular ring of v49 is 0.2 mm, but the minimum is 0.3 mm | 38.943,29.281
+Error | annular_ring |  | v5 | The annular ring of v5 is 0.15 mm, but the minimum is 0.3 mm | 57.748,37.548
+Error | annular_ring |  | v50 | The annular ring of v50 is 0.15 mm, but the minimum is 0.3 mm | 21.650,36.400
+Error | annular_ring |  | v51 | The annular ring of v51 is 0.2 mm, but the minimum is 0.3 mm | 48.650,21.624
+Error | annular_ring |  | v52 | The annular ring of v52 is 0.15 mm, but the minimum is 0.3 mm | 53.500,25.200
+Error | annular_ring |  | v53 | The annular ring of v53 is 0.2 mm, but the minimum is 0.3 mm | 15.855,33.691
+Error | annular_ring |  | v6 | The annular ring of v6 is 0.15 mm, but the minimum is 0.3 mm | 25.637,30.753
+Error | annular_ring |  | v7 | The annular ring of v7 is 0.15 mm, but the minimum is 0.3 mm | 19.249,36.807
+Error | annular_ring |  | v8 | The annular ring of v8 is 0.15 mm, but the minimum is 0.3 mm | 23.085,55.285
+Error | annular_ring |  | v9 | The annular ring of v9 is 0.2 mm, but the minimum is 0.3 mm | 15.828,24.772
+Error | clearance | bottom | J3.1,t193 | J3.1 and t193 are 0.29 mm apart on bottom (SERVO1 / GND), but the minimum clearance is 0.3 mm | 13.355,35.888
+Error | clearance | bottom | J3.3,t507 | J3.3 and t507 are 0.162 mm apart on bottom (GND / FIRE2), but the minimum clearance is 0.3 mm | 13.421,41.025
+Error | clearance | bottom | J3.3,t509 | J3.3 and t509 are 0.158 mm apart on bottom (GND / FIRE2), but the minimum clearance is 0.3 mm | 14.611,41.366
+Error | clearance | bottom | J4.1,t274 | J4.1 and t274 are 0.279 mm apart on bottom (SERVO2 / VSYS), but the minimum clearance is 0.3 mm | 13.336,27.413
+Error | clearance | bottom | J9.1,t324 | J9.1 and t324 are 0.289 mm apart on bottom (PYRO_V / USB_DP), but the minimum clearance is 0.3 mm | 23.865,16.807
+Error | clearance | bottom | J9.2,t324 | J9.2 and t324 are 0.289 mm apart on bottom (PYRO2_DRAIN / USB_DP), but the minimum clearance is 0.3 mm | 25.115,16.807
+Error | clearance | bottom | t11,v32 | t11 and v32 are 0.174 mm apart on bottom (FIRE1 / SPI_SCK), but the minimum clearance is 0.3 mm | 44.821,36.759
+Error | clearance | bottom | t174,v40 | t174 and v40 are 0.152 mm apart on bottom (GND / CONT1_SENSE), but the minimum clearance is 0.3 mm | 19.424,32.353
+Error | clearance | bottom | t176,t502 | t176 and t502 are 0.276 mm apart on bottom (GND / FIRE2), but the minimum clearance is 0.3 mm | 12.757,32.854
+Error | clearance | bottom | t178,v35 | t178 and v35 are 0.194 mm apart on bottom (GND / VBAT_SENSE), but the minimum clearance is 0.3 mm | 16.993,38.607
+Error | clearance | bottom | t183,t502 | t183 and t502 are 0.276 mm apart on bottom (GND / FIRE2), but the minimum clearance is 0.3 mm | 12.651,36.079
+Error | clearance | bottom | t189,v35 | t189 and v35 are 0.152 mm apart on bottom (GND / VBAT_SENSE), but the minimum clearance is 0.3 mm | 15.681,39.308
+Error | clearance | bottom | t189,v45 | t189 and v45 are 0.246 mm apart on bottom (GND / SERVO2), but the minimum clearance is 0.3 mm | 15.399,39.957
+Error | clearance | bottom | t193,t502 | t193 and t502 are 0.276 mm apart on bottom (GND / FIRE2), but the minimum clearance is 0.3 mm | 12.435,34.519
+Error | clearance | bottom | t220,v2 | t220 and v2 are 0.254 mm apart on bottom (PYRO1_DRAIN / FIRE1), but the minimum clearance is 0.3 mm | 32.189,25.224
+Error | clearance | bottom | t220,v34 | t220 and v34 are 0.252 mm apart on bottom (PYRO1_DRAIN / VBAT_SENSE), but the minimum clearance is 0.3 mm | 23.504,25.223
+Error | clearance | bottom | t249,v48 | t249 and v48 are 0.22 mm apart on bottom (3V3 / BOOT), but the minimum clearance is 0.3 mm | 19.913,49.468
+Error | clearance | bottom | t254,v20 | t254 and v20 are 0.152 mm apart on bottom (3V3 / USB_DP), but the minimum clearance is 0.3 mm | 20.468,40.559
+Error | clearance | bottom | t271,t503 | t271 and t503 are 0.152 mm apart on bottom (VSYS / FIRE2), but the minimum clearance is 0.3 mm | 21.118,20.037
+Error | clearance | bottom | t271,t508 | t271 and t508 are 0.177 mm apart on bottom (VSYS / FIRE2), but the minimum clearance is 0.3 mm | 27.278,18.131
+Error | clearance | bottom | t271,t510 | t271 and t510 are 0.177 mm apart on bottom (VSYS / FIRE2), but the minimum clearance is 0.3 mm | 25.116,18.166
+Error | clearance | bottom | t272,t502 | t272 and t502 are 0.187 mm apart on bottom (VSYS / FIRE2), but the minimum clearance is 0.3 mm | 12.612,31.733
+Error | clearance | bottom | t273,t344 | t273 and t344 are 0.152 mm apart on bottom (VSYS / USB_DN), but the minimum clearance is 0.3 mm | 21.738,20.586
+Error | clearance | bottom | t273,t346 | t273 and t346 are 0.152 mm apart on bottom (VSYS / USB_DN), but the minimum clearance is 0.3 mm | 15.439,23.379
+Error | clearance | bottom | t273,t348 | t273 and t348 are 0.152 mm apart on bottom (VSYS / USB_DN), but the minimum clearance is 0.3 mm | 16.711,21.858
+Error | clearance | bottom | t273,t502 | t273 and t502 are 0.187 mm apart on bottom (VSYS / FIRE2), but the minimum clearance is 0.3 mm | 14.201,27.486
+Error | clearance | bottom | t273,t503 | t273 and t503 are 0.152 mm apart on bottom (VSYS / FIRE2), but the minimum clearance is 0.3 mm | 16.072,21.823
+Error | clearance | bottom | t273,t510 | t273 and t510 are 0.177 mm apart on bottom (VSYS / FIRE2), but the minimum clearance is 0.3 mm | 20.070,19.952
+Error | clearance | bottom | t274,t502 | t274 and t502 are 0.187 mm apart on bottom (VSYS / FIRE2), but the minimum clearance is 0.3 mm | 12.415,30.404
+Error | clearance | bottom | t274,t503 | t274 and t503 are 0.152 mm apart on bottom (VSYS / FIRE2), but the minimum clearance is 0.3 mm | 14.286,24.741
+Error | clearance | bottom | t317,t504 | t317 and t504 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 32.893,17.780
+Error | clearance | bottom | t317,t506 | t317 and t506 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 31.397,17.576
+Error | clearance | bottom | t317,t508 | t317 and t508 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 30.071,17.610
+Error | clearance | bottom | t317,t510 | t317 and t510 are 0.29 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 27.909,17.645
+Error | clearance | bottom | t318,t505 | t318 and t505 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 16.557,41.728
+Error | clearance | bottom | t318,t507 | t318 and t507 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 14.111,41.792
+Error | clearance | bottom | t318,t509 | t318 and t509 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 15.302,42.134
+Error | clearance | bottom | t319,t502 | t319 and t502 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 12.358,37.258
+Error | clearance | bottom | t319,t507 | t319 and t507 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 12.700,41.392
+Error | clearance | bottom | t319,t509 | t319 and t509 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 13.890,41.733
+Error | clearance | bottom | t320,v43 | t320 and v43 are 0.2 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 18.659,40.637
+Error | clearance | bottom | t321,t502 | t321 and t502 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 11.958,32.983
+Error | clearance | bottom | t321,t503 | t321 and t503 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 13.829,27.320
+Error | clearance | bottom | t321,t507 | t321 and t507 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 12.300,37.116
+Error | clearance | bottom | t322,t502 | t322 and t502 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 13.888,27.178
+Error | clearance | bottom | t322,t503 | t322 and t503 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 15.759,21.515
+Error | clearance | bottom | t322,t510 | t322 and t510 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 19.757,19.644
+Error | clearance | bottom | t323,t506 | t323 and t506 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 29.463,17.610
+Error | clearance | bottom | t323,t508 | t323 and t508 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 28.137,17.645
+Error | clearance | bottom | t323,t510 | t323 and t510 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 25.975,17.680
+Error | clearance | bottom | t324,t503 | t324 and t503 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 19.815,19.585
+Error | clearance | bottom | t324,t506 | t324 and t506 are 0.153 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 27.301,17.645
+Error | clearance | bottom | t324,t508 | t324 and t508 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 25.975,17.680
+Error | clearance | bottom | t324,t510 | t324 and t510 are 0.152 mm apart on bottom (USB_DP / FIRE2), but the minimum clearance is 0.3 mm | 23.813,17.714
+Error | clearance | bottom | t341,t459 | t341 and t459 are 0.152 mm apart on bottom (USB_DN / VBAT_SENSE), but the minimum clearance is 0.3 mm | 16.436,25.816
+Error | clearance | bottom | t341,t460 | t341 and t460 are 0.152 mm apart on bottom (USB_DN / VBAT_SENSE), but the minimum clearance is 0.3 mm | 15.326,25.673
+Error | clearance | bottom | t341,t463 | t341 and t463 are 0.152 mm apart on bottom (USB_DN / VBAT_SENSE), but the minimum clearance is 0.3 mm | 15.182,25.363
+Error | clearance | bottom | t344,v42 | t344 and v42 are 0.163 mm apart on bottom (USB_DN / FIRE2), but the minimum clearance is 0.3 mm | 30.753,18.888
+Error | clearance | bottom | t345,v21 | t345 and v21 are 0.174 mm apart on bottom (USB_DN / USB_DP), but the minimum clearance is 0.3 mm | 36.020,16.092
+Error | clearance | bottom | t346,t460 | t346 and t460 are 0.152 mm apart on bottom (USB_DN / VBAT_SENSE), but the minimum clearance is 0.3 mm | 14.980,25.078
+Error | clearance | bottom | t346,t461 | t346 and t461 are 0.152 mm apart on bottom (USB_DN / VBAT_SENSE), but the minimum clearance is 0.3 mm | 15.182,24.257
+Error | clearance | bottom | t346,t463 | t346 and t463 are 0.152 mm apart on bottom (USB_DN / VBAT_SENSE), but the minimum clearance is 0.3 mm | 14.836,24.768
+Error | clearance | bottom | t347,v21 | t347 and v21 are 0.162 mm apart on bottom (USB_DN / USB_DP), but the minimum clearance is 0.3 mm | 35.626,17.885
+Error | clearance | bottom | t348,t461 | t348 and t461 are 0.152 mm apart on bottom (USB_DN / VBAT_SENSE), but the minimum clearance is 0.3 mm | 16.454,22.736
+Error | clearance | bottom | t348,t463 | t348 and t463 are 0.152 mm apart on bottom (USB_DN / VBAT_SENSE), but the minimum clearance is 0.3 mm | 16.108,23.247
+Error | clearance | bottom | t348,t464 | t348 and t464 are 0.152 mm apart on bottom (USB_DN / VBAT_SENSE), but the minimum clearance is 0.3 mm | 18.726,22.390
+Error | clearance | bottom | t392,t473 | t392 and t473 are 0.202 mm apart on bottom (3V3_SENSOR / IMU_FSYNC), but the minimum clearance is 0.3 mm | 31.535,37.794
+Error | clearance | bottom | t392,t474 | t392 and t474 are 0.152 mm apart on bottom (3V3_SENSOR / IMU_FSYNC), but the minimum clearance is 0.3 mm | 31.961,35.881
+Error | clearance | bottom | t392,v28 | t392 and v28 are 0.186 mm apart on bottom (3V3_SENSOR / SPI_MISO), but the minimum clearance is 0.3 mm | 32.053,36.505
+Error | clearance | bottom | t393,v38 | t393 and v38 are 0.187 mm apart on bottom (3V3_SENSOR / IMU_FSYNC), but the minimum clearance is 0.3 mm | 35.723,34.959
+Error | clearance | bottom | t395,v10 | t395 and v10 are 0.212 mm apart on bottom (3V3_SENSOR / 3V3), but the minimum clearance is 0.3 mm | 36.270,33.040
+Error | clearance | bottom | t396,t473 | t396 and t473 are 0.202 mm apart on bottom (3V3_SENSOR / IMU_FSYNC), but the minimum clearance is 0.3 mm | 31.391,38.078
+Error | clearance | bottom | t396,t474 | t396 and t474 are 0.152 mm apart on bottom (3V3_SENSOR / IMU_FSYNC), but the minimum clearance is 0.3 mm | 31.818,36.165
+Error | clearance | bottom | t396,v28 | t396 and v28 are 0.16 mm apart on bottom (3V3_SENSOR / SPI_MISO), but the minimum clearance is 0.3 mm | 31.910,36.789
+Error | clearance | bottom | t397,t473 | t397 and t473 are 0.202 mm apart on bottom (3V3_SENSOR / IMU_FSYNC), but the minimum clearance is 0.3 mm | 31.615,38.442
+Error | clearance | bottom | t397,v28 | t397 and v28 are 0.189 mm apart on bottom (3V3_SENSOR / SPI_MISO), but the minimum clearance is 0.3 mm | 32.133,37.154
+Error | clearance | bottom | t398,v31 | t398 and v31 are 0.167 mm apart on bottom (3V3_SENSOR / SPI_MOSI), but the minimum clearance is 0.3 mm | 34.967,37.670
+Error | clearance | bottom | t400,t474 | t400 and t474 are 0.152 mm apart on bottom (3V3_SENSOR / IMU_FSYNC), but the minimum clearance is 0.3 mm | 32.852,35.738
+Error | clearance | bottom | t419,v31 | t419 and v31 are 0.161 mm apart on bottom (SPI_MISO / SPI_MOSI), but the minimum clearance is 0.3 mm | 34.991,37.081
+Error | clearance | bottom | t430,v27 | t430 and v27 are 0.167 mm apart on bottom (SPI_MOSI / 3V3_SENSOR), but the minimum clearance is 0.3 mm | 39.870,37.670
+Error | clearance | bottom | t442,v30 | t442 and v30 are 0.152 mm apart on bottom (SPI_SCK / SPI_MOSI), but the minimum clearance is 0.3 mm | 44.275,37.184
+Error | clearance | bottom | t445,v30 | t445 and v30 are 0.164 mm apart on bottom (SPI_SCK / SPI_MOSI), but the minimum clearance is 0.3 mm | 43.858,37.919
+Error | clearance | bottom | t460,v9 | t460 and v9 are 0.267 mm apart on bottom (VBAT_SENSE / PYRO1_DRAIN), but the minimum clearance is 0.3 mm | 15.576,25.079
+Error | clearance | bottom | t461,v9 | t461 and v9 are 0.272 mm apart on bottom (VBAT_SENSE / PYRO1_DRAIN), but the minimum clearance is 0.3 mm | 15.778,24.259
+Error | clearance | bottom | t463,v9 | t463 and v9 are 0.267 mm apart on bottom (VBAT_SENSE / PYRO1_DRAIN), but the minimum clearance is 0.3 mm | 15.433,24.770
+Error | clearance | bottom | t506,v16 | t506 and v16 are 0.215 mm apart on bottom (FIRE2 / VSYS), but the minimum clearance is 0.3 mm | 31.864,18.097
+Error | clearance | bottom | t522,v43 | t522 and v43 are 0.198 mm apart on bottom (SERVO2 / FIRE2), but the minimum clearance is 0.3 mm | 18.298,40.116
+Error | clearance | bottom | t609,v46 | t609 and v46 are 0.282 mm apart on bottom (VBAT / SERVO4), but the minimum clearance is 0.3 mm | 53.966,38.044
+Error | clearance | top | BZ1.1,v3 | BZ1.1 and v3 are 0.2 mm apart on top (BUZZER / FIRE1), but the minimum clearance is 0.3 mm | 45.575,46.663
+Error | clearance | top | C15.2,t523 | C15.2 and t523 are 0.25 mm apart on top (GND / IMU_INT), but the minimum clearance is 0.3 mm | 30.795,36.142
+Error | clearance | top | C16.1,v10 | C16.1 and v10 are 0.289 mm apart on top (3V3_SENSOR / 3V3), but the minimum clearance is 0.3 mm | 36.226,33.734
+Error | clearance | top | C16.1,v38 | C16.1 and v38 are 0.203 mm apart on top (3V3_SENSOR / IMU_FSYNC), but the minimum clearance is 0.3 mm | 36.031,34.456
+Error | clearance | top | C17.1,t108 | C17.1 and t108 are 0.173 mm apart on top (3V3_SENSOR / GND), but the minimum clearance is 0.3 mm | 41.101,31.899
+Error | clearance | top | C17.1,t124 | C17.1 and t124 are 0.2 mm apart on top (3V3_SENSOR / GND), but the minimum clearance is 0.3 mm | 40.896,31.087
+Error | clearance | top | C18.1,t111 | C18.1 and t111 are 0.28 mm apart on top (3V3_SENSOR / GND), but the minimum clearance is 0.3 mm | 35.032,27.148
+Error | clearance | top | C18.1,t78 | C18.1 and t78 are 0.175 mm apart on top (3V3_SENSOR / GND), but the minimum clearance is 0.3 mm | 34.536,27.262
+Error | clearance | top | C18.1,t84 | C18.1 and t84 are 0.206 mm apart on top (3V3_SENSOR / GND), but the minimum clearance is 0.3 mm | 34.422,27.676
+Error | clearance | top | C18.2,t382 | C18.2 and t382 are 0.295 mm apart on top (GND / 3V3_SENSOR), but the minimum clearance is 0.3 mm | 36.131,28.050
+Error | clearance | top | C19.1,t159 | C19.1 and t159 are 0.186 mm apart on top (VBAT_SENSE / GND), but the minimum clearance is 0.3 mm | 24.173,24.405
+Error | clearance | top | C3.1,t143 | C3.1 and t143 are 0.169 mm apart on top (EN / GND), but the minimum clearance is 0.3 mm | 20.470,51.933
+Error | clearance | top | C3.1,v12 | C3.1 and v12 are 0.259 mm apart on top (EN / 3V3), but the minimum clearance is 0.3 mm | 20.430,52.771
+Error | clearance | top | C3.2,t448 | C3.2 and t448 are 0.231 mm apart on top (GND / VBAT_SENSE), but the minimum clearance is 0.3 mm | 22.678,50.959
+Error | clearance | top | C9.2,t584 | C9.2 and t584 are 0.193 mm apart on top (GND / FB_5V), but the minimum clearance is 0.3 mm | 50.141,23.739
+Error | clearance | top | D1.2,t307 | D1.2 and t307 are 0.153 mm apart on top (VBUS / USB_DP), but the minimum clearance is 0.3 mm | 36.286,16.431
+Error | clearance | top | D1.2,t308 | D1.2 and t308 are 0.153 mm apart on top (VBUS / USB_DP), but the minimum clearance is 0.3 mm | 36.236,17.287
+Error | clearance | top | D1.2,t311 | D1.2 and t311 are 0.161 mm apart on top (VBUS / USB_DP), but the minimum clearance is 0.3 mm | 37.094,17.418
+Error | clearance | top | D1.2,t313 | D1.2 and t313 are 0.219 mm apart on top (VBUS / USB_DP), but the minimum clearance is 0.3 mm | 36.634,17.672
+Error | clearance | top | D1.2,t314 | D1.2 and t314 are 0.153 mm apart on top (VBUS / USB_DP), but the minimum clearance is 0.3 mm | 36.286,17.409
+Error | clearance | top | D1.2,t316 | D1.2 and t316 are 0.207 mm apart on top (VBUS / USB_DP), but the minimum clearance is 0.3 mm | 36.357,17.601
+Error | clearance | top | D1.2,v21 | D1.2 and v21 are 0.179 mm apart on top (VBUS / USB_DP), but the minimum clearance is 0.3 mm | 36.186,17.287
+Error | clearance | top | D2.1,t449 | D2.1 and t449 are 0.173 mm apart on top (VSYS / VBAT_SENSE), but the minimum clearance is 0.3 mm | 18.123,35.042
+Error | clearance | top | D2.1,t455 | D2.1 and t455 are 0.2 mm apart on top (VSYS / VBAT_SENSE), but the minimum clearance is 0.3 mm | 17.962,32.947
+Error | clearance | top | FB1.2,t23 | FB1.2 and t23 are 0.276 mm apart on top (3V3_SENSOR / GND), but the minimum clearance is 0.3 mm | 36.986,28.905
+Error | clearance | top | J1.A4,J1.B8 | J1.A4 and J1.B8 are 0.2 mm apart on top (VBUS / no net), but the minimum clearance is 0.3 mm | 32.925,8.980
+Error | clearance | top | J1.A5,J1.B7 | J1.A5 and J1.B7 are 0.2 mm apart on top (CC1 / USB_DN), but the minimum clearance is 0.3 mm | 34.000,8.980
+Error | clearance | top | J1.A5,J1.B8 | J1.A5 and J1.B8 are 0.2 mm apart on top (CC1 / no net), but the minimum clearance is 0.3 mm | 33.500,8.980
+Error | clearance | top | J1.A5,t332 | J1.A5 and t332 are 0.225 mm apart on top (CC1 / USB_DN), but the minimum clearance is 0.3 mm | 34.000,9.651
+Error | clearance | top | J1.A5,t333 | J1.A5 and t333 are 0.225 mm apart on top (CC1 / USB_DN), but the minimum clearance is 0.3 mm | 34.000,8.831
+Error | clearance | top | J1.A5,t338 | J1.A5 and t338 are 0.237 mm apart on top (CC1 / USB_DN), but the minimum clearance is 0.3 mm | 34.074,8.608
+Error | clearance | top | J1.A6,J1.A7 | J1.A6 and J1.A7 are 0.2 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 35.000,8.980
+Error | clearance | top | J1.A6,J1.B7 | J1.A6 and J1.B7 are 0.2 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 34.500,8.980
+Error | clearance | top | J1.A6,t326 | J1.A6 and t326 are 0.225 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 35.000,8.821
+Error | clearance | top | J1.A6,t328 | J1.A6 and t328 are 0.225 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 35.000,9.471
+Error | clearance | top | J1.A6,t329 | J1.A6 and t329 are 0.198 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 34.937,8.598
+Error | clearance | top | J1.A6,t332 | J1.A6 and t332 are 0.225 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 34.500,9.651
+Error | clearance | top | J1.A6,t333 | J1.A6 and t333 are 0.225 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 34.500,8.831
+Error | clearance | top | J1.A6,t334 | J1.A6 and t334 are 0.191 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 34.760,8.535
+Error | clearance | top | J1.A6,t338 | J1.A6 and t338 are 0.168 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 34.574,8.608
+Error | clearance | top | J1.A7,J1.B6 | J1.A7 and J1.B6 are 0.2 mm apart on top (USB_DN / USB_DP), but the minimum clearance is 0.3 mm | 35.500,8.980
+Error | clearance | top | J1.A7,t300 | J1.A7 and t300 are 0.225 mm apart on top (USB_DN / USB_DP), but the minimum clearance is 0.3 mm | 35.500,9.325
+Error | clearance | top | J1.A7,t301 | J1.A7 and t301 are 0.154 mm apart on top (USB_DN / USB_DP), but the minimum clearance is 0.3 mm | 35.036,10.166
+Error | clearance | top | J1.A7,t305 | J1.A7 and t305 are 0.154 mm apart on top (USB_DN / USB_DP), but the minimum clearance is 0.3 mm | 35.018,8.998
+Error | clearance | top | J1.A8,J1.B5 | J1.A8 and J1.B5 are 0.2 mm apart on top (no net / CC2), but the minimum clearance is 0.3 mm | 36.500,8.980
+Error | clearance | top | J1.A8,J1.B6 | J1.A8 and J1.B6 are 0.2 mm apart on top (no net / USB_DP), but the minimum clearance is 0.3 mm | 36.000,8.980
+Error | clearance | top | J1.A8,t300 | J1.A8 and t300 are 0.225 mm apart on top (no net / USB_DP), but the minimum clearance is 0.3 mm | 36.000,9.325
+Error | clearance | top | J1.A8,t349 | J1.A8 and t349 are 0.225 mm apart on top (no net / CC2), but the minimum clearance is 0.3 mm | 36.500,9.358
+Error | clearance | top | J1.A9,J1.B5 | J1.A9 and J1.B5 are 0.2 mm apart on top (VBUS / CC2), but the minimum clearance is 0.3 mm | 37.075,8.980
+Error | clearance | top | J1.A9,t349 | J1.A9 and t349 are 0.225 mm apart on top (VBUS / CC2), but the minimum clearance is 0.3 mm | 37.075,9.358
+Error | clearance | top | J1.B4,J1.B5 | J1.B4 and J1.B5 are 0.2 mm apart on top (VBUS / CC2), but the minimum clearance is 0.3 mm | 37.075,8.980
+Error | clearance | top | J1.B4,t349 | J1.B4 and t349 are 0.225 mm apart on top (VBUS / CC2), but the minimum clearance is 0.3 mm | 37.075,9.358
+Error | clearance | top | J1.B6,t326 | J1.B6 and t326 are 0.225 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 35.500,8.821
+Error | clearance | top | J1.B6,t328 | J1.B6 and t328 are 0.225 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 35.500,9.471
+Error | clearance | top | J1.B6,t329 | J1.B6 and t329 are 0.247 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 35.437,8.598
+Error | clearance | top | J1.B7,t294 | J1.B7 and t294 are 0.225 mm apart on top (USB_DN / CC1), but the minimum clearance is 0.3 mm | 34.000,8.166
+Error | clearance | top | J1.B7,t301 | J1.B7 and t301 are 0.296 mm apart on top (USB_DN / USB_DP), but the minimum clearance is 0.3 mm | 34.536,10.166
+Error | clearance | top | J1.B7,t305 | J1.B7 and t305 are 0.225 mm apart on top (USB_DN / USB_DP), but the minimum clearance is 0.3 mm | 34.518,8.998
+Error | clearance | top | J1.B8,J1.B9 | J1.B8 and J1.B9 are 0.2 mm apart on top (no net / VBUS), but the minimum clearance is 0.3 mm | 32.925,8.980
+Error | clearance | top | J1.B8,t294 | J1.B8 and t294 are 0.225 mm apart on top (no net / CC1), but the minimum clearance is 0.3 mm | 33.500,8.166
+Error | clearance | top | J1.SH,t293 | J1.SH and t293 are 0.199 mm apart on top (GND / CC1), but the minimum clearance is 0.3 mm | 30.268,8.345
+Error | clearance | top | J1.SH,t296 | J1.SH and t296 are 0.174 mm apart on top (GND / CC1), but the minimum clearance is 0.3 mm | 30.694,3.625
+Error | clearance | top | J1.SH,t297 | J1.SH and t297 are 0.161 mm apart on top (GND / CC1), but the minimum clearance is 0.3 mm | 30.396,3.753
+Error | clearance | top | J1.SH,t298 | J1.SH and t298 are 0.202 mm apart on top (GND / CC1), but the minimum clearance is 0.3 mm | 31.540,4.300
+Error | clearance | top | J3.1,t561 | J3.1 and t561 are 0.263 mm apart on top (SERVO1 / 5V_SERVO), but the minimum clearance is 0.3 mm | 13.268,34.813
+Error | clearance | top | J3.1,t564 | J3.1 and t564 are 0.252 mm apart on top (SERVO1 / 5V_SERVO), but the minimum clearance is 0.3 mm | 13.631,36.627
+Error | clearance | top | J3.2,t518 | J3.2 and t518 are 0.256 mm apart on top (5V_SERVO / SERVO2), but the minimum clearance is 0.3 mm | 13.343,38.473
+Error | clearance | top | J3.3,t516 | J3.3 and t516 are 0.224 mm apart on top (GND / SERVO2), but the minimum clearance is 0.3 mm | 14.117,40.200
+Error | clearance | top | J3.3,t518 | J3.3 and t518 are 0.289 mm apart on top (GND / SERVO2), but the minimum clearance is 0.3 mm | 13.343,39.743
+Error | clearance | top | J4.1,t593 | J4.1 and t593 are 0.289 mm apart on top (SERVO2 / VBAT), but the minimum clearance is 0.3 mm | 14.809,26.396
+Error | clearance | top | J4.1,t597 | J4.1 and t597 are 0.277 mm apart on top (SERVO2 / VBAT), but the minimum clearance is 0.3 mm | 14.550,26.257
+Error | clearance | top | J6.1,t17 | J6.1 and t17 are 0.28 mm apart on top (SERVO4 / GND), but the minimum clearance is 0.3 mm | 55.360,31.720
+Error | clearance | top | J6.1,t560 | J6.1 and t560 are 0.279 mm apart on top (SERVO4 / 5V_SERVO), but the minimum clearance is 0.3 mm | 56.740,32.904
+Error | clearance | top | LED1.2,t165 | LED1.2 and t165 are 0.19 mm apart on top (LED_ARM / GND), but the minimum clearance is 0.3 mm | 54.176,8.716
+Error | clearance | top | LED1.2,t61 | LED1.2 and t61 are 0.153 mm apart on top (LED_ARM / GND), but the minimum clearance is 0.3 mm | 53.713,7.611
+Error | clearance | top | LED1.2,t91 | LED1.2 and t91 are 0.198 mm apart on top (LED_ARM / GND), but the minimum clearance is 0.3 mm | 54.106,7.681
+Error | clearance | top | R10.1,t479 | R10.1 and t479 are 0.152 mm apart on top (VBAT_SENSE / CONT1_SENSE), but the minimum clearance is 0.3 mm | 21.214,24.222
+Error | clearance | top | R11.1,t362 | R11.1 and t362 are 0.255 mm apart on top (PYRO1_DRAIN / CONT2_SENSE), but the minimum clearance is 0.3 mm | 18.065,22.703
+Error | clearance | top | R13.2,t355 | R13.2 and t355 are 0.281 mm apart on top (CONT2_SENSE / PYRO2_DRAIN), but the minimum clearance is 0.3 mm | 19.049,19.451
+Error | clearance | top | R15.1,t22 | R15.1 and t22 are 0.177 mm apart on top (LED_STATUS / GND), but the minimum clearance is 0.3 mm | 57.738,49.257
+Error | clearance | top | R15.1,t94 | R15.1 and t94 are 0.21 mm apart on top (LED_STATUS / GND), but the minimum clearance is 0.3 mm | 55.484,51.925
+Error | clearance | top | R4.2,t129 | R4.2 and t129 are 0.225 mm apart on top (FB_5V / GND), but the minimum clearance is 0.3 mm | 48.638,26.122
+Error | clearance | top | R4.2,t31 | R4.2 and t31 are 0.197 mm apart on top (FB_5V / GND), but the minimum clearance is 0.3 mm | 49.517,26.611
+Error | clearance | top | R4.2,t58 | R4.2 and t58 are 0.184 mm apart on top (FB_5V / GND), but the minimum clearance is 0.3 mm | 48.729,26.519
+Error | clearance | top | R5.1,t31 | R5.1 and t31 are 0.197 mm apart on top (FB_5V / GND), but the minimum clearance is 0.3 mm | 50.292,26.611
+Error | clearance | top | R7.1,t141 | R7.1 and t141 are 0.217 mm apart on top (FIRE2 / GND), but the minimum clearance is 0.3 mm | 33.649,19.963
+Error | clearance | top | R7.2,t494 | R7.2 and t494 are 0.162 mm apart on top (GND / FIRE2), but the minimum clearance is 0.3 mm | 33.284,21.669
+Error | clearance | top | R7.2,t495 | R7.2 and t495 are 0.199 mm apart on top (GND / FIRE2), but the minimum clearance is 0.3 mm | 34.400,21.212
+Error | clearance | top | R7.2,t498 | R7.2 and t498 are 0.187 mm apart on top (GND / FIRE2), but the minimum clearance is 0.3 mm | 34.328,21.597
+Error | clearance | top | R8.2,t165 | R8.2 and t165 are 0.19 mm apart on top (LED_ARM / GND), but the minimum clearance is 0.3 mm | 54.195,9.616
+Error | clearance | top | R9.1,t362 | R9.1 and t362 are 0.255 mm apart on top (VBAT / CONT2_SENSE), but the minimum clearance is 0.3 mm | 18.065,23.703
+Error | clearance | top | SW1.1,t24 | SW1.1 and t24 are 0.152 mm apart on top (BOOT / GND), but the minimum clearance is 0.3 mm | 21.488,48.293
+Error | clearance | top | U1.10,t367 | U1.10 and t367 are 0.152 mm apart on top (FIRE1 / CONT2_SENSE), but the minimum clearance is 0.3 mm | 26.763,47.053
+Error | clearance | top | U1.11,t367 | U1.11 and t367 are 0.152 mm apart on top (FIRE2 / CONT2_SENSE), but the minimum clearance is 0.3 mm | 26.763,46.418
+Error | clearance | top | U1.11,v1 | U1.11 and v1 are 0.254 mm apart on top (FIRE2 / FIRE1), but the minimum clearance is 0.3 mm | 25.639,46.631
+Error | clearance | top | U1.12,t367 | U1.12 and t367 are 0.152 mm apart on top (SERVO2 / CONT2_SENSE), but the minimum clearance is 0.3 mm | 26.763,45.783
+Error | clearance | top | U1.13,t367 | U1.13 and t367 are 0.152 mm apart on top (USB_DN / CONT2_SENSE), but the minimum clearance is 0.3 mm | 26.763,45.148
+Error | clearance | top | U1.14,t367 | U1.14 and t367 are 0.152 mm apart on top (USB_DP / CONT2_SENSE), but the minimum clearance is 0.3 mm | 26.763,44.513
+Error | clearance | top | U1.14,t369 | U1.14 and t369 are 0.204 mm apart on top (USB_DP / CONT2_SENSE), but the minimum clearance is 0.3 mm | 25.992,41.359
+Error | clearance | top | U1.15,t367 | U1.15 and t367 are 0.163 mm apart on top (no net / CONT2_SENSE), but the minimum clearance is 0.3 mm | 27.646,43.888
+Error | clearance | top | U1.15,t369 | U1.15 and t369 are 0.163 mm apart on top (no net / CONT2_SENSE), but the minimum clearance is 0.3 mm | 26.874,40.734
+Error | clearance | top | U1.15,v41 | U1.15 and v41 are 0.195 mm apart on top (no net / CONT1_SENSE), but the minimum clearance is 0.3 mm | 28.146,41.823
+Error | clearance | top | U1.17,v39 | U1.17 and v39 are 0.257 mm apart on top (IMU_INT / IMU_FSYNC), but the minimum clearance is 0.3 mm | 30.911,41.821
+Error | clearance | top | U1.18,v39 | U1.18 and v39 are 0.203 mm apart on top (SPI_MISO / IMU_FSYNC), but the minimum clearance is 0.3 mm | 31.546,41.821
+Error | clearance | top | U1.30,v3 | U1.30 and v3 are 0.2 mm apart on top (no net / FIRE1), but the minimum clearance is 0.3 mm | 44.375,46.043
+Error | clearance | top | U1.31,t401 | U1.31 and t401 are 0.152 mm apart on top (no net / BUZZER), but the minimum clearance is 0.3 mm | 44.375,47.627
+Error | clearance | top | U1.31,t404 | U1.31 and t404 are 0.152 mm apart on top (no net / BUZZER), but the minimum clearance is 0.3 mm | 44.263,49.857
+Error | clearance | top | U1.32,t404 | U1.32 and t404 are 0.152 mm apart on top (no net / BUZZER), but the minimum clearance is 0.3 mm | 44.263,50.492
+Error | clearance | top | U1.33,t404 | U1.33 and t404 are 0.152 mm apart on top (no net / BUZZER), but the minimum clearance is 0.3 mm | 44.263,51.127
+Error | clearance | top | U1.34,t404 | U1.34 and t404 are 0.152 mm apart on top (no net / BUZZER), but the minimum clearance is 0.3 mm | 44.263,51.762
+Error | clearance | top | U1.35,t404 | U1.35 and t404 are 0.152 mm apart on top (no net / BUZZER), but the minimum clearance is 0.3 mm | 44.263,52.397
+Error | clearance | top | U1.36,t404 | U1.36 and t404 are 0.152 mm apart on top (no net / BUZZER), but the minimum clearance is 0.3 mm | 44.263,53.032
+Error | clearance | top | U1.37,t404 | U1.37 and t404 are 0.152 mm apart on top (no net / BUZZER), but the minimum clearance is 0.3 mm | 44.263,53.667
+Error | clearance | top | U1.41,t467 | U1.41 and t467 are 0.158 mm apart on top (GND / IMU_FSYNC), but the minimum clearance is 0.3 mm | 32.384,48.703
+Error | clearance | top | U1.41,t468 | U1.41 and t468 are 0.158 mm apart on top (GND / IMU_FSYNC), but the minimum clearance is 0.3 mm | 31.386,51.562
+Error | clearance | top | U1.8,t367 | U1.8 and t367 are 0.152 mm apart on top (no net / CONT2_SENSE), but the minimum clearance is 0.3 mm | 26.763,48.323
+Error | clearance | top | U1.9,t367 | U1.9 and t367 are 0.152 mm apart on top (SERVO1 / CONT2_SENSE), but the minimum clearance is 0.3 mm | 26.763,47.688
+Error | clearance | top | U2.1,t99 | U2.1 and t99 are 0.207 mm apart on top (USB_DP / GND), but the minimum clearance is 0.3 mm | 33.340,13.783
+Error | clearance | top | U2.2,t301 | U2.2 and t301 are 0.171 mm apart on top (GND / USB_DP), but the minimum clearance is 0.3 mm | 34.342,12.176
+Error | clearance | top | U2.3,t301 | U2.3 and t301 are 0.171 mm apart on top (USB_DN / USB_DP), but the minimum clearance is 0.3 mm | 34.342,11.701
+Error | clearance | top | U2.3,t35 | U2.3 and t35 are 0.207 mm apart on top (USB_DN / GND), but the minimum clearance is 0.3 mm | 33.211,12.088
+Error | clearance | top | U2.4,t302 | U2.4 and t302 are 0.177 mm apart on top (USB_DN / USB_DP), but the minimum clearance is 0.3 mm | 36.518,11.780
+Error | clearance | top | U3.6,t275 | U3.6 and t275 are 0.235 mm apart on top (BST_3V3 / SW_3V3), but the minimum clearance is 0.3 mm | 26.205,33.817
+Error | clearance | top | U3.6,t276 | U3.6 and t276 are 0.184 mm apart on top (BST_3V3 / SW_3V3), but the minimum clearance is 0.3 mm | 25.205,33.726
+Error | clearance | top | U3.6,t280 | U3.6 and t280 are 0.186 mm apart on top (BST_3V3 / SW_3V3), but the minimum clearance is 0.3 mm | 25.113,33.305
+Error | clearance | top | U5.1,U5.2 | U5.1 and U5.2 are 0.25 mm apart on top (SPI_MISO / no net), but the minimum clearance is 0.3 mm | 32.237,35.500
+Error | clearance | top | U5.1,t523 | U5.1 and t523 are 0.169 mm apart on top (SPI_MISO / IMU_INT), but the minimum clearance is 0.3 mm | 31.663,36.130
+Error | clearance | top | U5.1,t525 | U5.1 and t525 are 0.152 mm apart on top (SPI_MISO / IMU_INT), but the minimum clearance is 0.3 mm | 31.930,35.431
+Error | clearance | top | U5.10,U5.9 | U5.10 and U5.9 are 0.25 mm apart on top (IMU_FSYNC / no net), but the minimum clearance is 0.3 mm | 34.763,35.000
+Error | clearance | top | U5.10,t466 | U5.10 and t466 are 0.25 mm apart on top (no net / IMU_FSYNC), but the minimum clearance is 0.3 mm | 34.947,35.000
+Error | clearance | top | U5.12,U5.13 | U5.12 and U5.13 are 0.25 mm apart on top (CS_IMU / SPI_SCK), but the minimum clearance is 0.3 mm | 33.750,36.013
+Error | clearance | top | U5.12,t437 | U5.12 and t437 are 0.25 mm apart on top (CS_IMU / SPI_SCK), but the minimum clearance is 0.3 mm | 33.750,36.255
+Error | clearance | top | U5.13,U5.14 | U5.13 and U5.14 are 0.25 mm apart on top (SPI_SCK / SPI_MOSI), but the minimum clearance is 0.3 mm | 33.250,36.013
+Error | clearance | top | U5.13,t423 | U5.13 and t423 are 0.25 mm apart on top (SPI_SCK / SPI_MOSI), but the minimum clearance is 0.3 mm | 33.250,36.166
+Error | clearance | top | U5.13,t527 | U5.13 and t527 are 0.25 mm apart on top (SPI_SCK / CS_IMU), but the minimum clearance is 0.3 mm | 33.750,36.166
+Error | clearance | top | U5.14,t437 | U5.14 and t437 are 0.25 mm apart on top (SPI_MOSI / SPI_SCK), but the minimum clearance is 0.3 mm | 33.250,36.255
+Error | clearance | top | U5.2,t414 | U5.2 and t414 are 0.25 mm apart on top (no net / SPI_MISO), but the minimum clearance is 0.3 mm | 32.237,35.751
+Error | clearance | top | U5.2,t525 | U5.2 and t525 are 0.152 mm apart on top (no net / IMU_INT), but the minimum clearance is 0.3 mm | 31.930,35.181
+Error | clearance | top | U5.3,U5.4 | U5.3 and U5.4 are 0.25 mm apart on top (no net / IMU_INT), but the minimum clearance is 0.3 mm | 32.237,34.500
+Error | clearance | top | U5.3,t524 | U5.3 and t524 are 0.25 mm apart on top (no net / IMU_INT), but the minimum clearance is 0.3 mm | 32.084,34.500
+Error | clearance | top | U5.3,t525 | U5.3 and t525 are 0.152 mm apart on top (no net / IMU_INT), but the minimum clearance is 0.3 mm | 31.930,34.931
+Error | clearance | top | U5.5,U5.6 | U5.5 and U5.6 are 0.25 mm apart on top (3V3_SENSOR / GND), but the minimum clearance is 0.3 mm | 33.250,33.987
+Error | clearance | top | U5.5,t93 | U5.5 and t93 are 0.225 mm apart on top (3V3_SENSOR / GND), but the minimum clearance is 0.3 mm | 33.250,34.147
+Error | clearance | top | U5.6,t375 | U5.6 and t375 are 0.25 mm apart on top (GND / 3V3_SENSOR), but the minimum clearance is 0.3 mm | 33.250,33.634
+Error | clearance | top | U5.8,U5.9 | U5.8 and U5.9 are 0.25 mm apart on top (3V3_SENSOR / IMU_FSYNC), but the minimum clearance is 0.3 mm | 34.763,34.500
+Error | clearance | top | U5.8,t132 | U5.8 and t132 are 0.297 mm apart on top (3V3_SENSOR / GND), but the minimum clearance is 0.3 mm | 34.381,33.959
+Error | clearance | top | U5.8,t466 | U5.8 and t466 are 0.25 mm apart on top (3V3_SENSOR / IMU_FSYNC), but the minimum clearance is 0.3 mm | 34.947,34.500
+Error | clearance | top | U5.8,t75 | U5.8 and t75 are 0.275 mm apart on top (3V3_SENSOR / GND), but the minimum clearance is 0.3 mm | 34.381,34.279
+Error | clearance | top | U5.8,v38 | U5.8 and v38 are 0.258 mm apart on top (3V3_SENSOR / IMU_FSYNC), but the minimum clearance is 0.3 mm | 35.162,34.469
+Error | clearance | top | U5.9,t383 | U5.9 and t383 are 0.25 mm apart on top (IMU_FSYNC / 3V3_SENSOR), but the minimum clearance is 0.3 mm | 34.797,34.465
+Error | clearance | top | U5.9,t53 | U5.9 and t53 are 0.275 mm apart on top (IMU_FSYNC / GND), but the minimum clearance is 0.3 mm | 34.256,34.688
+Error | clearance | top | U5.9,t75 | U5.9 and t75 are 0.275 mm apart on top (IMU_FSYNC / GND), but the minimum clearance is 0.3 mm | 34.381,34.529
+Error | clearance | top | U6.1,t107 | U6.1 and t107 are 0.152 mm apart on top (3V3_SENSOR / GND), but the minimum clearance is 0.3 mm | 40.537,36.470
+Error | clearance | top | U6.5,t60 | U6.5 and t60 are 0.257 mm apart on top (no net / GND), but the minimum clearance is 0.3 mm | 43.515,32.903
+Error | clearance | top | U6.8,t424 | U6.8 and t424 are 0.159 mm apart on top (SPI_SCK / SPI_MOSI), but the minimum clearance is 0.3 mm | 43.491,37.085
+Error | clearance | top | U6.8,t427 | U6.8 and t427 are 0.152 mm apart on top (SPI_SCK / SPI_MOSI), but the minimum clearance is 0.3 mm | 43.451,36.647
+Error | clearance | top | U6.8,v30 | U6.8 and v30 are 0.191 mm apart on top (SPI_SCK / SPI_MOSI), but the minimum clearance is 0.3 mm | 43.531,37.124
+Error | clearance | top | t110,v27 | t110 and v27 are 0.152 mm apart on top (GND / 3V3_SENSOR), but the minimum clearance is 0.3 mm | 40.888,38.069
+Error | clearance | top | t123,v42 | t123 and v42 are 0.152 mm apart on top (GND / FIRE2), but the minimum clearance is 0.3 mm | 34.565,18.462
+Error | clearance | top | t133,t493 | t133 and t493 are 0.235 mm apart on top (GND / FIRE2), but the minimum clearance is 0.3 mm | 33.834,18.841
+Error | clearance | top | t133,t501 | t133 and t501 are 0.233 mm apart on top (GND / FIRE2), but the minimum clearance is 0.3 mm | 33.903,18.571
+Error | clearance | top | t133,v42 | t133 and v42 are 0.164 mm apart on top (GND / FIRE2), but the minimum clearance is 0.3 mm | 33.971,18.503
+Error | clearance | top | t135,t365 | t135 and t365 are 0.152 mm apart on top (GND / CONT2_SENSE), but the minimum clearance is 0.3 mm | 22.108,38.511
+Error | clearance | top | t14,t311 | t14 and t311 are 0.247 mm apart on top (GND / USB_DP), but the minimum clearance is 0.3 mm | 36.862,18.150
+Error | clearance | top | t14,t313 | t14 and t313 are 0.247 mm apart on top (GND / USB_DP), but the minimum clearance is 0.3 mm | 36.402,18.405
+Error | clearance | top | t14,t316 | t14 and t316 are 0.247 mm apart on top (GND / USB_DP), but the minimum clearance is 0.3 mm | 36.126,18.334
+Error | clearance | top | t160,t493 | t160 and t493 are 0.233 mm apart on top (GND / FIRE2), but the minimum clearance is 0.3 mm | 33.567,19.143
+Error | clearance | top | t160,t501 | t160 and t501 are 0.233 mm apart on top (GND / FIRE2), but the minimum clearance is 0.3 mm | 33.635,18.872
+Error | clearance | top | t160,v42 | t160 and v42 are 0.164 mm apart on top (GND / FIRE2), but the minimum clearance is 0.3 mm | 33.703,18.804
+Error | clearance | top | t162,t438 | t162 and t438 are 0.257 mm apart on top (GND / SPI_SCK), but the minimum clearance is 0.3 mm | 44.849,36.072
+Error | clearance | top | t162,t439 | t162 and t439 are 0.257 mm apart on top (GND / SPI_SCK), but the minimum clearance is 0.3 mm | 44.870,36.390
+Error | clearance | top | t162,t440 | t162 and t440 are 0.257 mm apart on top (GND / SPI_SCK), but the minimum clearance is 0.3 mm | 44.769,36.789
+Error | clearance | top | t162,v32 | t162 and v32 are 0.164 mm apart on top (GND / SPI_SCK), but the minimum clearance is 0.3 mm | 44.829,36.051
+Error | clearance | top | t167,v42 | t167 and v42 are 0.166 mm apart on top (GND / FIRE2), but the minimum clearance is 0.3 mm | 34.205,17.936
+Error | clearance | top | t170,t311 | t170 and t311 are 0.267 mm apart on top (GND / USB_DP), but the minimum clearance is 0.3 mm | 37.579,18.372
+Error | clearance | top | t170,t313 | t170 and t313 are 0.267 mm apart on top (GND / USB_DP), but the minimum clearance is 0.3 mm | 37.119,18.626
+Error | clearance | top | t259,v40 | t259 and v40 are 0.152 mm apart on top (VSYS / CONT1_SENSE), but the minimum clearance is 0.3 mm | 19.667,33.113
+Error | clearance | top | t284,t303 | t284 and t303 are 0.284 mm apart on top (VBUS / USB_DP), but the minimum clearance is 0.3 mm | 37.743,14.799
+Error | clearance | top | t286,t351 | t286 and t351 are 0.286 mm apart on top (VBUS / CC2), but the minimum clearance is 0.3 mm | 37.638,10.624
+Error | clearance | top | t288,t303 | t288 and t303 are 0.285 mm apart on top (VBUS / USB_DP), but the minimum clearance is 0.3 mm | 37.417,13.946
+Error | clearance | top | t289,t303 | t289 and t303 are 0.284 mm apart on top (VBUS / USB_DP), but the minimum clearance is 0.3 mm | 37.546,15.849
+Error | clearance | top | t29,v27 | t29 and v27 are 0.173 mm apart on top (GND / 3V3_SENSOR), but the minimum clearance is 0.3 mm | 41.915,38.278
+Error | clearance | top | t294,t332 | t294 and t332 are 0.25 mm apart on top (CC1 / USB_DN), but the minimum clearance is 0.3 mm | 34.000,8.837
+Error | clearance | top | t294,t333 | t294 and t333 are 0.25 mm apart on top (CC1 / USB_DN), but the minimum clearance is 0.3 mm | 34.000,8.017
+Error | clearance | top | t294,t338 | t294 and t338 are 0.25 mm apart on top (CC1 / USB_DN), but the minimum clearance is 0.3 mm | 34.074,7.795
+Error | clearance | top | t300,t326 | t300 and t326 are 0.25 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 35.500,9.166
+Error | clearance | top | t300,t328 | t300 and t328 are 0.25 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 35.500,9.816
+Error | clearance | top | t301,t325 | t301 and t325 are 0.179 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 35.074,11.186
+Error | clearance | top | t301,t326 | t301 and t326 are 0.185 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 35.036,10.007
+Error | clearance | top | t301,t328 | t301 and t328 are 0.179 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 35.036,10.657
+Error | clearance | top | t301,v22 | t301 and v22 are 0.155 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 35.111,11.223
+Error | clearance | top | t302,t328 | t302 and t328 are 0.25 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 36.074,10.736
+Error | clearance | top | t302,v18 | t302 and v18 are 0.248 mm apart on top (USB_DP / VBUS), but the minimum clearance is 0.3 mm | 37.168,12.255
+Error | clearance | top | t303,v18 | t303 and v18 are 0.185 mm apart on top (USB_DP / VBUS), but the minimum clearance is 0.3 mm | 37.742,13.946
+Error | clearance | top | t305,t326 | t305 and t326 are 0.185 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 35.018,8.838
+Error | clearance | top | t305,t328 | t305 and t328 are 0.179 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 35.018,9.489
+Error | clearance | top | t305,t332 | t305 and t332 are 0.25 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 34.518,9.668
+Error | clearance | top | t305,t333 | t305 and t333 are 0.25 mm apart on top (USB_DP / USB_DN), but the minimum clearance is 0.3 mm | 34.518,8.849
+Error | clearance | top | t330,t512 | t330 and t512 are 0.152 mm apart on top (USB_DN / SERVO2), but the minimum clearance is 0.3 mm | 19.337,39.959
+Error | clearance | top | t330,t519 | t330 and t519 are 0.152 mm apart on top (USB_DN / SERVO2), but the minimum clearance is 0.3 mm | 20.767,41.322
+Error | clearance | top | t330,v20 | t330 and v20 are 0.152 mm apart on top (USB_DN / USB_DP), but the minimum clearance is 0.3 mm | 20.125,39.987
+Error | clearance | top | t330,v44 | t330 and v44 are 0.166 mm apart on top (USB_DN / SERVO2), but the minimum clearance is 0.3 mm | 19.270,39.959
+Error | clearance | top | t331,t519 | t331 and t519 are 0.152 mm apart on top (USB_DN / SERVO2), but the minimum clearance is 0.3 mm | 22.881,42.992
+Error | clearance | top | t336,t363 | t336 and t363 are 0.157 mm apart on top (USB_DN / CONT2_SENSE), but the minimum clearance is 0.3 mm | 16.970,31.614
+Error | clearance | top | t336,t364 | t336 and t364 are 0.157 mm apart on top (USB_DN / CONT2_SENSE), but the minimum clearance is 0.3 mm | 17.764,34.489
+Error | clearance | top | t336,t366 | t336 and t366 are 0.157 mm apart on top (USB_DN / CONT2_SENSE), but the minimum clearance is 0.3 mm | 17.290,29.213
+Error | clearance | top | t349,v19 | t349 and v19 are 0.225 mm apart on top (CC2 / VBUS), but the minimum clearance is 0.3 mm | 37.075,10.008
+Error | clearance | top | t351,v19 | t351 and v19 are 0.186 mm apart on top (CC2 / VBUS), but the minimum clearance is 0.3 mm | 37.638,10.949
+Error | clearance | top | t362,t453 | t362 and t453 are 0.176 mm apart on top (CONT2_SENSE / VBAT_SENSE), but the minimum clearance is 0.3 mm | 18.453,24.978
+Error | clearance | top | t363,t449 | t363 and t449 are 0.152 mm apart on top (CONT2_SENSE / VBAT_SENSE), but the minimum clearance is 0.3 mm | 17.534,33.435
+Error | clearance | top | t363,t453 | t363 and t453 are 0.152 mm apart on top (CONT2_SENSE / VBAT_SENSE), but the minimum clearance is 0.3 mm | 17.812,28.967
+Error | clearance | top | t363,t455 | t363 and t455 are 0.152 mm apart on top (CONT2_SENSE / VBAT_SENSE), but the minimum clearance is 0.3 mm | 17.374,31.340
+Error | clearance | top | t363,v23 | t363 and v23 are 0.278 mm apart on top (CONT2_SENSE / USB_DN), but the minimum clearance is 0.3 mm | 16.970,29.018
+Error | clearance | top | t364,v37 | t364 and v37 are 0.163 mm apart on top (CONT2_SENSE / VBAT_SENSE), but the minimum clearance is 0.3 mm | 18.512,36.470
+Error | clearance | top | t364,v7 | t364 and v7 are 0.152 mm apart on top (CONT2_SENSE / GND), but the minimum clearance is 0.3 mm | 19.005,36.971
+Error | clearance | top | t365,t71 | t365 and t71 are 0.152 mm apart on top (GND / CONT2_SENSE), but the minimum clearance is 0.3 mm | 23.286,37.936
+Error | clearance | top | t365,t81 | t365 and t81 are 0.152 mm apart on top (GND / CONT2_SENSE), but the minimum clearance is 0.3 mm | 21.132,38.138
+Error | clearance | top | t366,t453 | t366 and t453 are 0.176 mm apart on top (CONT2_SENSE / VBAT_SENSE), but the minimum clearance is 0.3 mm | 18.132,26.566
+Error | clearance | top | t366,t455 | t366 and t455 are 0.176 mm apart on top (CONT2_SENSE / VBAT_SENSE), but the minimum clearance is 0.3 mm | 17.694,28.939
+Error | clearance | top | t366,v23 | t366 and v23 are 0.269 mm apart on top (CONT2_SENSE / USB_DN), but the minimum clearance is 0.3 mm | 17.290,26.617
+Error | clearance | top | t375,t93 | t375 and t93 are 0.225 mm apart on top (GND / 3V3_SENSOR), but the minimum clearance is 0.3 mm | 33.250,33.794
+Error | clearance | top | t383,t466 | t383 and t466 are 0.25 mm apart on top (3V3_SENSOR / IMU_FSYNC), but the minimum clearance is 0.3 mm | 34.982,34.465
+Error | clearance | top | t386,v38 | t386 and v38 are 0.152 mm apart on top (3V3_SENSOR / IMU_FSYNC), but the minimum clearance is 0.3 mm | 35.603,34.399
+Error | clearance | top | t407,v8 | t407 and v8 are 0.152 mm apart on top (EN / GND), but the minimum clearance is 0.3 mm | 23.506,55.298
+Error | clearance | top | t421,t433 | t421 and t433 are 0.262 mm apart on top (SPI_MOSI / SPI_SCK), but the minimum clearance is 0.3 mm | 33.477,37.032
+Error | clearance | top | t421,t437 | t421 and t437 are 0.177 mm apart on top (SPI_MOSI / SPI_SCK), but the minimum clearance is 0.3 mm | 33.268,36.581
+Error | clearance | top | t422,t433 | t422 and t433 are 0.177 mm apart on top (SPI_MOSI / SPI_SCK), but the minimum clearance is 0.3 mm | 33.496,37.219
+Error | clearance | top | t422,t437 | t422 and t437 are 0.177 mm apart on top (SPI_MOSI / SPI_SCK), but the minimum clearance is 0.3 mm | 33.287,36.767
+Error | clearance | top | t423,t437 | t423 and t437 are 0.25 mm apart on top (SPI_MOSI / SPI_SCK), but the minimum clearance is 0.3 mm | 33.250,36.409
+Error | clearance | top | t427,v32 | t427 and v32 are 0.27 mm apart on top (SPI_MOSI / SPI_SCK), but the minimum clearance is 0.3 mm | 44.174,36.369
+Error | clearance | top | t433,v31 | t433 and v31 are 0.154 mm apart on top (SPI_SCK / SPI_MOSI), but the minimum clearance is 0.3 mm | 33.496,37.388
+Error | clearance | top | t434,v30 | t434 and v30 are 0.21 mm apart on top (SPI_SCK / SPI_MOSI), but the minimum clearance is 0.3 mm | 43.689,37.526
+Error | clearance | top | t436,t68 | t436 and t68 are 0.183 mm apart on top (GND / SPI_SCK), but the minimum clearance is 0.3 mm | 44.325,38.072
+Error | clearance | top | t436,v30 | t436 and v30 are 0.197 mm apart on top (SPI_SCK / SPI_MOSI), but the minimum clearance is 0.3 mm | 43.971,37.685
+Error | clearance | top | t437,t527 | t437 and t527 are 0.25 mm apart on top (SPI_SCK / CS_IMU), but the minimum clearance is 0.3 mm | 33.750,36.409
+Error | clearance | top | t437,t530 | t437 and t530 are 0.25 mm apart on top (SPI_SCK / CS_IMU), but the minimum clearance is 0.3 mm | 34.159,36.971
+Error | clearance | top | t437,v31 | t437 and v31 are 0.154 mm apart on top (SPI_SCK / SPI_MOSI), but the minimum clearance is 0.3 mm | 33.287,36.936
+Error | clearance | top | t439,t68 | t439 and t68 are 0.183 mm apart on top (GND / SPI_SCK), but the minimum clearance is 0.3 mm | 44.650,37.573
+Error | clearance | top | t439,v30 | t439 and v30 are 0.192 mm apart on top (SPI_SCK / SPI_MOSI), but the minimum clearance is 0.3 mm | 44.295,37.185
+Error | clearance | top | t440,t68 | t440 and t68 are 0.183 mm apart on top (GND / SPI_SCK), but the minimum clearance is 0.3 mm | 44.549,37.971
+Error | clearance | top | t440,v30 | t440 and v30 are 0.166 mm apart on top (SPI_SCK / SPI_MOSI), but the minimum clearance is 0.3 mm | 44.194,37.584
+Error | clearance | top | t448,t485 | t448 and t485 are 0.152 mm apart on top (VBAT_SENSE / SERVO1), but the minimum clearance is 0.3 mm | 21.997,46.555
+Error | clearance | top | t454,t485 | t454 and t485 are 0.152 mm apart on top (VBAT_SENSE / SERVO1), but the minimum clearance is 0.3 mm | 20.261,43.125
+Error | clearance | top | t454,t487 | t454 and t487 are 0.152 mm apart on top (VBAT_SENSE / SERVO1), but the minimum clearance is 0.3 mm | 18.607,41.339
+Error | clearance | top | t48,v42 | t48 and v42 are 0.152 mm apart on top (GND / FIRE2), but the minimum clearance is 0.3 mm | 34.301,18.293
+Error | clearance | top | t485,v43 | t485 and v43 are 0.152 mm apart on top (SERVO1 / FIRE2), but the minimum clearance is 0.3 mm | 19.729,41.901
+Error | clearance | top | t489,v35 | t489 and v35 are 0.153 mm apart on top (SERVO1 / VBAT_SENSE), but the minimum clearance is 0.3 mm | 16.169,38.629
+Error | clearance | top | t51,v42 | t51 and v42 are 0.153 mm apart on top (GND / FIRE2), but the minimum clearance is 0.3 mm | 34.059,18.381
+Error | clearance | top | t517,t561 | t517 and t561 are 0.291 mm apart on top (SERVO2 / 5V_SERVO), but the minimum clearance is 0.3 mm | 12.154,33.879
+Error | clearance | top | t517,t564 | t517 and t564 are 0.291 mm apart on top (SERVO2 / 5V_SERVO), but the minimum clearance is 0.3 mm | 12.517,35.693
+Error | clearance | top | t517,t570 | t517 and t570 are 0.291 mm apart on top (SERVO2 / 5V_SERVO), but the minimum clearance is 0.3 mm | 12.519,32.062
+Error | clearance | top | t519,v43 | t519 and v43 are 0.229 mm apart on top (SERVO2 / FIRE2), but the minimum clearance is 0.3 mm | 19.985,41.287
+Error | clearance | top | t531,v46 | t531 and v46 are 0.163 mm apart on top (SERVO3 / SERVO4), but the minimum clearance is 0.3 mm | 54.934,40.994
+Error | clearance | top | t534,v46 | t534 and v46 are 0.162 mm apart on top (SERVO3 / SERVO4), but the minimum clearance is 0.3 mm | 54.352,40.693
+Error | clearance | top | t535,t536 | t535 and t536 are 0.152 mm apart on top (SERVO3 / SERVO4), but the minimum clearance is 0.3 mm | 46.956,39.797
+Error | clearance | top | t535,t537 | t535 and t537 are 0.152 mm apart on top (SERVO3 / SERVO4), but the minimum clearance is 0.3 mm | 50.341,40.095
+Error | clearance | top | t535,t539 | t535 and t539 are 0.152 mm apart on top (SERVO3 / SERVO4), but the minimum clearance is 0.3 mm | 43.824,39.841
+Error | clearance | top | t536,v4 | t536 and v4 are 0.152 mm apart on top (SERVO4 / FIRE1), but the minimum clearance is 0.3 mm | 46.033,40.286
+Error | clearance | top | t590,v23 | t590 and v23 are 0.26 mm apart on top (VBAT / USB_DN), but the minimum clearance is 0.3 mm | 16.311,28.196
+Error | clearance | top | t62,v42 | t62 and v42 are 0.166 mm apart on top (GND / FIRE2), but the minimum clearance is 0.3 mm | 34.176,18.293
+Error | clearance | top | v43,v44 | v43 and v44 are 0.178 mm apart on top (FIRE2 / SERVO2), but the minimum clearance is 0.3 mm | 18.489,39.924
+Error | hole_to_hole |  | J1.(hole),J1.SH | The holes J1.(hole) and J1.SH are 0.805 mm apart, but the minimum is 1 mm | 31.395,8.155
+Error | hole_to_hole |  | J1.(hole),J1.SH | The holes J1.(hole) and J1.SH are 0.805 mm apart, but the minimum is 1 mm | 38.605,8.155
+Error | hole_to_hole |  | J3.3,v45 | The holes J3.3 and v45 are 1 mm apart, but the minimum is 1 mm | 14.787,40.552
+Error | hole_to_hole |  | J5.1,v46 | The holes J5.1 and v46 are 0.966 mm apart, but the minimum is 1 mm | 55.216,40.994
+Error | hole_to_hole |  | U1.41,U1.41 | The holes U1.41 and U1.41 are 0.69 mm apart, but the minimum is 1 mm | 32.450,50.190
+Error | hole_to_hole |  | U1.41,U1.41 | The holes U1.41 and U1.41 are 0.69 mm apart, but the minimum is 1 mm | 32.450,50.890
+Error | hole_to_hole |  | U1.41,U1.41 | The holes U1.41 and U1.41 are 0.69 mm apart, but the minimum is 1 mm | 32.450,51.590
+Error | hole_to_hole |  | U1.41,U1.41 | The holes U1.41 and U1.41 are 0.69 mm apart, but the minimum is 1 mm | 32.450,52.290
+Error | hole_to_hole |  | U1.41,U1.41 | The holes U1.41 and U1.41 are 0.69 mm apart, but the minimum is 1 mm | 33.150,50.190
+Error | hole_to_hole |  | U1.41,U1.41 | The holes U1.41 and U1.41 are 0.69 mm apart, but the minimum is 1 mm | 33.150,50.890
+Error | hole_to_hole |  | U1.41,U1.41 | The holes U1.41 and U1.41 are 0.69 mm apart, but the minimum is 1 mm | 33.150,51.590
+Error | hole_to_hole |  | U1.41,U1.41 | The holes U1.41 and U1.41 are 0.69 mm apart, but the minimum is 1 mm | 33.150,52.290
+Error | hole_to_hole |  | U1.41,U1.41 | The holes U1.41 and U1.41 are 0.69 mm apart, but the minimum is 1 mm | 33.850,50.190
+Error | hole_to_hole |  | U1.41,U1.41 | The holes U1.41 and U1.41 are 0.69 mm apart, but the minimum is 1 mm | 33.850,50.890
+Error | hole_to_hole |  | U1.41,U1.41 | The holes U1.41 and U1.41 are 0.69 mm apart, but the minimum is 1 mm | 33.850,51.590
+Error | hole_to_hole |  | U1.41,U1.41 | The holes U1.41 and U1.41 are 0.69 mm apart, but the minimum is 1 mm | 33.850,52.290
+Error | hole_to_hole |  | U1.41,U1.41 | The holes U1.41 and U1.41 are 0.69 mm apart, but the minimum is 1 mm | 34.550,50.190
+Error | hole_to_hole |  | U1.41,U1.41 | The holes U1.41 and U1.41 are 0.69 mm apart, but the minimum is 1 mm | 34.550,50.890
+Error | hole_to_hole |  | U1.41,U1.41 | The holes U1.41 and U1.41 are 0.69 mm apart, but the minimum is 1 mm | 34.550,51.590
+Error | hole_to_hole |  | U1.41,U1.41 | The holes U1.41 and U1.41 are 0.69 mm apart, but the minimum is 1 mm | 34.550,52.290
+Error | hole_to_hole |  | v11,v50 | The holes v11 and v50 are 0.619 mm apart, but the minimum is 1 mm | 21.198,36.481
+Error | hole_to_hole |  | v13,v6 | The holes v13 and v6 are 0.76 mm apart, but the minimum is 1 mm | 26.093,30.483
+Error | hole_to_hole |  | v28,v31 | The holes v28 and v31 are 0.75 mm apart, but the minimum is 1 mm | 32.638,37.081
+Error | hole_to_hole |  | v30,v32 | The holes v30 and v32 are 0.884 mm apart, but the minimum is 1 mm | 44.254,36.846
+Error | hole_to_hole |  | v43,v44 | The holes v43 and v44 are 0.478 mm apart, but the minimum is 1 mm | 18.489,39.924
+Error | track_width | bottom | t10 | t10 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t11 | t11 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t12 | t12 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t13 | t13 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t317 | t317 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t318 | t318 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t319 | t319 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t320 | t320 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t321 | t321 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t322 | t322 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t323 | t323 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t324 | t324 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t341 | t341 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t342 | t342 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t343 | t343 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t344 | t344 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t345 | t345 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t346 | t346 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t347 | t347 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t348 | t348 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t392 | t392 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t393 | t393 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t394 | t394 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t395 | t395 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t396 | t396 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t397 | t397 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t398 | t398 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t399 | t399 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t400 | t400 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t419 | t419 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t420 | t420 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t430 | t430 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t442 | t442 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t443 | t443 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t444 | t444 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t445 | t445 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t459 | t459 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t460 | t460 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t461 | t461 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t462 | t462 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t463 | t463 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t464 | t464 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t465 | t465 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t471 | t471 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t472 | t472 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t473 | t473 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t474 | t474 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t483 | t483 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t484 | t484 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t502 | t502 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t503 | t503 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t504 | t504 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t505 | t505 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t506 | t506 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t507 | t507 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t508 | t508 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t509 | t509 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t510 | t510 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t521 | t521 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t522 | t522 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t540 | t540 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t541 | t541 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t542 | t542 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t549 | t549 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t550 | t550 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | bottom | t9 | t9 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t1 | t1 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t2 | t2 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t282 | t282 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t283 | t283 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t293 | t293 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t294 | t294 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t295 | t295 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t296 | t296 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t297 | t297 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t298 | t298 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t299 | t299 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t3 | t3 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t300 | t300 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t301 | t301 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t302 | t302 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t303 | t303 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t304 | t304 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t305 | t305 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t306 | t306 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t307 | t307 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t308 | t308 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t309 | t309 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t310 | t310 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t311 | t311 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t312 | t312 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t313 | t313 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t314 | t314 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t315 | t315 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t316 | t316 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t325 | t325 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t326 | t326 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t327 | t327 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t328 | t328 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t329 | t329 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t330 | t330 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t331 | t331 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t332 | t332 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t333 | t333 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t334 | t334 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t335 | t335 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t336 | t336 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t337 | t337 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t338 | t338 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t339 | t339 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t340 | t340 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t349 | t349 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t350 | t350 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t351 | t351 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t361 | t361 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t362 | t362 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t363 | t363 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t364 | t364 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t365 | t365 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t366 | t366 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t367 | t367 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t368 | t368 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t369 | t369 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t370 | t370 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t371 | t371 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t372 | t372 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t373 | t373 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t374 | t374 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t375 | t375 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t376 | t376 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t377 | t377 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t378 | t378 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t379 | t379 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t380 | t380 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t381 | t381 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t382 | t382 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t383 | t383 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t384 | t384 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t385 | t385 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t386 | t386 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t387 | t387 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t388 | t388 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t389 | t389 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t390 | t390 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t391 | t391 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t4 | t4 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t401 | t401 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t402 | t402 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t403 | t403 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t404 | t404 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t405 | t405 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t406 | t406 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t407 | t407 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t408 | t408 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t409 | t409 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t410 | t410 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t411 | t411 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t412 | t412 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t413 | t413 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t414 | t414 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t415 | t415 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t416 | t416 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t417 | t417 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t418 | t418 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t421 | t421 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t422 | t422 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t423 | t423 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t424 | t424 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t425 | t425 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t426 | t426 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t427 | t427 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t428 | t428 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t429 | t429 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t431 | t431 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t432 | t432 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t433 | t433 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t434 | t434 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t435 | t435 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t436 | t436 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t437 | t437 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t438 | t438 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t439 | t439 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t440 | t440 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t441 | t441 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t446 | t446 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t447 | t447 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t448 | t448 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t449 | t449 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t450 | t450 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t451 | t451 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t452 | t452 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t453 | t453 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t454 | t454 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t455 | t455 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t456 | t456 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t457 | t457 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t458 | t458 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t466 | t466 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t467 | t467 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t468 | t468 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t469 | t469 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t470 | t470 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t475 | t475 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t476 | t476 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t477 | t477 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t478 | t478 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t479 | t479 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t480 | t480 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t481 | t481 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t482 | t482 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t485 | t485 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t486 | t486 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t487 | t487 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t488 | t488 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t489 | t489 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t490 | t490 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t491 | t491 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t492 | t492 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t493 | t493 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t494 | t494 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t495 | t495 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t496 | t496 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t497 | t497 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t498 | t498 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t499 | t499 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t5 | t5 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t500 | t500 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t501 | t501 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t511 | t511 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t512 | t512 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t513 | t513 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t514 | t514 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t515 | t515 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t516 | t516 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t517 | t517 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t518 | t518 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t519 | t519 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t520 | t520 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t523 | t523 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t524 | t524 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t525 | t525 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t526 | t526 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t527 | t527 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t528 | t528 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t529 | t529 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t530 | t530 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t531 | t531 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t532 | t532 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t533 | t533 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t534 | t534 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t535 | t535 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t536 | t536 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t537 | t537 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t538 | t538 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t539 | t539 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t543 | t543 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t544 | t544 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t545 | t545 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t546 | t546 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t547 | t547 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t548 | t548 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t551 | t551 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t552 | t552 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t553 | t553 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t554 | t554 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t581 | t581 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t582 | t582 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t583 | t583 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t584 | t584 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t585 | t585 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t586 | t586 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t6 | t6 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t613 | t613 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t614 | t614 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t7 | t7 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t8 | t8 is 0.25 mm wide, but the minimum width is 0.3 mm | 
+Warning | courtyard_outside_board |  | J7 | The courtyard of J7 is partly outside the board | 45.750,6.475
+Warning | courtyard_outside_board |  | U1 | The courtyard of U1 is partly outside the board | 35.000,60.650
+Warning | mask_bridge | top.mask | J1.A1,J1.A4 | The mask between pads J1.A1 and J1.A4 is 0.05 mm wide, but the minimum is 0.2 mm | 31.850,8.980
+Warning | mask_bridge | top.mask | J1.A1,J1.B9 | The mask between pads J1.A1 and J1.B9 is 0.05 mm wide, but the minimum is 0.2 mm | 31.850,8.980
+Warning | mask_bridge | top.mask | J1.A12,J1.A9 | The mask between pads J1.A9 and J1.A12 is 0.15 mm wide, but the minimum is 0.2 mm | 37.400,8.980
+Warning | mask_bridge | top.mask | J1.A12,J1.B4 | The mask between pads J1.A12 and J1.B4 is 0.15 mm wide, but the minimum is 0.2 mm | 38.250,8.980
+Warning | mask_bridge | top.mask | J1.A4,J1.B12 | The mask between pads J1.A4 and J1.B12 is 0.05 mm wide, but the minimum is 0.2 mm | 32.600,8.980
+Warning | mask_bridge | top.mask | J1.A4,J1.B8 | The mask between pads J1.A4 and J1.B8 is 0.1 mm wide, but the minimum is 0.2 mm | 32.600,8.980
+Warning | mask_bridge | top.mask | J1.A5,J1.B7 | The mask between pads J1.A5 and J1.B7 is 0.1 mm wide, but the minimum is 0.2 mm | 33.750,8.980
+Warning | mask_bridge | top.mask | J1.A5,J1.B8 | The mask between pads J1.A5 and J1.B8 is 0.1 mm wide, but the minimum is 0.2 mm | 33.750,8.980
+Warning | mask_bridge | top.mask | J1.A6,J1.A7 | The mask between pads J1.A6 and J1.A7 is 0.1 mm wide, but the minimum is 0.2 mm | 34.750,8.980
+Warning | mask_bridge | top.mask | J1.A6,J1.B7 | The mask between pads J1.A6 and J1.B7 is 0.1 mm wide, but the minimum is 0.2 mm | 34.750,8.980
+Warning | mask_bridge | top.mask | J1.A7,J1.B6 | The mask between pads J1.A7 and J1.B6 is 0.1 mm wide, but the minimum is 0.2 mm | 35.250,8.980
+Warning | mask_bridge | top.mask | J1.A8,J1.B5 | The mask between pads J1.A8 and J1.B5 is 0.1 mm wide, but the minimum is 0.2 mm | 36.250,8.980
+Warning | mask_bridge | top.mask | J1.A8,J1.B6 | The mask between pads J1.A8 and J1.B6 is 0.1 mm wide, but the minimum is 0.2 mm | 36.250,8.980
+Warning | mask_bridge | top.mask | J1.A9,J1.B1 | The mask between pads J1.A9 and J1.B1 is 0.15 mm wide, but the minimum is 0.2 mm | 37.400,8.980
+Warning | mask_bridge | top.mask | J1.A9,J1.B5 | The mask between pads J1.A9 and J1.B5 is 0.1 mm wide, but the minimum is 0.2 mm | 37.400,8.980
+Warning | mask_bridge | top.mask | J1.B1,J1.B4 | The mask between pads J1.B1 and J1.B4 is 0.15 mm wide, but the minimum is 0.2 mm | 38.250,8.980
+Warning | mask_bridge | top.mask | J1.B12,J1.B9 | The mask between pads J1.B9 and J1.B12 is 0.05 mm wide, but the minimum is 0.2 mm | 32.600,8.980
+Warning | mask_bridge | top.mask | J1.B4,J1.B5 | The mask between pads J1.B4 and J1.B5 is 0.1 mm wide, but the minimum is 0.2 mm | 37.400,8.980
+Warning | mask_bridge | top.mask | J1.B8,J1.B9 | The mask between pads J1.B8 and J1.B9 is 0.1 mm wide, but the minimum is 0.2 mm | 33.250,8.980
+Warning | mask_bridge | top.mask | U5.1,U5.2 | The mask between pads U5.1 and U5.2 is 0.15 mm wide, but the minimum is 0.2 mm | 32.237,35.750
+Warning | mask_bridge | top.mask | U5.10,U5.11 | The mask between pads U5.10 and U5.11 is 0.15 mm wide, but the minimum is 0.2 mm | 34.763,35.250
+Warning | mask_bridge | top.mask | U5.10,U5.9 | The mask between pads U5.9 and U5.10 is 0.15 mm wide, but the minimum is 0.2 mm | 34.763,34.750
+Warning | mask_bridge | top.mask | U5.12,U5.13 | The mask between pads U5.12 and U5.13 is 0.15 mm wide, but the minimum is 0.2 mm | 34.000,36.013
+Warning | mask_bridge | top.mask | U5.13,U5.14 | The mask between pads U5.13 and U5.14 is 0.15 mm wide, but the minimum is 0.2 mm | 33.500,36.013
+Warning | mask_bridge | top.mask | U5.2,U5.3 | The mask between pads U5.2 and U5.3 is 0.15 mm wide, but the minimum is 0.2 mm | 32.237,35.250
+Warning | mask_bridge | top.mask | U5.3,U5.4 | The mask between pads U5.3 and U5.4 is 0.15 mm wide, but the minimum is 0.2 mm | 32.237,34.750
+Warning | mask_bridge | top.mask | U5.5,U5.6 | The mask between pads U5.5 and U5.6 is 0.15 mm wide, but the minimum is 0.2 mm | 33.000,33.987
+Warning | mask_bridge | top.mask | U5.8,U5.9 | The mask between pads U5.8 and U5.9 is 0.15 mm wide, but the minimum is 0.2 mm | 34.763,34.250
+Warning | silk_text_size | bottom.silk | x12 | The silkscreen text "v1" is 1.2 mm high, but the minimum is 1.5 mm | 25.500,32.400
+Warning | silk_text_size | top.silk | x1 | The silkscreen text "SERVO" is 1 mm high, but the minimum is 1.5 mm | 11.000,44.000
+Warning | silk_text_size | top.silk | x10 | The silkscreen text "PYRO2" is 1 mm high, but the minimum is 1.5 mm | 19.200,16.100
+Warning | silk_text_size | top.silk | x11 | The silkscreen text "PYRO1" is 1 mm high, but the minimum is 1.5 mm | 40.600,15.400
+Warning | silk_text_size | top.silk | x2 | The silkscreen text "1" is 1 mm high, but the minimum is 1.5 mm | 16.400,38.260
+Warning | silk_text_size | top.silk | x3 | The silkscreen text "2" is 1 mm high, but the minimum is 1.5 mm | 16.400,29.540
+Warning | silk_text_size | top.silk | x4 | The silkscreen text "BOOT" is 1 mm high, but the minimum is 1.5 mm | 19.000,43.400
+Warning | silk_text_size | top.silk | x5 | The silkscreen text "BAT 2S" is 1 mm high, but the minimum is 1.5 mm | 26.200,4.400
+Warning | silk_text_size | top.silk | x6 | The silkscreen text "ARM" is 1 mm high, but the minimum is 1.5 mm | 51.000,11.800
+Warning | silk_text_size | top.silk | x7 | The silkscreen text "3" is 1 mm high, but the minimum is 1.5 mm | 53.800,38.260
+Warning | silk_text_size | top.silk | x8 | The silkscreen text "4" is 1 mm high, but the minimum is 1.5 mm | 53.800,29.540
+Warning | silk_text_size | top.silk | x9 | The silkscreen text "SERVO" is 1 mm high, but the minimum is 1.5 mm | 59.000,44.000
+Warning | silk_to_edge | top.silk | J7 | The silkscreen drawing of J7 is 0.21 mm from the board edge, but the minimum is 0.5 mm | 45.750,3.490
+Warning | silk_to_pad | bottom.silk | J3.1,x13 | The silkscreen text "Flight Computer" is 0.289 mm from pad J3.1 on bottom.silk, but the minimum is 0.3 mm | 14.000,35.720
+Warning | silk_to_pad | bottom.silk | J6.1,g1 | The silkscreen drawing g1 is 0.158 mm from pad J6.1 on bottom.silk, but the minimum is 0.3 mm | 56.000,32.080
+Warning | silk_to_pad | bottom.silk | J6.2,g1 | The silkscreen drawing g1 is 0.221 mm from pad J6.2 on bottom.silk, but the minimum is 0.3 mm | 56.000,29.540
+Warning | silk_to_pad | bottom.silk | J6.3,g1 | The silkscreen drawing g1 is 0.221 mm from pad J6.3 on bottom.silk, but the minimum is 0.3 mm | 56.000,27.000
+Warning | starved_thermal | bottom | J1.SH,z2 | Pad J1.SH has 2 spoke(s) to zone z2, but the minimum is 4 | 30.680,8.405
+Warning | starved_thermal | bottom | J1.SH,z2 | Pad J1.SH has 3 spoke(s) to zone z2, but the minimum is 4 | 39.320,8.405
+Warning | starved_thermal | bottom | J3.3,z2 | Pad J3.3 has 2 spoke(s) to zone z2, but the minimum is 4 | 14.000,40.800
+Warning | starved_thermal | bottom | J5.3,z2 | Pad J5.3 has 3 spoke(s) to zone z2, but the minimum is 4 | 56.000,35.720
+Warning | starved_thermal | bottom | J6.3,z2 | Pad J6.3 has 3 spoke(s) to zone z2, but the minimum is 4 | 56.000,27.000
+Warning | starved_thermal | bottom | U1.41,z2 | Pad U1.41 has 1 spoke(s) to zone z2, but the minimum is 4 | 32.800,51.240
+Warning | starved_thermal | bottom | U1.41,z2 | Pad U1.41 has 1 spoke(s) to zone z2, but the minimum is 4 | 33.500,50.540
+Warning | starved_thermal | bottom | U1.41,z2 | Pad U1.41 has 2 spoke(s) to zone z2, but the minimum is 4 | 34.200,51.240
+Warning | starved_thermal | bottom | U1.41,z2 | Pad U1.41 has 2 spoke(s) to zone z2, but the minimum is 4 | 34.900,50.540
+Warning | starved_thermal | bottom | U1.41,z2 | Pad U1.41 has 3 spoke(s) to zone z2, but the minimum is 4 | 32.100,50.540
+Warning | starved_thermal | bottom | U1.41,z2 | Pad U1.41 has 3 spoke(s) to zone z2, but the minimum is 4 | 32.100,51.940
+Warning | starved_thermal | bottom | U1.41,z2 | Pad U1.41 has 3 spoke(s) to zone z2, but the minimum is 4 | 32.800,49.840
+Warning | starved_thermal | bottom | U1.41,z2 | Pad U1.41 has 3 spoke(s) to zone z2, but the minimum is 4 | 33.500,51.940
+Warning | starved_thermal | bottom | U1.41,z2 | Pad U1.41 has 3 spoke(s) to zone z2, but the minimum is 4 | 34.200,49.840
+Warning | starved_thermal | bottom | U1.41,z2 | Pad U1.41 has 3 spoke(s) to zone z2, but the minimum is 4 | 34.200,52.640
+Warning | starved_thermal | bottom | U1.41,z2 | Pad U1.41 has 3 spoke(s) to zone z2, but the minimum is 4 | 34.900,51.940
+Warning | starved_thermal | top | C1.2,z1 | Pad C1.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 22.450,58.400
+Warning | starved_thermal | top | C13.2,z1 | Pad C13.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 44.700,26.500
+Warning | starved_thermal | top | C14.2,z1 | Pad C14.2 has 2 spoke(s) to zone z1, but the minimum is 4 | 34.275,32.300
+Warning | starved_thermal | top | C15.2,z1 | Pad C15.2 has 2 spoke(s) to zone z1, but the minimum is 4 | 30.500,35.775
+Warning | starved_thermal | top | C16.2,z1 | Pad C16.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 36.500,35.775
+Warning | starved_thermal | top | C19.2,z1 | Pad C19.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 25.675,24.000
+Warning | starved_thermal | top | C2.2,z1 | Pad C2.2 has 1 spoke(s) to zone z1, but the minimum is 4 | 22.275,56.100
+Warning | starved_thermal | top | C3.2,z1 | Pad C3.2 has 2 spoke(s) to zone z1, but the minimum is 4 | 22.275,52.300
+Warning | starved_thermal | top | C4.2,z1 | Pad C4.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 25.450,36.000
+Warning | starved_thermal | top | C9.2,z1 | Pad C9.2 has 2 spoke(s) to zone z1, but the minimum is 4 | 50.550,23.600
+Warning | starved_thermal | top | J1.A1,z1 | Pad J1.A1 has 2 spoke(s) to zone z1, but the minimum is 4 | 31.850,8.980
+Warning | starved_thermal | top | J1.A12,z1 | Pad J1.A12 has 1 spoke(s) to zone z1, but the minimum is 4 | 38.250,8.980
+Warning | starved_thermal | top | J1.B1,z1 | Pad J1.B1 has 1 spoke(s) to zone z1, but the minimum is 4 | 38.250,8.980
+Warning | starved_thermal | top | J1.B12,z1 | Pad J1.B12 has 2 spoke(s) to zone z1, but the minimum is 4 | 31.850,8.980
+Warning | starved_thermal | top | J1.SH,z1 | Pad J1.SH has 3 spoke(s) to zone z1, but the minimum is 4 | 30.680,4.225
+Warning | starved_thermal | top | J4.3,z1 | Pad J4.3 has 1 spoke(s) to zone z1, but the minimum is 4 | 14.000,32.080
+Warning | starved_thermal | top | J5.3,z1 | Pad J5.3 has 3 spoke(s) to zone z1, but the minimum is 4 | 56.000,35.720
+Warning | starved_thermal | top | LED2.1,z1 | Pad LED2.1 has 3 spoke(s) to zone z1, but the minimum is 4 | 57.413,47.600
+Warning | starved_thermal | top | Q2.2,z1 | Pad Q2.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 30.062,19.550
+Warning | starved_thermal | top | R10.2,z1 | Pad R10.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 22.525,24.000
+Warning | starved_thermal | top | R12.2,z1 | Pad R12.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 22.525,22.000
+Warning | starved_thermal | top | R14.2,z1 | Pad R14.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 22.525,20.000
+Warning | starved_thermal | top | R3.2,z1 | Pad R3.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 39.000,15.825
+Warning | starved_thermal | top | R6.2,z1 | Pad R6.2 has 1 spoke(s) to zone z1, but the minimum is 4 | 36.000,21.325
+Warning | starved_thermal | top | R7.2,z1 | Pad R7.2 has 2 spoke(s) to zone z1, but the minimum is 4 | 34.000,21.325
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 0 spoke(s) to zone z1, but the minimum is 4 | 32.100,50.540
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 0 spoke(s) to zone z1, but the minimum is 4 | 32.800,52.640
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 0 spoke(s) to zone z1, but the minimum is 4 | 34.200,49.840
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 0 spoke(s) to zone z1, but the minimum is 4 | 34.200,51.240
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 0 spoke(s) to zone z1, but the minimum is 4 | 34.200,52.640
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 1 spoke(s) to zone z1, but the minimum is 4 | 32.100,51.940
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 1 spoke(s) to zone z1, but the minimum is 4 | 32.800,49.840
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 1 spoke(s) to zone z1, but the minimum is 4 | 32.800,51.240
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 1 spoke(s) to zone z1, but the minimum is 4 | 33.500,50.540
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 1 spoke(s) to zone z1, but the minimum is 4 | 33.500,51.940
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 1 spoke(s) to zone z1, but the minimum is 4 | 34.900,50.540
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 2 spoke(s) to zone z1, but the minimum is 4 | 34.900,51.940
+Warning | starved_thermal | top | U2.2,z1 | Pad U2.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 33.862,13.000
+Warning | starved_thermal | top | U4.1,z1 | Pad U4.1 has 1 spoke(s) to zone z1, but the minimum is 4 | 52.438,19.850
+Warning | starved_thermal | top | U5.6,z1 | Pad U5.6 has 2 spoke(s) to zone z1, but the minimum is 4 | 33.500,33.987
+Warning | starved_thermal | top | U5.7,z1 | Pad U5.7 has 3 spoke(s) to zone z1, but the minimum is 4 | 34.000,33.987
+Warning | starved_thermal | top | U6.2,z1 | Pad U6.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 40.925,35.625
+# excluded
+
+# ratsnest
+
+# islands
+3V3 1
+3V3_SENSOR 1
+5V_SERVO 1
+BOOT 1
+BOOT_5V 1
+BST_3V3 1
+BUZZER 1
+CC1 1
+CC2 1
+CONT1_SENSE 1
+CONT2_SENSE 1
+CS_BARO 1
+CS_IMU 1
+EN 1
+FB_5V 1
+FIRE1 1
+FIRE2 1
+GND 1
+IMU_FSYNC 1
+IMU_INT 1
+LED_ARM 1
+LED_STATUS 1
+LED_STATUS_A 1
+PYRO1_DRAIN 1
+PYRO2_DRAIN 1
+PYRO_V 1
+SERVO1 1
+SERVO2 1
+SERVO3 1
+SERVO4 1
+SPI_MISO 1
+SPI_MOSI 1
+SPI_SCK 1
+SW_3V3 1
+SW_5V 1
+USB_DN 1
+USB_DP 1
+VBAT 1
+VBAT_SENSE 1
+VBUS 1
+VSYS 1

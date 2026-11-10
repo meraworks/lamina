@@ -79,6 +79,10 @@ pub struct CheckParams {
     /// The maximum number of violations to return (default 200).
     #[serde(default)]
     pub limit: Option<usize>,
+    /// Check for release: open connections and parts with no placement
+    /// are errors, as `export` sees them (default false).
+    #[serde(default)]
+    pub release: bool,
 }
 
 fn yes() -> bool {
@@ -139,8 +143,7 @@ pub fn read_project(path: &str) -> lamina_core::Result<Project> {
     if !model::ProjectData::is_project(&dir) {
         return Err(model::Error::NotAProject(dir));
     }
-    let mut p = lamina_wiring::open_shared(&dir)?;
-    crate::register_checkers(&mut p);
+    let p = lamina_wiring::open_shared(&dir)?;
     Ok(p)
 }
 
@@ -152,8 +155,7 @@ pub fn open_project(
 ) -> lamina_core::Result<Project> {
     let dir = PathBuf::from(path);
     if model::ProjectData::is_project(&dir) {
-        let mut p = lamina_wiring::open(&dir)?;
-        crate::register_checkers(&mut p);
+        let p = lamina_wiring::open(&dir)?;
         return Ok(p);
     }
     if !create {
@@ -166,7 +168,6 @@ pub fn open_project(
             .to_string()
     });
     let mut p = lamina_wiring::create(&dir, &name)?;
-    crate::register_checkers(&mut p);
     if modular {
         p.init_source()?;
     }
@@ -396,7 +397,11 @@ impl Lamina {
         Parameters(p): Parameters<CheckParams>,
     ) -> Result<CallToolResult, McpError> {
         self.with(|proj| {
-            let mut v = proj.check();
+            let mut v = if p.release {
+                proj.check_release()
+            } else {
+                proj.check()
+            };
             if let Some(rules) = &p.rules {
                 v.retain(|x| rules.contains(&x.rule));
             }
@@ -408,6 +413,13 @@ impl Lamina {
             v.truncate(p.limit.unwrap_or(200));
             Ok(serde_json::json!({ "total": total, "violations": v }))
         })
+    }
+
+    /// List all checks: what each one reports, why, its severity on this
+    /// board, the severity for `export`, and the rule fields that set its limits.
+    #[tool(annotations(title = "Checks", read_only_hint = true))]
+    async fn checks(&self) -> Result<CallToolResult, McpError> {
+        self.with(|proj| Ok(proj.checks()))
     }
 
     /// Accept a DRC violation by rule and item IDs from check. A reason is required.

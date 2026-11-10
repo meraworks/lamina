@@ -24,7 +24,9 @@ impl Project {
     }
 
     pub fn exclude_violation(&mut self, p: ExcludeViolation) -> Result<OpResult> {
-        if !lamina_drc::RULE_NAMES.contains(&p.rule.as_str()) || p.rule == "stale_exclusion" {
+        if !lamina_drc::registry::get(&p.rule).is_some_and(|c| c.excludable)
+            || p.rule == "stale_exclusion"
+        {
             return Err(Error::invalid(format!(
                 "Cannot exclude {}. Use a DRC rule name from check.",
                 p.rule

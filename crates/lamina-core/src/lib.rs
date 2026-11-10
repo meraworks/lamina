@@ -9,7 +9,10 @@ pub mod lock;
 pub mod ops;
 pub mod project;
 pub mod reuse;
-pub mod validate;
+/// The model checks. They are part of the analysis in `lamina-drc`.
+pub mod validate {
+    pub use lamina_drc::model::validate;
+}
 
 pub use lamina_model as model;
 pub use lamina_model::error::{Error, Result};

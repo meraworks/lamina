@@ -75,6 +75,10 @@ pub struct DrillItem {
     pub prim: Prim,
     pub plated: bool,
     pub owner: Owner,
+    /// The net of the copper around a plated hole.
+    pub net: Option<String>,
+    /// The first and the last copper layer that the hole goes through.
+    pub layers: (u8, u8),
 }
 
 /// The pad shape in board coordinates.
@@ -259,6 +263,14 @@ pub fn build(d: &ProjectData) -> BoardGeometry {
                         pad: pad.number.clone(),
                         index: i,
                     },
+                    net: (*plated && !pad.number.is_empty())
+                        .then(|| {
+                            pad_nets
+                                .get(&PadRef::new(refdes.clone(), pad.number.clone()))
+                                .cloned()
+                        })
+                        .flatten(),
+                    layers: (0, layers.saturating_sub(1)),
                 });
             }
         }
@@ -348,6 +360,8 @@ pub fn build(d: &ProjectData) -> BoardGeometry {
             },
             plated: true,
             owner: Owner::Via { id: v.id.clone() },
+            net: Some(v.net.clone()),
+            layers: (lo, hi),
         });
     }
 
@@ -356,6 +370,8 @@ pub fn build(d: &ProjectData) -> BoardGeometry {
             prim: drill_prim(&h.drill, h.at, h.rotation),
             plated: h.plated,
             owner: Owner::Hole { id: h.id.clone() },
+            net: h.net.clone().filter(|_| h.plated),
+            layers: (0, layers.saturating_sub(1)),
         });
         if h.plated {
             if let Some(pd) = h.pad_diameter {
@@ -377,8 +393,20 @@ pub fn build(d: &ProjectData) -> BoardGeometry {
     BoardGeometry {
         copper,
         drills,
-        outline: d.board.outline.as_ref().map(|c| c.flatten(0.01)),
-        cutouts: d.board.cutouts.iter().map(|c| c.flatten(0.01)).collect(),
+        // An outline that is not valid counts as absent. The model checks report it.
+        outline: d
+            .board
+            .outline
+            .as_ref()
+            .filter(|c| c.check().is_ok())
+            .map(|c| c.flatten(0.01)),
+        cutouts: d
+            .board
+            .cutouts
+            .iter()
+            .filter(|c| c.check().is_ok())
+            .map(|c| c.flatten(0.01))
+            .collect(),
         layers,
     }
 }
