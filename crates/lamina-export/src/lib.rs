@@ -152,9 +152,12 @@ fn csv(s: &str) -> String {
 /// Make the JLCPCB assembly BOM and the pick-and-place files.
 pub fn assembly(d: &ProjectData, name: &str) -> (Vec<Output>, Vec<String>) {
     let mut warnings = Vec::new();
-    let mut groups: BTreeMap<(String, String, String), Vec<String>> = BTreeMap::new();
+    // (value, footprint, LCSC number, manufacturer, part number)
+    let mut groups: BTreeMap<(String, String, String, String, String), Vec<String>> =
+        BTreeMap::new();
+    let in_bom = |p: &Part| !p.dnp && !p.fields.get("exclude_from_bom").is_some_and(|v| v == "yes");
     for (r, p) in &d.parts.parts {
-        if p.dnp {
+        if !in_bom(p) {
             continue;
         }
         if p.lcsc.is_none() {
@@ -166,40 +169,69 @@ pub fn assembly(d: &ProjectData, name: &str) -> (Vec<Output>, Vec<String>) {
             p.value.clone().or(p.mpn.clone()).unwrap_or_default(),
             p.footprint.clone(),
             p.lcsc.clone().unwrap_or_default(),
+            p.manufacturer.clone().unwrap_or_default(),
+            p.mpn.clone().unwrap_or_default(),
         );
         groups.entry(key).or_default().push(r.clone());
     }
-    let mut bom = String::from("Comment,Designator,Footprint,LCSC Part #\n");
-    for ((value, fp, lcsc), mut refs) in groups {
+    let mut bom = String::from(
+        "Comment,Designator,Footprint,LCSC Part #,Manufacturer,MPN
+",
+    );
+    for ((value, fp, lcsc, maker, mpn), mut refs) in groups {
         refs.sort_by(|a, b| natural(a, b));
         let _ = writeln!(
             bom,
-            "{},{},{},{}",
+            "{},{},{},{},{},{}",
             csv(&value),
             csv(&refs.join(",")),
             csv(&fp),
-            csv(&lcsc)
+            csv(&lcsc),
+            csv(&maker),
+            csv(&mpn)
         );
     }
-    let mut cpl = String::from("Designator,Mid X,Mid Y,Layer,Rotation\n");
+    let mut cpl = String::from(
+        "Designator,Mid X,Mid Y,Layer,Rotation
+",
+    );
     let mut placed: Vec<(&String, &Placement)> = d.placement.placements.iter().collect();
     placed.sort_by(|a, b| natural(a.0, b.0));
     for (r, pl) in placed {
-        if d.parts.parts.get(r).is_none_or(|p| p.dnp) {
+        let Some(part) = d.parts.parts.get(r).filter(|p| in_bom(p)) else {
             continue;
-        }
+        };
+        // The middle of the part is the middle of its pads. The origin of a
+        // footprint can be at pin 1.
+        let mid = d
+            .footprints
+            .get(&part.footprint)
+            .and_then(|fp| fp.pads_bbox())
+            .map(|b| {
+                pl.transform(Point::new(
+                    (b.min.x + b.max.x) / 2.0,
+                    (b.min.y + b.max.y) / 2.0,
+                ))
+            })
+            .unwrap_or(Point::new(pl.x, pl.y));
+        // A correction for a part whose zero angle is not that of the assembler.
+        let turn = part
+            .fields
+            .get("cpl_rotation")
+            .and_then(|v| v.parse::<f64>().ok())
+            .unwrap_or(0.0);
         let _ = writeln!(
             cpl,
             "{},{:.4}mm,{:.4}mm,{},{}",
             r,
-            pl.x,
-            pl.y,
+            mid.x,
+            mid.y,
             if pl.side == Side::Top {
                 "Top"
             } else {
                 "Bottom"
             },
-            json::round6(pl.rotation)
+            json::round6((pl.rotation + turn).rem_euclid(360.0))
         );
     }
     for r in d.parts.parts.keys() {

@@ -1,5 +1,6 @@
 //! Design rule checks, connectivity and fab presets.
 
+pub mod assembly;
 pub mod fab;
 pub mod footprints;
 mod holes;
@@ -786,6 +787,7 @@ pub fn analyze(d: &ProjectData) -> Analysis {
     v.extend(holes::hole_to_copper(d, &g));
     v.extend(parity::check(d, &g));
     v.extend(footprints::check(d));
+    v.extend(assembly::check(d, &g, &fills));
     // A join that only touches is a violation if nothing else connects the two sides.
     for (i, j) in weak {
         if strong.find(i) != strong.find(j) {
