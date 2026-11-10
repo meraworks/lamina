@@ -14,7 +14,6 @@
   <img src="https://img.shields.io/badge/MCP-server-6e56cf" alt="MCP server">
   <img src="https://img.shields.io/badge/Windows%20·%20macOS%20·%20Linux-informational" alt="Windows, macOS and Linux">
   <a href="#licence"><img src="https://img.shields.io/badge/licence-MIT%20%2F%20Apache--2.0-blue" alt="MIT or Apache-2.0"></a>
-  <a href="https://m8ven.ai/mcp/roku-on-it-lamina-19f5nm?s=readme"><img src="https://m8ven.ai/badge/mcp/roku-on-it-lamina-19f5nm?v=b0e32a2870337469e33cf2808546568a" alt="M8ven Score"></a>
 </p>
 
 <p align="center">
