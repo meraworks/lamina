@@ -580,4 +580,27 @@ fn fab(d: &ProjectData, g: &BoardGeometry, v: &mut Vec<Violation>) {
             );
         }
     }
+    // A part of the board itself that is narrower than the limit breaks
+    // when the board is cut or handled.
+    if let Some(outline) = &g.outline {
+        for (k, (at, _)) in
+            lamina_geom::fill::narrow_parts(outline, &g.cutouts, rules.min_route_width)
+                .into_iter()
+                .enumerate()
+        {
+            v.push(
+                Violation::warning(
+                    "board_neck",
+                    format!(
+                        "A part of the board at ({}, {}) is narrower than {} mm",
+                        r3(at.x),
+                        r3(at.y),
+                        r3(rules.min_route_width)
+                    ),
+                )
+                .at(at)
+                .items([format!("neck{}", k + 1)]),
+            );
+        }
+    }
 }

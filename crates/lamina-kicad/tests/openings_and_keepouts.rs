@@ -142,3 +142,27 @@ fn edge_drawings_of_a_footprint_become_board_cutouts() {
             && near((cx - 10.0).hypot(cy - 10.0), 4.0)
     }));
 }
+
+#[test]
+fn zone_parts_that_lamina_does_not_have_give_notes() {
+    let text = r#"(kicad_pcb (version 20240108) (generator "test")
+  (layers (0 "F.Cu" signal) (31 "B.Cu" signal) (44 "Edge.Cuts" user))
+  (net 0 "") (net 1 "GND")
+  (gr_rect (start 0 0) (end 20 20) (layer "Edge.Cuts") (stroke (width 0.1) (type default)))
+  (gr_text_box "note" (start 1 1) (end 5 3) (layer "F.SilkS"))
+  (zone (net 1) (net_name "GND") (layer "F.Cu") (hatch edge 0.5)
+    (connect_pads thru_hole_only (clearance 0.2))
+    (min_thickness 0.2)
+    (fill yes (mode hatch) (thermal_gap 0.3) (thermal_bridge_width 0.3))
+    (polygon (pts (xy 1 1) (xy 9 1) (xy 9 9) (xy 1 9)))
+    (polygon (pts (xy 11 11) (xy 19 11) (xy 19 19) (xy 11 19)))
+  )
+)"#;
+    let b = lamina_kicad::import_board(text, "zones").unwrap();
+    assert_eq!(b.data.routing.zones.len(), 1);
+    let has = |s: &str| b.notes.iter().any(|n| n.contains(s));
+    assert!(has("thru_hole_only"), "{:?}", b.notes);
+    assert!(has("hatch pattern"), "{:?}", b.notes);
+    assert!(has("1 more outline(s) of the zone z1"), "{:?}", b.notes);
+    assert!(has("1 text box(es)"), "{:?}", b.notes);
+}

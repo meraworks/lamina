@@ -44,6 +44,42 @@ pub fn inflate(p: &Prim, d: f64) -> MultiPolygon<f64> {
     }
 }
 
+/// The parts of a board that are narrower than `width`: the middle of each
+/// part and its area in mm2. The board is the outline without the cut-outs.
+///
+/// The board is made smaller by half of the width and then larger again. A
+/// narrow part does not come back. A sharp corner loses a small area also,
+/// so a part counts only if its area is above the square of half the width.
+pub fn narrow_parts(outline: &[Point], cutouts: &[Vec<Point>], width: f64) -> Vec<(Point, f64)> {
+    if outline.len() < 3 || width <= 0.0 {
+        return Vec::new();
+    }
+    let r = width / 2.0;
+    let mut board = mp(gpoly(outline));
+    for c in cutouts.iter().filter(|c| c.len() >= 3) {
+        board = board.difference(&mp(gpoly(c)));
+    }
+    // A little less than half the width, so that a part of exactly the width stays.
+    let opened = board.buffer(-0.98 * r).buffer(0.98 * r);
+    let lost = board.difference(&opened);
+    let mut out = Vec::new();
+    for piece in &lost.0 {
+        let area = piece.unsigned_area();
+        if area <= r * r {
+            continue;
+        }
+        let pts: Vec<_> = piece.exterior().points().collect();
+        let n = pts.len().max(1) as f64;
+        let at = Point::new(
+            pts.iter().map(|p| p.x()).sum::<f64>() / n,
+            pts.iter().map(|p| p.y()).sum::<f64>() / n,
+        );
+        out.push((round_pt(at), area));
+    }
+    out.sort_by(|a, b| a.0.x.total_cmp(&b.0.x).then(a.0.y.total_cmp(&b.0.y)));
+    out
+}
+
 fn union_all(items: Vec<MultiPolygon<f64>>) -> MultiPolygon<f64> {
     // A pairwise tree union keeps each step small.
     let mut layer = items;

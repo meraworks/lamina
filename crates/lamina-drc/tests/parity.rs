@@ -338,3 +338,50 @@ fn minimums_and_fab_profiles() {
         assert!(track(&r).unwrap().fits, "{}", profile.id);
     }
 }
+
+#[test]
+fn a_narrow_part_of_the_board_is_a_board_neck() {
+    let mut d = ProjectData::new("neck");
+    // Two squares of 10 mm with a bridge of 0.5 mm between them.
+    let pts = [
+        (0.0, 0.0),
+        (10.0, 0.0),
+        (10.0, 4.75),
+        (14.0, 4.75),
+        (14.0, 0.0),
+        (24.0, 0.0),
+        (24.0, 10.0),
+        (14.0, 10.0),
+        (14.0, 5.25),
+        (10.0, 5.25),
+        (10.0, 10.0),
+        (0.0, 10.0),
+    ];
+    d.board.outline = Some(Contour {
+        vertices: pts
+            .iter()
+            .map(|(x, y)| Vertex {
+                x: *x,
+                y: *y,
+                arc: None,
+            })
+            .collect(),
+    });
+    let necks = |d: &ProjectData| {
+        analyze(d)
+            .violations
+            .into_iter()
+            .filter(|v| v.rule == "board_neck")
+            .collect::<Vec<_>>()
+    };
+    let v = necks(&d);
+    assert_eq!(v.len(), 1, "{v:?}");
+    let at = v[0].at.unwrap();
+    assert!(
+        at.x > 10.0 && at.x < 14.0 && (at.y - 5.0).abs() < 0.3,
+        "{at:?}"
+    );
+    // A plain rectangle has no neck.
+    d.board.outline = Some(Contour::rect(0.0, 0.0, 24.0, 10.0));
+    assert!(necks(&d).is_empty());
+}

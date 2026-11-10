@@ -342,6 +342,24 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
         };
         let fill = zone.child("fill");
         zid += 1;
+        // The parts of a KiCad zone that Lamina does not have.
+        if cp.and_then(|c| c.arg(0)) == Some("thru_hole_only") {
+            notes.push(format!(
+                "skipped the pad connection `thru_hole_only` of the zone z{zid}: all its pads get thermal spokes"
+            ));
+        }
+        if fill.and_then(|f| f.child_text("mode")) == Some("hatch") {
+            notes.push(format!(
+                "skipped the hatch pattern of the zone z{zid}: its pour is solid"
+            ));
+        }
+        let outlines = zone.args().iter().filter(|c| c.is("polygon")).count();
+        if outlines > 1 {
+            notes.push(format!(
+                "skipped {} more outline(s) of the zone z{zid}",
+                outlines - 1
+            ));
+        }
         d.routing.zones.push(Zone {
             id: format!("z{zid}"),
             net,
@@ -364,6 +382,7 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
 
     // Outline, texts and drawings.
     let mut edges: Vec<Edge> = Vec::new();
+    let text_boxes = &mut 0usize;
     let mut gid = 0;
     let mut xid = 0;
     for g in root.args() {
@@ -402,6 +421,10 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
             });
             continue;
         }
+        if kind == "gr_text_box" {
+            *text_boxes += 1;
+            continue;
+        }
         if !kind.starts_with("gr_") {
             continue;
         }
@@ -432,6 +455,9 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
                 .unwrap_or(0.15),
             filled,
         });
+    }
+    if *text_boxes > 0 {
+        notes.push(format!("skipped {} text box(es)", *text_boxes));
     }
     edges.extend(part_edges);
     let (loops, open) = chain_edges(edges, 0.01);
