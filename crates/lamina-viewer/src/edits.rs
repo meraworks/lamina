@@ -1504,6 +1504,7 @@ pub fn add_keepout(d: &mut ProjectData, layers: Vec<Layer>, pts: &[Point]) -> Ed
         layers,
         outline,
         forbid: Forbid::default(),
+        max_height: None,
     });
     Ok(format!("Added keep-out {id}"))
 }

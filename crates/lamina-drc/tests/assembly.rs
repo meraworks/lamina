@@ -94,12 +94,16 @@ fn part_near_the_edge_and_part_above_a_height_limit() {
             pads: false,
             parts: false,
         },
+        max_height: None,
     });
     d.footprints.get_mut("R_0603").unwrap().height = Some(0.55);
     d.board.rules.height_limits.insert("low".into(), 0.4);
     assert_eq!(count(&d, "part_height"), 1, "only R2 is in the area");
     d.board.rules.height_limits.insert("low".into(), 0.6);
     assert_eq!(count(&d, "part_height"), 0);
+    // The limit of the keep-out itself wins.
+    d.routing.keepouts[0].max_height = Some(0.3);
+    assert_eq!(count(&d, "part_height"), 1);
 }
 
 #[test]

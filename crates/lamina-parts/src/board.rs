@@ -510,6 +510,7 @@ pub fn import_board(doc: &Value, name: &str) -> Result<ImportedBoard, String> {
                                     pads: false,
                                     parts: false,
                                 },
+                                max_height: None,
                             });
                         }
                     }

@@ -69,6 +69,10 @@ pub struct AddKeepout {
     pub outline: Contour,
     #[serde(default)]
     pub forbid: Forbid,
+    /// The maximum height of a part in this area, in mm. The check
+    /// `part_height` uses it.
+    #[serde(default)]
+    pub max_height: Option<f64>,
     #[serde(default)]
     pub strict: bool,
 }
@@ -369,6 +373,9 @@ impl Project {
         if p.layers.is_empty() {
             return Err(Error::invalid("Give at least one layer."));
         }
+        if p.max_height.is_some_and(|h| !h.is_finite() || h <= 0.0) {
+            return Err(Error::invalid("max_height must be more than 0."));
+        }
         let id = self.new_id("k");
         let mut d = self.data.clone();
         d.routing.keepouts.push(Keepout {
@@ -376,6 +383,7 @@ impl Project {
             layers: p.layers,
             outline: p.outline,
             forbid: p.forbid,
+            max_height: p.max_height,
         });
         self.commit(
             d,

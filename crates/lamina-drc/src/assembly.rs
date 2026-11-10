@@ -152,7 +152,9 @@ pub(crate) fn check(d: &ProjectData, g: &BoardGeometry, fills: &[ZoneFill]) -> V
         // The height limit of a keep-out.
         if let (Some(height), Some(c)) = (p.fp.height, &p.courtyard) {
             for k in &d.routing.keepouts {
-                let Some(max) = rules.height_limits.get(&k.id) else {
+                // The limit of the keep-out. A limit in the rules for the
+                // id of the keep-out is the older form.
+                let Some(max) = k.max_height.as_ref().or(rules.height_limits.get(&k.id)) else {
                     continue;
                 };
                 if height > *max + 1e-9 && polys_overlap(c, &k.outline.flatten(0.02)) {

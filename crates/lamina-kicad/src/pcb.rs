@@ -324,6 +324,7 @@ pub fn import_board(src: &str, name: &str) -> Result<ImportedBoard, String> {
                     pads: !allowed("pads"),
                     parts: !allowed("footprints"),
                 },
+                max_height: None,
             });
             continue;
         }
@@ -1651,6 +1652,7 @@ mod tests {
                 pads: false,
                 parts: false,
             },
+            max_height: None,
         });
         d.routing.texts.push(BoardText {
             id: "x1".into(),

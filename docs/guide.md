@@ -215,7 +215,8 @@ profile id (`jlcpcb`, `pcbway`) puts the limits of that fab into the rules. The 
   `FID`, or a part with the field `kind` set to `fiducial`.
 - `part_to_edge`: a part is nearer to the board edge than `part_to_edge` (0 is off).
 - `part_height`: a part is higher than the limit of a keep-out that it overlaps.
-  Set the limit in `height_limits`, a map from the keep-out id to a height in mm.
+  Set `max_height` (mm) when you make the keep-out with `add_keepout`. The rule
+  field `height_limits` (keep-out id to height) is the older form.
 - `paste_missing`, `paste_oversize`, `via_in_pad`.
 - `testpoint_access`: a test point is under a part, has no mask opening, is
   smaller than `min_testpoint` or is nearer to the edge than `testpoint_to_edge`.
