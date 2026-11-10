@@ -444,6 +444,19 @@ pub fn build_2d_with(d: &ProjectData, a: &Analysis, options: &Options) -> Scene2
             },
         );
     }
+    // A rule area is a line on the keep-out layer. A keep-out is filled, so
+    // the two look different.
+    for a in &d.routing.areas {
+        push(
+            &mut layers,
+            SceneLayer::Keepout,
+            Geom::Stroke {
+                pts: a.outline.flatten(0.02),
+                width: 0.1,
+                closed: true,
+            },
+        );
+    }
     if let Some(o) = &g.outline {
         push(
             &mut layers,

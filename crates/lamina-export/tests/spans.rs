@@ -124,3 +124,26 @@ fn a_long_reference_gets_an_alias_in_the_netlist() {
     );
     assert!(out.lines().all(|l| l.len() == 80));
 }
+
+#[test]
+fn a_rule_area_is_a_line_on_the_keepout_layer_and_not_in_the_gerbers() {
+    let mut d = board();
+    d.routing.areas.push(RuleArea {
+        id: "a1".into(),
+        layers: vec![],
+        outline: Contour::rect(2.0, 2.0, 5.0, 5.0),
+    });
+    let a = lamina_drc::analyze(&d);
+    let s = lamina_scene::build_2d(&d, &a);
+    let layer = s.layer(SceneLayer::Keepout).expect("the layer exists");
+    assert_eq!(layer.items.len(), 1);
+    assert!(matches!(
+        layer.items[0],
+        lamina_scene::Geom::Stroke { closed: true, .. }
+    ));
+    let before = lamina_export::gerbers(&lamina_scene::build_2d(&board(), &a), "b");
+    let after = lamina_export::gerbers(&s, "b");
+    for (x, y) in before.iter().zip(&after) {
+        assert_eq!(x.contents, y.contents, "{}", x.name);
+    }
+}
