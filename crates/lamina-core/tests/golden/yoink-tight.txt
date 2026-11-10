@@ -1,0 +1,171 @@
+# violations
+Error | annular_ring |  | v1 | The annular ring of v1 is 0.15 mm, but the minimum is 0.3 mm | 24.725,30.063
+Error | annular_ring |  | v10 | The annular ring of v10 is 0.15 mm, but the minimum is 0.3 mm | 37.828,0.788
+Error | annular_ring |  | v11 | The annular ring of v11 is 0.15 mm, but the minimum is 0.3 mm | 32.982,1.774
+Error | annular_ring |  | v12 | The annular ring of v12 is 0.15 mm, but the minimum is 0.3 mm | 18.568,10.782
+Error | annular_ring |  | v13 | The annular ring of v13 is 0.15 mm, but the minimum is 0.3 mm | 56.003,35.184
+Error | annular_ring |  | v14 | The annular ring of v14 is 0.15 mm, but the minimum is 0.3 mm | 30.410,11.658
+Error | annular_ring |  | v15 | The annular ring of v15 is 0.15 mm, but the minimum is 0.3 mm | 55.715,12.797
+Error | annular_ring |  | v16 | The annular ring of v16 is 0.15 mm, but the minimum is 0.3 mm | 46.005,39.070
+Error | annular_ring |  | v17 | The annular ring of v17 is 0.15 mm, but the minimum is 0.3 mm | 33.399,8.812
+Error | annular_ring |  | v18 | The annular ring of v18 is 0.15 mm, but the minimum is 0.3 mm | 40.289,12.512
+Error | annular_ring |  | v2 | The annular ring of v2 is 0.15 mm, but the minimum is 0.3 mm | 38.428,14.335
+Error | annular_ring |  | v3 | The annular ring of v3 is 0.15 mm, but the minimum is 0.3 mm | 31.820,9.345
+Error | annular_ring |  | v5 | The annular ring of v5 is 0.15 mm, but the minimum is 0.3 mm | 45.528,21.451
+Error | annular_ring |  | v6 | The annular ring of v6 is 0.15 mm, but the minimum is 0.3 mm | 35.990,20.569
+Error | annular_ring |  | v7 | The annular ring of v7 is 0.15 mm, but the minimum is 0.3 mm | 47.839,19.785
+Error | annular_ring |  | v8 | The annular ring of v8 is 0.15 mm, but the minimum is 0.3 mm | 50.227,27.284
+Error | annular_ring |  | v9 | The annular ring of v9 is 0.15 mm, but the minimum is 0.3 mm | 49.140,3.754
+Error | copper_to_edge |  | t129 | t129 is 0.425 mm from the board edge, but the minimum is 1 mm | 0.575,9.528
+Error | copper_to_edge |  | t130 | t130 is 0.375 mm from the board edge, but the minimum is 1 mm | 0.842,9.014
+Error | copper_to_edge |  | t133 | t133 is 0.425 mm from the board edge, but the minimum is 1 mm | 0.600,9.801
+Error | copper_to_edge |  | t134 | t134 is 0.909 mm from the board edge, but the minimum is 1 mm | 1.508,8.747
+Error | copper_to_edge |  | t138 | t138 is 0.425 mm from the board edge, but the minimum is 1 mm | 4.866,46.620
+Error | copper_to_edge |  | t139 | t139 is 0.425 mm from the board edge, but the minimum is 1 mm | 0.625,26.103
+Error | copper_to_edge |  | t248 | t248 is 0.405 mm from the board edge, but the minimum is 1 mm | 23.668,0.605
+Error | copper_to_edge |  | t251 | t251 is 0.588 mm from the board edge, but the minimum is 1 mm | 33.315,0.788
+Error | copper_to_edge |  | t252 | t252 is 0.61 mm from the board edge, but the minimum is 1 mm | 14.350,0.810
+Error | copper_to_edge |  | t255 | t255 is 0.455 mm from the board edge, but the minimum is 1 mm | 18.964,0.605
+Error | copper_to_edge |  | t257 | t257 is 0.455 mm from the board edge, but the minimum is 1 mm | 18.613,0.708
+Error | copper_to_edge |  | t258 | t258 is 0.405 mm from the board edge, but the minimum is 1 mm | 28.711,0.697
+Error | copper_to_edge |  | t259 | t259 is 0.61 mm from the board edge, but the minimum is 1 mm | 9.345,1.655
+Error | copper_to_edge |  | t260 | t260 is 0.455 mm from the board edge, but the minimum is 1 mm | 28.372,0.605
+Error | copper_to_edge |  | t261 | t261 is 0.588 mm from the board edge, but the minimum is 1 mm | 39.414,2.374
+Error | copper_to_edge |  | t287 | t287 is 0.405 mm from the board edge, but the minimum is 1 mm | 0.605,24.934
+Error | copper_to_edge |  | t289 | t289 is 0.455 mm from the board edge, but the minimum is 1 mm | 0.605,25.520
+Error | copper_to_edge |  | t290 | t290 is 0.405 mm from the board edge, but the minimum is 1 mm | 1.697,8.219
+Error | copper_to_edge |  | t291 | t291 is 0.455 mm from the board edge, but the minimum is 1 mm | 0.605,24.348
+Error | copper_to_edge |  | t295 | t295 is 0.405 mm from the board edge, but the minimum is 1 mm | 0.605,16.705
+Error | copper_to_edge |  | t297 | t297 is 0.455 mm from the board edge, but the minimum is 1 mm | 1.787,26.949
+Error | copper_to_edge |  | t334 | t334 is 0.455 mm from the board edge, but the minimum is 1 mm | 25.419,0.605
+Error | copper_to_edge |  | t335 | t335 is 0.455 mm from the board edge, but the minimum is 1 mm | 18.613,0.708
+Error | copper_to_edge |  | t336 | t336 is 0.455 mm from the board edge, but the minimum is 1 mm | 18.964,0.605
+Error | copper_to_edge |  | t337 | t337 is 0.405 mm from the board edge, but the minimum is 1 mm | 22.191,0.605
+Error | copper_to_edge |  | t338 | t338 is 0.61 mm from the board edge, but the minimum is 1 mm | 8.785,6.595
+Error | copper_to_edge |  | t339 | t339 is 0.61 mm from the board edge, but the minimum is 1 mm | 16.540,0.810
+Error | copper_to_edge |  | t340 | t340 is 0.405 mm from the board edge, but the minimum is 1 mm | 34.434,2.092
+Error | copper_to_edge |  | t342 | t342 is 0.405 mm from the board edge, but the minimum is 1 mm | 29.307,0.605
+Error | copper_to_edge |  | v10 | v10 is 0.488 mm from the board edge, but the minimum is 1 mm | 37.828,0.788
+Error | track_width | top | t208 | t208 is 0.24 mm wide, but the minimum width is 0.3 mm | 
+Error | track_width | top | t209 | t209 is 0.24 mm wide, but the minimum width is 0.3 mm | 
+Warning | silk_text_size | bottom.silk | x7 | The silkscreen text "XH: 1 M+  2 GND  3 A  4 B  5 3V3  6 M-" is 1 mm high, but the minimum is 1.5 mm | 40.000,34.600
+Warning | silk_text_size | bottom.silk | x8 | The silkscreen text "PWM0..5" is 1 mm high, but the minimum is 1.5 mm | 59.200,12.600
+Warning | silk_text_size | bottom.silk | x9 | The silkscreen text "YOINK v1" is 1.1 mm high, but the minimum is 1.5 mm | 43.000,56.400
+Warning | silk_text_size | top.silk | C1 | The silkscreen text "C1" is 1 mm high, but the minimum is 1.5 mm | 80.500,43.250
+Warning | silk_text_size | top.silk | C10 | The silkscreen text "C10" is 1 mm high, but the minimum is 1.5 mm | 23.500,16.000
+Warning | silk_text_size | top.silk | C11 | The silkscreen text "C11" is 1 mm high, but the minimum is 1.5 mm | 61.500,13.500
+Warning | silk_text_size | top.silk | C2 | The silkscreen text "C2" is 1 mm high, but the minimum is 1.5 mm | 25.000,25.500
+Warning | silk_text_size | top.silk | C3 | The silkscreen text "C3" is 1 mm high, but the minimum is 1.5 mm | 48.000,25.500
+Warning | silk_text_size | top.silk | C4 | The silkscreen text "C4" is 1 mm high, but the minimum is 1.5 mm | 71.000,25.500
+Warning | silk_text_size | top.silk | C5 | The silkscreen text "C5" is 1 mm high, but the minimum is 1.5 mm | 73.000,14.250
+Warning | silk_text_size | top.silk | C6 | The silkscreen text "C6" is 1 mm high, but the minimum is 1.5 mm | 12.000,21.000
+Warning | silk_text_size | top.silk | C7 | The silkscreen text "C7" is 1 mm high, but the minimum is 1.5 mm | 35.000,21.000
+Warning | silk_text_size | top.silk | C8 | The silkscreen text "C8" is 1 mm high, but the minimum is 1.5 mm | 58.000,21.000
+Warning | silk_text_size | top.silk | C9 | The silkscreen text "C9" is 1 mm high, but the minimum is 1.5 mm | 62.500,8.500
+Warning | silk_text_size | top.silk | D1 | The silkscreen text "D1" is 1 mm high, but the minimum is 1.5 mm | 15.770,13.460
+Warning | silk_text_size | top.silk | J1 | The silkscreen text "J1" is 1 mm high, but the minimum is 1.5 mm | 72.500,55.320
+Warning | silk_text_size | top.silk | J10 | The silkscreen text "J10" is 1 mm high, but the minimum is 1.5 mm | 83.500,30.380
+Warning | silk_text_size | top.silk | J11 | The silkscreen text "J11" is 1 mm high, but the minimum is 1.5 mm | 3.000,22.380
+Warning | silk_text_size | top.silk | J12 | The silkscreen text "J12" is 1 mm high, but the minimum is 1.5 mm | 56.880,15.000
+Warning | silk_text_size | top.silk | J2 | The silkscreen text "J2" is 1 mm high, but the minimum is 1.5 mm | 13.000,55.320
+Warning | silk_text_size | top.silk | J3 | The silkscreen text "J3" is 1 mm high, but the minimum is 1.5 mm | 36.000,55.320
+Warning | silk_text_size | top.silk | J4 | The silkscreen text "J4" is 1 mm high, but the minimum is 1.5 mm | 59.000,55.320
+Warning | silk_text_size | top.silk | J5 | The silkscreen text "J5" is 1 mm high, but the minimum is 1.5 mm | 47.100,5.230
+Warning | silk_text_size | top.silk | J6 | The silkscreen text "J6" is 1 mm high, but the minimum is 1.5 mm | 14.250,42.050
+Warning | silk_text_size | top.silk | J7 | The silkscreen text "J7" is 1 mm high, but the minimum is 1.5 mm | 37.250,42.050
+Warning | silk_text_size | top.silk | J8 | The silkscreen text "J8" is 1 mm high, but the minimum is 1.5 mm | 60.250,42.050
+Warning | silk_text_size | top.silk | R1 | The silkscreen text "R1" is 1 mm high, but the minimum is 1.5 mm | 55.080,4.370
+Warning | silk_text_size | top.silk | R2 | The silkscreen text "R2" is 1 mm high, but the minimum is 1.5 mm | 55.080,12.370
+Warning | silk_text_size | top.silk | R3 | The silkscreen text "R3" is 1 mm high, but the minimum is 1.5 mm | 13.580,4.870
+Warning | silk_text_size | top.silk | U1 | The silkscreen text "U1" is 1 mm high, but the minimum is 1.5 mm | 11.810,33.330
+Warning | silk_text_size | top.silk | U2 | The silkscreen text "U2" is 1 mm high, but the minimum is 1.5 mm | 34.810,33.330
+Warning | silk_text_size | top.silk | U3 | The silkscreen text "U3" is 1 mm high, but the minimum is 1.5 mm | 57.810,33.330
+Warning | silk_text_size | top.silk | x20 | The silkscreen text "+" is 1 mm high, but the minimum is 1.5 mm | 10.500,56.900
+Warning | silk_text_size | top.silk | x21 | The silkscreen text "M1" is 1 mm high, but the minimum is 1.5 mm | 13.000,56.900
+Warning | silk_text_size | top.silk | x22 | The silkscreen text "-" is 1 mm high, but the minimum is 1.5 mm | 15.500,56.900
+Warning | silk_text_size | top.silk | x23 | The silkscreen text "+" is 1 mm high, but the minimum is 1.5 mm | 33.500,56.900
+Warning | silk_text_size | top.silk | x24 | The silkscreen text "M2" is 1 mm high, but the minimum is 1.5 mm | 36.000,56.900
+Warning | silk_text_size | top.silk | x25 | The silkscreen text "-" is 1 mm high, but the minimum is 1.5 mm | 38.500,56.900
+Warning | silk_text_size | top.silk | x26 | The silkscreen text "+" is 1 mm high, but the minimum is 1.5 mm | 56.500,56.900
+Warning | silk_text_size | top.silk | x27 | The silkscreen text "M3" is 1 mm high, but the minimum is 1.5 mm | 59.000,56.900
+Warning | silk_text_size | top.silk | x28 | The silkscreen text "-" is 1 mm high, but the minimum is 1.5 mm | 61.500,56.900
+Warning | silk_text_size | top.silk | x29 | The silkscreen text "+" is 1 mm high, but the minimum is 1.5 mm | 70.000,56.900
+Warning | silk_text_size | top.silk | x30 | The silkscreen text "BAT" is 1 mm high, but the minimum is 1.5 mm | 72.500,56.900
+Warning | silk_text_size | top.silk | x31 | The silkscreen text "-" is 1 mm high, but the minimum is 1.5 mm | 75.000,56.900
+Warning | silk_text_size | top.silk | x32 | The silkscreen text "GND" is 1 mm high, but the minimum is 1.5 mm | 6.175,20.000
+Warning | silk_text_size | top.silk | x33 | The silkscreen text "OE" is 1 mm high, but the minimum is 1.5 mm | 5.750,17.460
+Warning | silk_text_size | top.silk | x34 | The silkscreen text "SCL" is 1 mm high, but the minimum is 1.5 mm | 6.175,14.920
+Warning | silk_text_size | top.silk | x35 | The silkscreen text "SDA" is 1 mm high, but the minimum is 1.5 mm | 6.175,12.380
+Warning | silk_text_size | top.silk | x36 | The silkscreen text "VCC" is 1 mm high, but the minimum is 1.5 mm | 6.175,9.840
+Warning | silk_text_size | top.silk | x37 | The silkscreen text "PCA9685" is 1 mm high, but the minimum is 1.5 mm | 4.400,7.300
+Warning | silk_text_size | top.silk | x38 | The silkscreen text "IN+" is 1 mm high, but the minimum is 1.5 mm | 80.125,28.000
+Warning | silk_text_size | top.silk | x39 | The silkscreen text "IN-" is 1 mm high, but the minimum is 1.5 mm | 80.125,25.460
+Warning | silk_text_size | top.silk | x40 | The silkscreen text "OUT+" is 1 mm high, but the minimum is 1.5 mm | 79.700,22.920
+Warning | silk_text_size | top.silk | x41 | The silkscreen text "OUT-" is 1 mm high, but the minimum is 1.5 mm | 79.700,20.380
+Warning | silk_text_size | top.silk | x5 | The silkscreen text "LM2596" is 1 mm high, but the minimum is 1.5 mm | 82.900,17.400
+Warning | silk_to_edge | top.silk | C1 | The silkscreen drawing of C1 is 0.32 mm from the board edge, but the minimum is 0.5 mm | 85.601,37.315
+Warning | silk_to_edge | top.silk | C1 | The silkscreen drawing of C1 is 0.36 mm from the board edge, but the minimum is 0.5 mm | 85.580,37.000
+Warning | silk_to_edge | top.silk | C1 | The silkscreen drawing of C1 is 0.4 mm from the board edge, but the minimum is 0.5 mm | 85.540,37.000
+Warning | silk_to_edge | top.silk | C1 | The silkscreen drawing of C1 is 0.44 mm from the board edge, but the minimum is 0.5 mm | 85.500,37.000
+Warning | silk_to_edge | top.silk | C1 | The silkscreen drawing of C1 is 0.48 mm from the board edge, but the minimum is 0.5 mm | 85.460,37.000
+Warning | starved_thermal | bottom | C6.2,z2 | Pad C6.2 has 2 spoke(s) to zone z2, but the minimum is 4 | 14.500,18.500
+Warning | starved_thermal | bottom | C7.2,z2 | Pad C7.2 has 3 spoke(s) to zone z2, but the minimum is 4 | 37.500,18.500
+Warning | starved_thermal | bottom | J10.2,z2 | Pad J10.2 has 2 spoke(s) to zone z2, but the minimum is 4 | 83.500,25.460
+Warning | starved_thermal | bottom | J10.4,z2 | Pad J10.4 has 3 spoke(s) to zone z2, but the minimum is 4 | 83.500,20.380
+Warning | starved_thermal | bottom | J11.2,z2 | Pad J11.2 has 3 spoke(s) to zone z2, but the minimum is 4 | 3.000,17.460
+Warning | starved_thermal | bottom | J5.3,z2 | Pad J5.3 has 3 spoke(s) to zone z2, but the minimum is 4 | 38.460,6.500
+Warning | starved_thermal | bottom | J5.4,z2 | Pad J5.4 has 2 spoke(s) to zone z2, but the minimum is 4 | 38.460,3.960
+Warning | starved_thermal | bottom | J6.2,z2 | Pad J6.2 has 3 spoke(s) to zone z2, but the minimum is 4 | 10.500,38.500
+Warning | starved_thermal | bottom | J7.2,z2 | Pad J7.2 has 3 spoke(s) to zone z2, but the minimum is 4 | 33.500,38.500
+Warning | starved_thermal | bottom | J8.2,z2 | Pad J8.2 has 3 spoke(s) to zone z2, but the minimum is 4 | 56.500,38.500
+Warning | starved_thermal | bottom | R2.2,z2 | Pad R2.2 has 3 spoke(s) to zone z2, but the minimum is 4 | 60.160,10.000
+Warning | starved_thermal | bottom | U1.3,z2 | Pad U1.3 has 3 spoke(s) to zone z2, but the minimum is 4 | 8.000,25.920
+Warning | starved_thermal | bottom | U2.3,z2 | Pad U2.3 has 3 spoke(s) to zone z2, but the minimum is 4 | 31.000,25.920
+Warning | starved_thermal | bottom | U3.3,z2 | Pad U3.3 has 3 spoke(s) to zone z2, but the minimum is 4 | 54.000,25.920
+Warning | starved_thermal | top | C10.2,z1 | Pad C10.2 has 2 spoke(s) to zone z1, but the minimum is 4 | 26.000,13.500
+Warning | starved_thermal | top | C7.2,z1 | Pad C7.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 37.500,18.500
+Warning | starved_thermal | top | C8.2,z1 | Pad C8.2 has 3 spoke(s) to zone z1, but the minimum is 4 | 60.500,18.500
+Warning | starved_thermal | top | D1.1,z1 | Pad D1.1 has 3 spoke(s) to zone z1, but the minimum is 4 | 14.500,9.500
+Warning | starved_thermal | top | J10.2,z1 | Pad J10.2 has 2 spoke(s) to zone z1, but the minimum is 4 | 83.500,25.460
+Warning | starved_thermal | top | J10.4,z1 | Pad J10.4 has 3 spoke(s) to zone z1, but the minimum is 4 | 83.500,20.380
+Warning | starved_thermal | top | J11.1,z1 | Pad J11.1 has 3 spoke(s) to zone z1, but the minimum is 4 | 3.000,20.000
+Warning | starved_thermal | top | J11.2,z1 | Pad J11.2 has 2 spoke(s) to zone z1, but the minimum is 4 | 3.000,17.460
+Warning | starved_thermal | top | J5.3,z1 | Pad J5.3 has 2 spoke(s) to zone z1, but the minimum is 4 | 38.460,6.500
+Warning | starved_thermal | top | J5.4,z1 | Pad J5.4 has 0 spoke(s) to zone z1, but the minimum is 4 | 38.460,3.960
+Warning | starved_thermal | top | J6.2,z1 | Pad J6.2 has 2 spoke(s) to zone z1, but the minimum is 4 | 10.500,38.500
+Warning | starved_thermal | top | J7.2,z1 | Pad J7.2 has 1 spoke(s) to zone z1, but the minimum is 4 | 33.500,38.500
+Warning | starved_thermal | top | J8.2,z1 | Pad J8.2 has 1 spoke(s) to zone z1, but the minimum is 4 | 56.500,38.500
+Warning | starved_thermal | top | U1.3,z1 | Pad U1.3 has 1 spoke(s) to zone z1, but the minimum is 4 | 8.000,25.920
+Warning | starved_thermal | top | U2.3,z1 | Pad U2.3 has 1 spoke(s) to zone z1, but the minimum is 4 | 31.000,25.920
+Warning | starved_thermal | top | U3.3,z1 | Pad U3.3 has 2 spoke(s) to zone z1, but the minimum is 4 | 54.000,25.920
+# excluded
+
+# ratsnest
+
+# islands
+3V3 1
+5V 1
+ENC1_A 1
+ENC1_B 1
+ENC2_A 1
+ENC2_B 1
+ENC3_A 1
+ENC3_B 1
+GND 1
+LED_A 1
+M1+ 1
+M1- 1
+M2+ 1
+M2- 1
+M3+ 1
+M3- 1
+PWM0 1
+PWM1 1
+PWM2 1
+PWM3 1
+PWM4 1
+PWM5 1
+SCL 1
+SDA 1
+VBAT 1
+VSENSE 1

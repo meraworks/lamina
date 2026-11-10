@@ -54,8 +54,35 @@ impl Project {
     }
 
     pub fn export(&self, p: Export) -> Result<Exported> {
+        // The fabrication files have one drill file for plated holes, so a
+        // via that does not go through the board cannot be made. `force`
+        // does not change this, because the files would be wrong.
+        let layers = self.data.board.stackup.copper_layers;
+        let partial: Vec<&str> = self
+            .data
+            .routing
+            .vias
+            .iter()
+            .filter(|v| {
+                let index = |l: Option<Layer>, default: u8| {
+                    l.and_then(|l| l.copper())
+                        .map(|c| c.index(layers))
+                        .unwrap_or(default)
+                };
+                let (a, b) = (index(v.from, 0), index(v.to, layers.saturating_sub(1)));
+                a.min(b) != 0 || a.max(b) != layers.saturating_sub(1)
+            })
+            .map(|v| v.id.as_str())
+            .collect();
+        if !partial.is_empty() {
+            return Err(Error::Refused(format!(
+                "The fabrication output cannot make blind or buried vias: {}. \
+                 Change them to through vias.",
+                partial.join(", ")
+            )));
+        }
         let errors: Vec<Violation> = self
-            .check()
+            .check_release()
             .into_iter()
             .filter(|v| v.severity == Severity::Error)
             .collect();

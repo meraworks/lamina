@@ -153,11 +153,7 @@ fn build(root: &Path, prev: Option<&ProjectData>, models_changed: bool) -> Resul
     for _ in 0..5 {
         match ProjectData::load(root) {
             Ok(data) => {
-                let (mut analysis, s2, s3) = lamina_scene::build(&data, root);
-                // Add the structure checks (unknown nets, bad layers) to the DRC results.
-                analysis
-                    .violations
-                    .extend(lamina_core::validate::validate(&data));
+                let (analysis, s2, s3) = lamina_scene::build(&data, root);
                 let changed = prev.map(|p| diff(p, &data)).unwrap_or_default();
                 return Ok(Loaded {
                     data,

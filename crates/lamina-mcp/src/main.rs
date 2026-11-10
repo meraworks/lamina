@@ -6,7 +6,6 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use clap::{Parser, Subcommand};
-use lamina_core::Project;
 use rmcp::ServiceExt;
 
 #[derive(Parser)]
@@ -173,8 +172,20 @@ enum Cmd {
     },
     /// Print the project status as JSON.
     Status { dir: PathBuf },
-    /// List the rule violations as JSON.
-    Check { dir: PathBuf },
+    /// List the rule violations as JSON. The exit code is 2 if a violation
+    /// is at or above the `--fail-on` level.
+    Check {
+        dir: PathBuf,
+        /// Check for release: open connections and parts with no placement are errors.
+        #[arg(long)]
+        release: bool,
+        /// `error` (default), `warning` or `never`.
+        #[arg(long, default_value = "error")]
+        fail_on: String,
+        /// Report only these rule ids (a list with commas).
+        #[arg(long)]
+        rules: Option<String>,
+    },
     /// Print the JSON schema of a file kind.
     Schema { kind: String },
 }
@@ -193,9 +204,16 @@ fn block(s: &str) -> lamina_core::reuse::Block {
     }
 }
 
-/// Hook for checkers from other crates (DRC). Lamina calls it each time a
-/// project opens.
-pub fn register_checkers(_p: &mut Project) {}
+/// The exit code of `lamina check`: 2 if a violation is at or above the level.
+fn exit_code(v: &[lamina_core::model::Violation], fail_on: &str) -> i32 {
+    use lamina_core::model::Severity;
+    let hit = match fail_on {
+        "never" => false,
+        "warning" => !v.is_empty(),
+        _ => v.iter().any(|x| x.severity == Severity::Error),
+    };
+    if hit { 2 } else { 0 }
+}
 
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
@@ -408,9 +426,30 @@ fn main() -> anyhow::Result<()> {
             println!("{}", serde_json::to_string_pretty(&p.status())?);
             Ok(())
         }
-        Cmd::Check { dir } => {
+        Cmd::Check {
+            dir,
+            release,
+            fail_on,
+            rules,
+        } => {
+            if !["error", "warning", "never"].contains(&fail_on.as_str()) {
+                anyhow::bail!("--fail-on must be error, warning or never");
+            }
             let p = server::read_project(&dir.to_string_lossy())?;
-            println!("{}", serde_json::to_string_pretty(&p.check())?);
+            let mut v = if release {
+                p.check_release()
+            } else {
+                p.check()
+            };
+            if let Some(rules) = rules {
+                let rules: Vec<&str> = rules.split(',').map(str::trim).collect();
+                v.retain(|x| rules.contains(&x.rule.as_str()));
+            }
+            println!("{}", serde_json::to_string_pretty(&v)?);
+            let code = exit_code(&v, &fail_on);
+            if code != 0 {
+                std::process::exit(code);
+            }
             Ok(())
         }
         Cmd::Schema { kind } => {
@@ -443,4 +482,20 @@ fn run_mcp(project: Option<PathBuf>) -> anyhow::Result<()> {
         service.waiting().await?;
         Ok(())
     })
+}
+
+#[cfg(test)]
+mod exit_tests {
+    use lamina_core::model::Violation;
+
+    #[test]
+    fn check_exit_codes() {
+        let e = [Violation::error("short", "x")];
+        let w = [Violation::warning("unrouted", "x")];
+        assert_eq!(super::exit_code(&e, "error"), 2);
+        assert_eq!(super::exit_code(&w, "error"), 0);
+        assert_eq!(super::exit_code(&w, "warning"), 2);
+        assert_eq!(super::exit_code(&e, "never"), 0);
+        assert_eq!(super::exit_code(&[], "warning"), 0);
+    }
 }

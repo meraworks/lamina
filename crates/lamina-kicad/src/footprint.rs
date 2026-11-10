@@ -238,9 +238,15 @@ pub fn convert(node: &Sx, library_hint: &str, origin: &str) -> Result<Instance, 
                     fp.pads.push(pad);
                 }
                 Ok(None) => {
-                    *skipped
-                        .entry("pads without copper on this side".into())
-                        .or_default() += 1
+                    // A pad with no copper is a paste or mask opening.
+                    let openings = openings_from(item, &ctx);
+                    if openings.is_empty() {
+                        *skipped
+                            .entry("pads without copper on this side".into())
+                            .or_default() += 1
+                    } else {
+                        fp.graphics.extend(openings);
+                    }
                 }
                 Err(e) => notes.push(format!("skipped pad {}: {e}", item.arg(0).unwrap_or("?"))),
             },
@@ -251,7 +257,10 @@ pub fn convert(node: &Sx, library_hint: &str, origin: &str) -> Result<Instance, 
                     models.extend(model_from(item));
                 }
             }
-            "zone" => *skipped.entry("footprint zones".into()).or_default() += 1,
+            "zone" => match keepout_from(item, &ctx, (ax, ay)) {
+                Some(k) => fp.keepouts.push(k),
+                None => *skipped.entry("footprint zones".into()).or_default() += 1,
+            },
             _ => {}
         }
     }
@@ -453,6 +462,120 @@ pub(crate) fn arc_from_three(s: Point, m: Point, e: Point) -> Option<Shape> {
     })
 }
 
+/// A keep-out zone of a footprint. In a board file, the points of the
+/// zone are board positions. In a library file the footprint is at the
+/// origin, so the two are the same.
+fn keepout_from(zone: &Sx, ctx: &Ctx, origin: (f64, f64)) -> Option<FpKeepout> {
+    let k = zone.child("keepout")?;
+    let mut front = false;
+    let mut back = false;
+    let mut other = false;
+    for l in zone.children("layer").chain(zone.children("layers")) {
+        for a in l.atoms() {
+            match a {
+                "F.Cu" => front = true,
+                "B.Cu" => back = true,
+                "F&B.Cu" => {
+                    front = true;
+                    back = true;
+                }
+                x if x.ends_with(".Cu") => other = true,
+                _ => {}
+            }
+        }
+    }
+    if ctx.side == Side::Bottom {
+        std::mem::swap(&mut front, &mut back);
+    }
+    let scope = match (front, back, other) {
+        (true, false, false) => KeepoutScope::Front,
+        (false, true, false) => KeepoutScope::Back,
+        (false, false, false) => return None,
+        _ => KeepoutScope::AllCopper,
+    };
+    let pts = zone.child("polygon").and_then(|p| p.child("pts"))?;
+    let (sin, cos) = ctx.rot.to_radians().sin_cos();
+    let points: Vec<Point> = pts
+        .children("xy")
+        .filter_map(|xy| Some((xy.arg_num(0)?, xy.arg_num(1)?)))
+        .map(|(x, y)| {
+            // Board position to footprint position: undo the move and the turn.
+            let (dx, dy) = (x - origin.0, y - origin.1);
+            ctx.lp(dx * cos - dy * sin, dx * sin + dy * cos)
+        })
+        .collect();
+    let outline = contour_from_points(points)?;
+    let allowed = |what: &str| k.child_text(what) != Some("not_allowed");
+    Some(FpKeepout {
+        scope,
+        outline,
+        forbid: Forbid {
+            tracks: !allowed("tracks"),
+            vias: !allowed("vias"),
+            pours: !allowed("copperpour"),
+            pads: !allowed("pads"),
+            parts: !allowed("footprints"),
+        },
+    })
+}
+
+/// The paste and mask openings of a pad that has no copper on the side of
+/// the part: one filled drawing for each layer.
+fn openings_from(item: &Sx, ctx: &Ctx) -> Vec<FpGraphic> {
+    let atoms = item.atoms();
+    if !matches!(atoms.get(1).copied(), Some("smd" | "connect")) {
+        return Vec::new();
+    }
+    let (Some(at), Some((w, h))) = (item.child("at"), item.xy("size")) else {
+        return Vec::new();
+    };
+    let (Some(x), Some(y)) = (at.arg_num(0), at.arg_num(1)) else {
+        return Vec::new();
+    };
+    if !(w > 0.0 && h > 0.0) {
+        return Vec::new();
+    }
+    let centre = ctx.lp(x, y);
+    let angle = ctx.angle(at.arg_num(2).unwrap_or(0.0));
+    let shape = match atoms.get(2).copied() {
+        Some("circle") => Shape::Circle {
+            center: centre,
+            radius: r6(w / 2.0),
+        },
+        Some("rect" | "roundrect" | "oval") => Shape::Polygon {
+            points: [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
+                .iter()
+                .map(|(sx, sy)| {
+                    let p = Point::new(sx * w / 2.0, sy * h / 2.0).rotated(angle);
+                    Point::new(r6(centre.x + p.x), r6(centre.y + p.y))
+                })
+                .collect(),
+        },
+        _ => return Vec::new(),
+    };
+    let layers: Vec<String> = item
+        .child("layers")
+        .map(|l| l.atoms().into_iter().map(str::to_string).collect())
+        .unwrap_or_default();
+    let (paste, mask) = if ctx.side == Side::Top {
+        ("F.Paste", "F.Mask")
+    } else {
+        ("B.Paste", "B.Mask")
+    };
+    let mut out = Vec::new();
+    for (name, layer) in [(paste, FpLayer::Paste), (mask, FpLayer::Mask)] {
+        if layers.iter().any(|l| l == name) {
+            out.push(FpGraphic {
+                layer,
+                shape: shape.clone(),
+                width: 0.0,
+                filled: true,
+            });
+        }
+    }
+    out
+}
+
 fn pad_from(item: &Sx, ctx: &Ctx) -> Result<Option<(Pad, Option<String>)>, String> {
     let atoms = item.atoms();
     let number = atoms.first().copied().unwrap_or("").to_string();
@@ -472,7 +595,13 @@ fn pad_from(item: &Sx, ctx: &Ctx) -> Result<Option<(Pad, Option<String>)>, Strin
         .child("layers")
         .map(|l| l.atoms().into_iter().map(str::to_string).collect())
         .unwrap_or_default();
-    let on = |name: &str| layers.iter().any(|l| l == name || l.starts_with("*."));
+    // `*.Cu` is a layer on the two sides. `*.Mask` is not a copper or paste layer.
+    let on = |name: &str| {
+        let kind = name.split('.').nth(1).unwrap_or("");
+        layers
+            .iter()
+            .any(|l| l == name || (l.starts_with("*.") && l.ends_with(kind)))
+    };
     let side_cu = if ctx.side == Side::Top {
         "F.Cu"
     } else {

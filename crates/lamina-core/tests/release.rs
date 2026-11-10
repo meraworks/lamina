@@ -1,0 +1,151 @@
+//! The release view, the export gate, presets and strict mode.
+
+use lamina_core::model::*;
+use lamina_core::*;
+use lamina_footprint::{Options, from_package};
+
+/// Two resistors. Net A joins R1.2 and R2.1 and is not routed.
+fn project() -> (tempfile::TempDir, Project) {
+    let dir = tempfile::tempdir().unwrap();
+    let mut p = Project::create_with(dir.path(), "test", Ports::default()).unwrap();
+    let d = &mut p.data;
+    d.board.outline = Some(Contour::rect(0.0, 0.0, 30.0, 20.0));
+    let fp = from_package("R_0603", &Options::default(), None).unwrap();
+    d.footprints.insert(fp.id.clone(), fp);
+    for (r, x) in [("R1", 10.0), ("R2", 20.0)] {
+        d.parts.parts.insert(r.into(), Part::new("R_0603"));
+        d.placement
+            .placements
+            .insert(r.into(), Placement::at(x, 10.0));
+    }
+    d.nets.nets.insert(
+        "A".into(),
+        Net {
+            pads: vec!["R1.2".parse().unwrap(), "R2.1".parse().unwrap()],
+            ..Default::default()
+        },
+    );
+    (dir, p)
+}
+
+fn export(p: &Project, force: bool) -> String {
+    p.export(Export {
+        dir: None,
+        force,
+        fabricator: None,
+    })
+    .unwrap_err()
+    .to_string()
+}
+
+#[test]
+fn export_refuses_open_connections_unless_forced() {
+    let (_t, p) = project();
+    assert_eq!(p.status().errors, 0);
+    assert_eq!(p.status().release_errors, 1);
+    let e = export(&p, false);
+    assert!(e.contains("unrouted connection"), "{e}");
+    // With force, the gate passes. The test project has no fabricator.
+    let e = export(&p, true);
+    assert!(e.contains("fabricator"), "{e}");
+}
+
+#[test]
+fn export_refuses_blind_vias_also_with_force() {
+    let (_t, mut p) = project();
+    p.data.board.stackup.copper_layers = 4;
+    p.data.routing.vias.push(Via {
+        id: "v1".into(),
+        net: "A".into(),
+        at: Point::new(15.0, 15.0),
+        diameter: 0.6,
+        drill: 0.3,
+        from: Some(Layer::TOP),
+        to: Some("in1".parse().unwrap()),
+    });
+    let e = export(&p, true);
+    assert!(e.contains("blind or buried vias: v1"), "{e}");
+}
+
+#[test]
+fn use_fab_preset_keeps_custom_rules_exclusions_and_severities() {
+    let (_t, mut p) = project();
+    let update = serde_json::from_value(serde_json::json!({"rules": {
+        "severities": {"silk_overlap": "error"},
+        "custom": [{"name": "wide", "when": {"net": "A"}, "clearance": 0.4}]
+    }}))
+    .unwrap();
+    p.set_rules(update).unwrap();
+    p.exclude_violation(ExcludeViolation {
+        rule: "via_dangling".into(),
+        items: vec!["v1".into()],
+        reason: "Test point".into(),
+    })
+    .unwrap();
+    p.use_fab_preset(UseFabPreset {
+        name: "relaxed".into(),
+        strict: false,
+    })
+    .unwrap();
+    let r = &p.data.board.rules;
+    assert_eq!(r.clearance, 0.2);
+    assert_eq!(r.custom.len(), 1);
+    assert_eq!(r.exclusions.len(), 1);
+    assert_eq!(r.severities.len(), 1);
+}
+
+#[test]
+fn second_free_end_of_one_track_is_a_new_violation() {
+    let (_t, mut p) = project();
+    let free = |d: &ProjectData| {
+        lamina_drc::analyze(d)
+            .violations
+            .iter()
+            .filter(|v| v.rule == "track_dangling")
+            .count()
+    };
+    let r1 = p.data.placement.placements["R1"];
+    let pad = p.data.footprints["R_0603"].pad("2").unwrap().at;
+    let start = r1.transform(pad);
+    // One end on the pad, one end free.
+    let mut d = p.data.clone();
+    d.routing.tracks.push(Track {
+        id: "t1".into(),
+        net: "A".into(),
+        layer: Layer::TOP,
+        width: 0.25,
+        points: vec![start, Point::new(15.0, 14.0)],
+    });
+    assert_eq!(free(&d), 1);
+    p.commit(d, Touched::file(FileKind::Routing), false, "one end")
+        .unwrap();
+    // Now the two ends are free. The key is the same, the count is not.
+    let mut d = p.data.clone();
+    d.routing.tracks[0].points[0] = Point::new(12.0, 14.0);
+    assert_eq!(free(&d), 2);
+    let r = p
+        .commit(d, Touched::file(FileKind::Routing), false, "two ends")
+        .unwrap();
+    assert_eq!(
+        r.new_violations
+            .iter()
+            .filter(|v| v.rule == "track_dangling")
+            .count(),
+        1
+    );
+}
+
+#[test]
+fn model_rules_accept_a_severity_but_data_errors_do_not() {
+    let (_t, mut p) = project();
+    let ok =
+        serde_json::from_value(serde_json::json!({"rules": {"severities": {"pin_role": "error"}}}))
+            .unwrap();
+    p.set_rules(ok).unwrap();
+    let bad = serde_json::from_value(
+        serde_json::json!({"rules": {"severities": {"unknown_net": "ignore"}}}),
+    )
+    .unwrap();
+    assert!(p.set_rules(bad).is_err());
+    assert!(p.checks().iter().any(|c| c.id == "hole_to_copper"));
+}

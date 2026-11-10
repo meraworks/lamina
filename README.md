@@ -38,7 +38,7 @@
 
 PCB programs were made for a mouse and a keyboard. Lamina was made for an agent.
 
-- **The agent does the work.** `lamina` is an MCP server with 74 tools: search real
+- **The agent does the work.** `lamina` is an MCP server with 75 tools: search real
   parts, import them with footprints and 3D models, place, route, pour, check and export
   the fab files.
 - **You stay in control.** `lamina-viewer` shows the board in 2D and 3D and updates
@@ -160,7 +160,7 @@ again before it writes, so neither one writes over a change of the other.
 | **Netlist** | `set_nets`, `connect`, `pins` (each pad with its pin name and net), `set_diff_pairs` |
 | **Placement** | `place_many`, `move_parts`, `rotate_part`, `flip_part`, `align`, `distribute`, `repeat_layout` |
 | **Routing** | `autoroute`, `route_trace`, `add_via`, `route_diff_pair`, `tune_length`, `add_teardrops`, `ripup` |
-| **Checks** | `check` (DRC, connectivity, pin roles, silkscreen, thermals), `set_rules`, `exclude_violation`, `net_lengths`, `board_stats` |
+| **Checks** | `check` (DRC, connectivity, pin roles, silkscreen, thermals, holes), `checks` (what each check reports), `set_rules`, `exclude_violation`, `net_lengths`, `board_stats` |
 | **Output** | `export` (Gerber X2, Excellon, BOM, CPL, IPC-D-356, zip), `export_step`, `export_board` (KiCad), `render` |
 | **Collaboration** | `notes`, `add_note`, `resolve_notes`: the notes that you write in the viewer |
 

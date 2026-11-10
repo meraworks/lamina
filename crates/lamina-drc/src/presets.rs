@@ -59,6 +59,7 @@ fn relaxed() -> Rules {
         min_annular_ring: 0.15,
         min_drill: 0.4,
         hole_to_hole: 0.6,
+        hole_to_copper: 0.3,
         copper_to_edge: 0.5,
         ..jlc_2()
     }
@@ -84,4 +85,15 @@ pub const PRESETS: &[Preset] = &[
 
 pub fn get(name: &str) -> Option<Rules> {
     PRESETS.iter().find(|p| p.name == name).map(|p| (p.rules)())
+}
+
+/// The rules of the board with the limits of a preset. The net classes, the
+/// custom rules, the exclusions and the severities of the board stay.
+pub fn apply(current: &Rules, name: &str) -> Option<Rules> {
+    let mut rules = get(name)?;
+    rules.net_classes = current.net_classes.clone();
+    rules.custom = current.custom.clone();
+    rules.exclusions = current.exclusions.clone();
+    rules.severities = current.severities.clone();
+    Some(rules)
 }

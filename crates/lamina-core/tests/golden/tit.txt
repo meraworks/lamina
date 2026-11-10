@@ -1,0 +1,54 @@
+# violations
+
+# excluded
+Warning | courtyard_outside_board |  | J7 | The courtyard of J7 is partly outside the board | 45.750,6.475
+Warning | courtyard_outside_board |  | U1 | The courtyard of U1 is partly outside the board | 35.000,60.650
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 0 spoke(s) to zone z1, but the minimum is 1 | 32.100,50.540
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 0 spoke(s) to zone z1, but the minimum is 1 | 32.800,52.640
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 0 spoke(s) to zone z1, but the minimum is 1 | 34.200,49.840
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 0 spoke(s) to zone z1, but the minimum is 1 | 34.200,51.240
+Warning | starved_thermal | top | U1.41,z1 | Pad U1.41 has 0 spoke(s) to zone z1, but the minimum is 1 | 34.200,52.640
+# ratsnest
+
+# islands
+3V3 1
+3V3_SENSOR 1
+5V_SERVO 1
+BOOT 1
+BOOT_5V 1
+BST_3V3 1
+BUZZER 1
+CC1 1
+CC2 1
+CONT1_SENSE 1
+CONT2_SENSE 1
+CS_BARO 1
+CS_IMU 1
+EN 1
+FB_5V 1
+FIRE1 1
+FIRE2 1
+GND 1
+IMU_FSYNC 1
+IMU_INT 1
+LED_ARM 1
+LED_STATUS 1
+LED_STATUS_A 1
+PYRO1_DRAIN 1
+PYRO2_DRAIN 1
+PYRO_V 1
+SERVO1 1
+SERVO2 1
+SERVO3 1
+SERVO4 1
+SPI_MISO 1
+SPI_MOSI 1
+SPI_SCK 1
+SW_3V3 1
+SW_5V 1
+USB_DN 1
+USB_DP 1
+VBAT 1
+VBAT_SENSE 1
+VBUS 1
+VSYS 1

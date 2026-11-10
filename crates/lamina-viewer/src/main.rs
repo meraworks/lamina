@@ -1070,7 +1070,7 @@ impl App {
                         goto = v.at;
                     }
                     if self.editor.is_some() && v.rule != "stale_exclusion"
-                        && lamina_drc::RULE_NAMES.contains(&v.rule.as_str()) {
+                        && lamina_drc::registry::get(&v.rule).is_some_and(|c| c.excludable) {
                         ui.push_id(v.key(), |ui| {
                             if ui.add_enabled(!self.exclusion_reason.trim().is_empty(), egui::Button::new("Exclude")).clicked() {
                                 exclude = lamina_model::Exclusion::new(v.rule.clone(), v.items.clone(), self.exclusion_reason.clone()).ok();

@@ -1,0 +1,495 @@
+//! The list of all checks: one row for each rule id.
+
+use lamina_model::{RuleSeverity, Rules, Severity, Violation};
+use serde::Serialize;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, schemars::JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum Family {
+    Model,
+    Connectivity,
+    Copper,
+    Holes,
+    Edge,
+    Place,
+    Zones,
+    Mask,
+    Silk,
+    Import,
+}
+
+/// What a check is, for the tools and for the severity rules.
+#[derive(Debug, Clone, Copy, Serialize)]
+pub struct CheckInfo {
+    pub id: &'static str,
+    pub family: Family,
+    pub default: RuleSeverity,
+    /// A higher severity for release (`export`, `check` with `release`).
+    pub release: Option<RuleSeverity>,
+    /// The user can change the severity.
+    pub overridable: bool,
+    /// The user can exclude a violation.
+    pub excludable: bool,
+    /// What the check reports.
+    pub summary: &'static str,
+    /// What goes wrong if you ignore it.
+    pub why: &'static str,
+    /// The rule fields that the check reads.
+    pub fields: &'static [&'static str],
+}
+
+const E: RuleSeverity = RuleSeverity::Error;
+const W: RuleSeverity = RuleSeverity::Warning;
+
+const fn row(
+    id: &'static str,
+    family: Family,
+    default: RuleSeverity,
+    summary: &'static str,
+    why: &'static str,
+    fields: &'static [&'static str],
+) -> CheckInfo {
+    CheckInfo {
+        id,
+        family,
+        default,
+        release: None,
+        overridable: true,
+        excludable: true,
+        summary,
+        why,
+        fields,
+    }
+}
+
+/// A rule about broken data. The user cannot ignore or exclude it.
+const fn fixed(id: &'static str, summary: &'static str, why: &'static str) -> CheckInfo {
+    CheckInfo {
+        id,
+        family: Family::Model,
+        default: E,
+        release: None,
+        overridable: false,
+        excludable: false,
+        summary,
+        why,
+        fields: &[],
+    }
+}
+
+const fn release(mut c: CheckInfo, s: RuleSeverity) -> CheckInfo {
+    c.release = Some(s);
+    c
+}
+
+/// All checks, sorted by id.
+pub const CHECKS: &[CheckInfo] = &[
+    row(
+        "annular_ring",
+        Family::Holes,
+        E,
+        "The copper ring around a plated hole is too narrow.",
+        "The drill can break out of the pad.",
+        &["min_annular_ring"],
+    ),
+    fixed(
+        "bad_outline",
+        "The board outline is not a valid closed shape.",
+        "The fab cannot cut the board.",
+    ),
+    row(
+        "clearance",
+        Family::Copper,
+        E,
+        "Copper of two nets is too near.",
+        "The fab can make a short circuit.",
+        &["clearance"],
+    ),
+    row(
+        "copper_outside_board",
+        Family::Edge,
+        E,
+        "Copper is outside the board outline.",
+        "The copper is cut off.",
+        &[],
+    ),
+    row(
+        "copper_to_edge",
+        Family::Edge,
+        E,
+        "Copper is too near to the board edge.",
+        "The router bit can show or tear the copper.",
+        &["copper_to_edge"],
+    ),
+    row(
+        "courtyard_outside_board",
+        Family::Place,
+        W,
+        "The courtyard of a part is partly outside the board.",
+        "The part can hang over the edge.",
+        &[],
+    ),
+    row(
+        "courtyard_overlap",
+        Family::Place,
+        E,
+        "The courtyards of two parts overlap.",
+        "The parts can collide in assembly.",
+        &[],
+    ),
+    row(
+        "diff_pair_gap",
+        Family::Copper,
+        W,
+        "The gap of a differential pair is not the specified gap.",
+        "The pair impedance changes.",
+        &[],
+    ),
+    row(
+        "diff_pair_uncoupled",
+        Family::Copper,
+        W,
+        "A part of a differential pair has no partner track beside it.",
+        "The pair loses its coupling.",
+        &[],
+    ),
+    row(
+        "drill_size",
+        Family::Holes,
+        E,
+        "A drill is smaller than the minimum.",
+        "The fab cannot drill the hole.",
+        &["min_drill"],
+    ),
+    row(
+        "hole_to_copper",
+        Family::Holes,
+        E,
+        "A hole wall is too near to copper of another net, or a non-plated hole is too near to copper.",
+        "The drill can cut or short the copper.",
+        &["hole_to_copper"],
+    ),
+    row(
+        "hole_to_hole",
+        Family::Holes,
+        E,
+        "Two holes are too near.",
+        "The drill can break the wall between the holes.",
+        &["hole_to_hole"],
+    ),
+    release(
+        row(
+            "import_loss",
+            Family::Import,
+            W,
+            "An import dropped data that changes the fabrication files.",
+            "The board is not the board of the source file.",
+            &[],
+        ),
+        E,
+    ),
+    row(
+        "isolated_copper",
+        Family::Zones,
+        W,
+        "A piece of a zone connects to no pad.",
+        "The copper has no function and can act as an antenna.",
+        &[],
+    ),
+    row(
+        "keepout",
+        Family::Place,
+        E,
+        "An item is in a keep-out that forbids it.",
+        "The keep-out protects an antenna, a hole or a mechanical part.",
+        &[],
+    ),
+    fixed(
+        "layer_not_in_stackup",
+        "An item is on a copper layer that the board does not have.",
+        "The item is not in the fabrication files.",
+    ),
+    row(
+        "length_out_of_range",
+        Family::Copper,
+        W,
+        "The track length of a net is not in its limits.",
+        "The signal timing can be wrong.",
+        &[],
+    ),
+    row(
+        "mask_bridge",
+        Family::Mask,
+        W,
+        "Too little solder mask stays between two openings of different nets.",
+        "Solder can bridge the pads.",
+        &["min_mask_web", "mask_margin"],
+    ),
+    fixed(
+        "missing_footprint",
+        "A part uses a footprint that is not in the project.",
+        "The part has no pads.",
+    ),
+    row(
+        "no_outline",
+        Family::Model,
+        W,
+        "The board has no outline.",
+        "The fab cannot cut the board.",
+        &[],
+    ),
+    row(
+        "npth_inside_courtyard",
+        Family::Place,
+        W,
+        "A non-plated hole is in the courtyard of a part.",
+        "The hole can be under the part.",
+        &[],
+    ),
+    fixed(
+        "pad_in_two_nets",
+        "A pad is in two nets.",
+        "The netlist is not valid.",
+    ),
+    row(
+        "pin_role",
+        Family::Model,
+        W,
+        "The name of a pin does not agree with its net.",
+        "A ground pin on a power net is a short circuit.",
+        &[],
+    ),
+    fixed(
+        "placement_unknown_part",
+        "A placement is for a part that does not exist.",
+        "The project files do not agree.",
+    ),
+    row(
+        "short",
+        Family::Copper,
+        E,
+        "Copper of two nets touches.",
+        "It is a short circuit.",
+        &[],
+    ),
+    row(
+        "short_nets",
+        Family::Connectivity,
+        E,
+        "Two nets are connected through copper.",
+        "It is a short circuit.",
+        &[],
+    ),
+    row(
+        "silk_overlap",
+        Family::Silk,
+        W,
+        "A silkscreen text overlaps other silkscreen.",
+        "The text is not readable.",
+        &[],
+    ),
+    row(
+        "silk_text_size",
+        Family::Silk,
+        W,
+        "A silkscreen text is too small.",
+        "The fab cannot print it clearly.",
+        &["min_silk_text_height"],
+    ),
+    row(
+        "silk_to_edge",
+        Family::Silk,
+        W,
+        "Silkscreen is too near to the board edge.",
+        "The fab cuts it off.",
+        &["silk_to_edge"],
+    ),
+    row(
+        "silk_to_pad",
+        Family::Silk,
+        W,
+        "Silkscreen is too near to a pad.",
+        "The fab removes silkscreen on mask openings.",
+        &["silk_to_pad", "mask_margin"],
+    ),
+    row(
+        "skew_out_of_range",
+        Family::Copper,
+        W,
+        "The nets of a skew group differ too much in length.",
+        "The signals do not arrive together.",
+        &[],
+    ),
+    row(
+        "stale_exclusion",
+        Family::Model,
+        W,
+        "An exclusion matches no violation.",
+        "The accepted problem is gone, or its items changed.",
+        &[],
+    ),
+    row(
+        "starved_thermal",
+        Family::Zones,
+        W,
+        "A pad has too few thermal spokes to its zone.",
+        "The connection can be weak.",
+        &["min_thermal_spokes"],
+    ),
+    row(
+        "track_dangling",
+        Family::Connectivity,
+        W,
+        "An end of a track connects to nothing.",
+        "The stub has no function and can act as an antenna.",
+        &[],
+    ),
+    row(
+        "track_points",
+        Family::Model,
+        E,
+        "A track has less than two points.",
+        "The track is not valid.",
+        &[],
+    ),
+    row(
+        "track_width",
+        Family::Copper,
+        E,
+        "A track is narrower than the minimum.",
+        "The fab cannot make it reliably.",
+        &["min_track_width"],
+    ),
+    fixed(
+        "unknown_net",
+        "An item uses a net that does not exist.",
+        "The netlist is not valid.",
+    ),
+    row(
+        "unknown_net_class",
+        Family::Model,
+        W,
+        "A net uses a net class that is not defined.",
+        "The net gets the default limits.",
+        &[],
+    ),
+    fixed(
+        "unknown_pad",
+        "A net uses a pad that the footprint does not have.",
+        "The netlist is not valid.",
+    ),
+    release(
+        row(
+            "unplaced",
+            Family::Place,
+            W,
+            "A part has no placement.",
+            "The part is not on the board.",
+            &[],
+        ),
+        E,
+    ),
+    row(
+        "unresolved_pad",
+        Family::Model,
+        W,
+        "A net uses a pad of a part that does not exist yet.",
+        "The connection is not made.",
+        &[],
+    ),
+    release(
+        row(
+            "unrouted",
+            Family::Connectivity,
+            W,
+            "A net has open connections.",
+            "The circuit is not complete.",
+            &[],
+        ),
+        E,
+    ),
+    row(
+        "via_dangling",
+        Family::Connectivity,
+        W,
+        "A via connects to no pad.",
+        "The via has no function.",
+        &[],
+    ),
+    row(
+        "via_drill",
+        Family::Holes,
+        E,
+        "A via drill is smaller than the minimum.",
+        "The fab cannot drill the hole.",
+        &["min_via_drill"],
+    ),
+    fixed(
+        "zone_outline",
+        "The outline of a zone or keep-out is not a valid shape.",
+        "The pour cannot be calculated.",
+    ),
+];
+
+/// The ids of all checks.
+pub const RULE_NAMES: [&str; CHECKS.len()] = {
+    let mut a = [""; CHECKS.len()];
+    let mut i = 0;
+    while i < CHECKS.len() {
+        a[i] = CHECKS[i].id;
+        i += 1;
+    }
+    a
+};
+
+pub fn get(id: &str) -> Option<&'static CheckInfo> {
+    CHECKS.iter().find(|c| c.id == id)
+}
+
+/// Check the parts of the rules that refer to checks.
+pub fn check_rules(rules: &Rules) -> Result<(), String> {
+    for name in rules.severities.keys() {
+        match get(name) {
+            None => {
+                return Err(format!(
+                    "The check `{name}` is unknown. Valid checks: {}.",
+                    RULE_NAMES.join(", ")
+                ));
+            }
+            Some(c) if !c.overridable => {
+                return Err(format!(
+                    "The severity of the check `{name}` cannot change, because it reports data that is not valid."
+                ));
+            }
+            _ => {}
+        }
+    }
+    Ok(())
+}
+
+fn level(s: RuleSeverity) -> Option<Severity> {
+    match s {
+        RuleSeverity::Error => Some(Severity::Error),
+        RuleSeverity::Warning => Some(Severity::Warning),
+        RuleSeverity::Ignore => None,
+    }
+}
+
+/// The violations as `export` sees them: some rules are errors for release.
+/// A severity that the user set wins.
+pub fn release_view(violations: &[Violation], rules: &Rules) -> Vec<Violation> {
+    violations
+        .iter()
+        .cloned()
+        .map(|mut v| {
+            if !rules.severities.contains_key(&v.rule) {
+                if let Some(s) = get(&v.rule).and_then(|c| c.release).and_then(level) {
+                    if s == Severity::Error {
+                        v.severity = Severity::Error;
+                    }
+                }
+            }
+            v
+        })
+        .collect()
+}

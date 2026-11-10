@@ -435,6 +435,24 @@ impl<'a> Ctx<'a> {
                 };
             }
         }
+        // A track must keep away from a hole that has no copper around it.
+        for dr in self.geo.drills.iter().filter(|dr| !dr.plated) {
+            for l in dr.layers.0..=dr.layers.1 {
+                if l as usize >= g.nl {
+                    continue;
+                }
+                cells.clear();
+                g.cover(
+                    &dr.prim,
+                    l as usize,
+                    rules.hole_to_copper + p.hw + margin,
+                    &mut cells,
+                );
+                for &c in &cells {
+                    owner[c as usize] = HARD;
+                }
+            }
+        }
         let layers = self.d.board.stackup.copper_layers;
         let mut keepouts: Vec<(Vec<u8>, Prim, Forbid)> = self
             .d

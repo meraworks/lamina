@@ -28,6 +28,9 @@ pub struct Status {
     pub open_notes: usize,
     pub errors: usize,
     pub warnings: usize,
+    /// The errors that stop `export`. Open connections and parts with no
+    /// placement are errors for release.
+    pub release_errors: usize,
     /// The number of violations for each rule.
     pub by_rule: BTreeMap<String, usize>,
     /// The design source file, if the board is built from a source file.
@@ -88,6 +91,10 @@ impl Project {
             open_notes: d.notes.notes.iter().filter(|n| !n.resolved).count(),
             errors,
             warnings: v.len() - errors,
+            release_errors: lamina_drc::release_view(&v, &d.board.rules)
+                .iter()
+                .filter(|x| x.severity == Severity::Error)
+                .count(),
             by_rule,
             source: self.source_file(),
             generated: self
@@ -100,5 +107,51 @@ impl Project {
             missing_models: self.missing_models(),
             groups: d.parts.groups(),
         }
+    }
+}
+
+/// A check, as the `checks` tool lists it.
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+pub struct CheckRow {
+    pub id: String,
+    pub family: lamina_drc::Family,
+    /// `error`, `warning` or `ignore`. The board can change it with `set_rules`.
+    pub severity: RuleSeverity,
+    /// The severity for `export`, if it is different.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub release: Option<RuleSeverity>,
+    pub can_change_severity: bool,
+    pub can_exclude: bool,
+    pub reports: String,
+    pub why: String,
+    /// The rule fields that set its limits.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub fields: Vec<String>,
+}
+
+impl Project {
+    /// All checks with their severity on this board.
+    pub fn checks(&self) -> Vec<CheckRow> {
+        lamina_drc::CHECKS
+            .iter()
+            .map(|c| CheckRow {
+                id: c.id.into(),
+                family: c.family,
+                severity: self
+                    .data
+                    .board
+                    .rules
+                    .severities
+                    .get(c.id)
+                    .copied()
+                    .unwrap_or(c.default),
+                release: c.release,
+                can_change_severity: c.overridable,
+                can_exclude: c.excludable && c.id != "stale_exclusion",
+                reports: c.summary.into(),
+                why: c.why.into(),
+                fields: c.fields.iter().map(|f| f.to_string()).collect(),
+            })
+            .collect()
     }
 }

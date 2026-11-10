@@ -226,14 +226,7 @@ impl Project {
                 }
             }
         }
-        for name in rules.severities.keys() {
-            if !lamina_drc::RULE_NAMES.contains(&name.as_str()) {
-                return Err(Error::invalid(format!(
-                    "The check `{name}` is unknown. Valid checks: {}.",
-                    lamina_drc::RULE_NAMES.join(", ")
-                )));
-            }
-        }
+        lamina_drc::registry::check_rules(&rules).map_err(Error::invalid)?;
         for (name, v) in [
             ("clearance", rules.clearance),
             ("track_width", rules.track_width),
@@ -262,19 +255,19 @@ pub struct UseFabPreset {
 
 impl Project {
     pub fn use_fab_preset(&mut self, p: UseFabPreset) -> Result<OpResult> {
-        let mut rules = lamina_drc::presets::get(&p.name).ok_or_else(|| {
-            let names: Vec<&str> = lamina_drc::presets::PRESETS
-                .iter()
-                .map(|x| x.name)
-                .collect();
-            Error::invalid(format!(
-                "The preset `{}` is unknown. Use one of these presets: {}.",
-                p.name,
-                names.join(", ")
-            ))
-        })?;
+        let rules =
+            lamina_drc::presets::apply(&self.data.board.rules, &p.name).ok_or_else(|| {
+                let names: Vec<&str> = lamina_drc::presets::PRESETS
+                    .iter()
+                    .map(|x| x.name)
+                    .collect();
+                Error::invalid(format!(
+                    "The preset `{}` is unknown. Use one of these presets: {}.",
+                    p.name,
+                    names.join(", ")
+                ))
+            })?;
         let mut d = self.data.clone();
-        rules.net_classes = d.board.rules.net_classes.clone();
         d.board.rules = rules;
         self.commit(
             d,
