@@ -27,6 +27,18 @@ Before a pull request, run the same checks as CI:
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked
+cargo clippy -p lamina-viewer --all-targets --features headless --locked -- -D warnings
+cargo test -p lamina-viewer --features headless --locked
+```
+
+After a change to the viewer, also run the smoke test of `lamina-viewer shot` (the
+viewer without a window). It needs a GPU or a software Vulkan driver (Mesa lavapipe,
+`mesa-vulkan-drivers` on Debian and Ubuntu); CI runs it on Linux:
+
+```sh
+cargo build -p lamina-mcp
+cargo build -p lamina-viewer --features headless
+python3 scripts/viewer-smoke.py --bin target/debug
 ```
 
 The tests also check the documents against the programs: the tool names, the number of

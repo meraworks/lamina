@@ -71,6 +71,11 @@ lamina-viewer shot <board> --3d --size 1280x760 drag:560,560,600,560 --out view.
 `lamina-viewer shot --help` lists the steps. On a computer without a GPU, a software
 Vulkan driver works (Mesa lavapipe, `mesa-vulkan-drivers` on Debian and Ubuntu).
 
+`scripts/viewer-smoke.py` is the smoke test of `shot` that CI runs on Linux. It makes a
+small board through `lamina mcp` (no network), takes 2D and 3D images with steps of each
+kind and checks the images, the time, the memory and that the board loaded once
+(`shot --stats`): a board that loads again and again is a reload loop.
+
 ## README images
 
 The screenshots and the GIF in the README come from the real programs.

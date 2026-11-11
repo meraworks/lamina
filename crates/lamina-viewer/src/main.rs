@@ -160,6 +160,9 @@ pub(crate) struct App {
     fit_pending: bool,
     flashes: Vec<(Rect, Instant)>,
     last_reload: Option<Instant>,
+    /// How many times the board loaded. `shot --stats` prints it.
+    #[cfg(feature = "headless")]
+    loads: usize,
     cursor_mm: Option<Point>,
     note_text: String,
     note_at: Option<Point>,
@@ -262,6 +265,8 @@ impl App {
             fit_pending: false,
             flashes: Vec::new(),
             last_reload: None,
+            #[cfg(feature = "headless")]
+            loads: 0,
             cursor_mm: None,
             note_text: String::new(),
             note_at: None,
@@ -382,6 +387,10 @@ impl App {
                     self.loaded = Some(l);
                     self.error = None;
                     self.last_reload = Some(now);
+                    #[cfg(feature = "headless")]
+                    {
+                        self.loads += 1;
+                    }
                     // A preview of the board before the reload is stale.
                     self.push_preview = None;
                     self.dirty = true;
