@@ -2,3 +2,4 @@
 *.png binary
 *.step binary
 *.stp binary
+packaging/*.sh text eol=lf

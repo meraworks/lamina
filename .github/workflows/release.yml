@@ -52,9 +52,20 @@ jobs:
           "$bin/lamina" status smoke/board
           "$bin/lamina-viewer" --help
 
+      - name: Build the Windows installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (!(Get-Command iscc.exe -ErrorAction SilentlyContinue) -and !(Test-Path "${env:ProgramFiles(x86)}/Inno Setup 6/ISCC.exe")) { choco install innosetup -y --no-progress }
+          ./packaging/windows.ps1 -Bin target/${{ matrix.target }}/release -Arch ("${{ matrix.target }}" -split "-")[0]
+      - name: Build the desktop installer
+        if: runner.os != 'Windows'
+        run: bash packaging/unix.sh target/${{ matrix.target }}/release
+
       - name: Package
         id: package
         run: |
+          cp target/installers/* .
           version="${GITHUB_REF_NAME#v}"
           [ "$GITHUB_REF_TYPE" = tag ] || version="dev-${GITHUB_SHA::7}"
           name="lamina-$version-${{ matrix.target }}"
@@ -79,6 +90,9 @@ jobs:
           path: |
             ${{ steps.package.outputs.archive }}
             ${{ steps.package.outputs.archive }}.sha256
+            *-setup.exe
+            *.pkg
+            *.deb
 
   release:
     name: Publish
