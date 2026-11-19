@@ -821,8 +821,7 @@ pub fn add_pair_route(d: &mut ProjectData, r: &Route, partner: &str, gap: f64) -
         // The partner vias: beside the route vias, on the side of the partner.
         let s = if left { 1.0 } else { -1.0 };
         let mut pvias: Vec<Point> = Vec::new();
-        for ri in 0..n_runs.saturating_sub(1) {
-            let run = &r.runs[ri].1;
+        for (_, run) in r.runs.iter().take(n_runs.saturating_sub(1)) {
             let (p, q) = (run[run.len() - 2], run[run.len() - 1]);
             let l = p.dist(q).max(1e-12);
             let n = Point::new(-(q.y - p.y) / l * s, (q.x - p.x) / l * s);

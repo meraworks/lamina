@@ -953,8 +953,8 @@ fn astar(ctx: &Ctx, s: &mut Search, q: &Query) -> Option<Vec<usize>> {
         if !ok {
             continue;
         }
-        for l2 in 0..g.nl {
-            if l2 == l || !ctx.allowed[l2] {
+        for (l2, &allowed) in ctx.allowed.iter().enumerate().take(g.nl) {
+            if l2 == l || !allowed {
                 continue;
             }
             let j = l2 * g.plane() + r;
